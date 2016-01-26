@@ -1,7 +1,7 @@
 'use strict';
 
 var do_chase_cam = false;
-var do_first_person_cam = true;
+var do_first_person_cam = false;
 var do_orbit_controls = false;
 var do_vr = false;
 var start_from_end_of_street = false;
@@ -30,6 +30,7 @@ var load_car = require("../load_car.js");
 require('script!../wingman_input.js');
 var Street = require('../street.js');
 var create_city_geometry = require('../city_geometry.js');
+var Terrain = require('../terrain.js');
 
 var Car = require("../../carphysics2d/public/js/Car.js");
 var Stats = require('../../carphysics2d/public/js/Stats.js');
@@ -194,10 +195,12 @@ function init() {
         $(document).ready(function() {
             document.addEventListener('keydown', function(ev) {
                 if (ev.keyCode == 16)
+                    controls.movementSpeed = 100;
+                else if (ev.keyCode == 17)
                     controls.movementSpeed = 5;
             });
             document.addEventListener('keyup', function(ev) {
-                if (ev.keyCode == 16)
+                if (ev.keyCode == 16 || ev.keyCode == 17)
                     controls.movementSpeed = 30;
             });
         });
@@ -211,26 +214,44 @@ function init() {
     light.position.set(0.75, 1, 0.25);
     scene.add(light);
 
-    var grass_tex = tex_loader.load('textures/grass.png');
-    grass_tex.anisotropy = renderer.getMaxAnisotropy();
-    grass_tex.wrapT = THREE.RepeatWrapping;
-    grass_tex.wrapS = THREE.RepeatWrapping;
-    grass_tex.repeat.set(50, 50);
-
-    var plane = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000),
-            new THREE.MeshBasicMaterial({
-                map: grass_tex,
-                color: 0xE8FF17 /*, side:THREE.DoubleSide*/
-        }));
-
-    plane.rotation.x = -90 * Math.PI / 180;
-    scene.add(plane);
+    var terrain = new Terrain();
+    var mesh = terrain.create_mesh();
+    terrain.adjust_height(function() {
+        terrain.rotate();
+        scene.add(mesh);
+    });
 
     street = new Street();
     street.create_road(function() {
         //scene.add(street);
         var city_mesh = create_city_geometry(street);
-        scene.add(city_mesh);        
+        //scene.add(city_mesh);
+
+        load_model_obj('models/stop_sign_obj/stop_sign.obj', function(obj) {
+            obj.rotateY(-Math.PI);
+            obj.rotateX(Math.PI / 2); //TODO: this modifies the object3d rotation (not the geometry itself!)
+            stop_sign = new THREE.Object3D();
+            stop_sign.add(obj);
+
+            var segments = street.segments, i = 1;
+            for (var pos = 10; pos < 500; pos += 10) {
+                i = 1;
+                for (; i < segments.length; i++) {
+                    if (segments[i].accumulated_road_length >= pos)
+                        break;
+                }
+                var segment = segments[i-1];
+                var t = (pos - segment.accumulated_road_length)/segment.curve.length();
+                var p = segment.curve.offset(t, street.street_width/2 * (start_from_end_of_street ? -1 : 1));
+                var d = segment.curve.derivative(t);
+                var sign = stop_sign.clone();
+                sign.position.copy(Street.xytovec3(p));
+                sign.position.y -= 2;
+                //console.log(Math.atan2(d.x,d.y));
+                sign.rotation.y = Math.atan2(d.x,d.y) + (start_from_end_of_street ? Math.PI : 0); //pos * Math.PI / 200;
+                scene.add(sign);
+            }
+        });        
     });
 
     ///////////////////////////////////////////////
@@ -369,35 +390,10 @@ function init() {
         animate();
     });
 
-    load_model_obj('models/stop_sign_obj/stop_sign.obj', function(obj) {
-        obj.rotateY(-Math.PI);
-        obj.rotateX(Math.PI / 2); //TODO: this modifies the object3d rotation (not the geometry itself!)
-        stop_sign = new THREE.Object3D();
-        stop_sign.add(obj);
-
-        var segments = street.segments, i = 1;
-        for (var pos = 10; pos < 500; pos += 10) {
-            i = 1;
-            for (; i < segments.length; i++) {
-                if (segments[i].accumulated_road_length >= pos)
-                    break;
-            }
-            var segment = segments[i-1];
-            var t = (pos - segment.accumulated_road_length)/segment.curve.length();
-            var p = segment.curve.offset(t, street.street_width/2 * (start_from_end_of_street ? -1 : 1));
-            var d = segment.curve.derivative(t);
-            var sign = stop_sign.clone();
-            sign.position.copy(Street.xytovec3(p));
-            sign.position.y -= 2;
-            //console.log(Math.atan2(d.x,d.y));
-            sign.rotation.y = Math.atan2(d.x,d.y) + (start_from_end_of_street ? Math.PI : 0); //pos * Math.PI / 200;
-            scene.add(sign);
-        }
-    });
-
 
     gui.close();
     lastTime = performance.now() / 1000;
+    animate();
 }
 
 function animate(time) {

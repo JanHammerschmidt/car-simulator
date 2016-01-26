@@ -1,15 +1,33 @@
-require('script!./lib/bezier.js');
-require("script!./lib/async.js");
+var isNode = typeof window == 'undefined'; // || this != window;
 
-var Street = function(lut_points, street_width, segment_points) {
+var Bezier = require('./lib/bezier.js');
+var async = require("./lib/async.js");
+if (isNode) {
+	jsonfile = module.require('jsonfile');
+	THREE = module.require('three');
+}
 
+function load_json(file, callback) {
+	if (isNode) {
+		//jsonfile
+		var json = module.require('../'+file);
+		callback(json);
+	} else {
+		$.getJSON(file, callback);
+	}
+}
+
+var Street = function(no_load_texture, lut_points, street_width, segment_points)
+{
+	this.loaded = false;
 	this.street_width = street_width || 20;
 	this.lut_points = lut_points || 20;
 	this.segment_points = segment_points || 20;
 	this.segments = [];
 	this._dists = [];
 
-	if (Street.road_tex === undefined) {
+
+	if (!no_load_texture && Street.road_tex === undefined) {
 	    var road_tex = new THREE.TextureLoader().load('textures/road.jpg');
 	    road_tex.anisotropy = renderer.getMaxAnisotropy();
 	    road_tex.wrapT = THREE.RepeatWrapping;
@@ -116,23 +134,18 @@ Street.prototype = {
         var geo = this.create_street_geometry(this.segment_points, function(t) {
             return [curve.offset(t, 0.5*street_width), curve.offset(t, -0.5*street_width)];
         });
-        geo.geo.computeBoundingSphere();
-        //street_geometries.push(geo);
 
-        var mat = new THREE.MeshBasicMaterial({
-                map: Street.road_tex,
-                color: 0x5d5d88,
-                //side: THREE.DoubleSide
-            });
-
-        var street = new THREE.Mesh(geo.geo, mat);
+        var street = {}; 
+        street.geometry = geo.geo;
         street.poly = geo.poly;
         street.lut = curve.getLUT(this.lut_points);
         street.road_length = curve.length();
         street.curve = curve;
-        this.segments.push(street);
 
-        scene.add(street);
+        //this.segments.push(street);
+
+        //scene.add(street);
+        return street;
     },
 
     create_road: function(callback) {
@@ -161,7 +174,9 @@ Street.prototype = {
 			                p2);
 			            t.copy(segment.derivative(1)).normalize();
 			            p.copy(p2);
-			            this.add_street_segment(segment);
+			            this.segments.push(segment);
+			            next();
+			            //this.add_street_segment(segment);
 				   //      var segments = that.segments;
 				   //      segments[0].accumulated_road_length = 0;
 				   //      for (var i = 1; i < segments.length; i++) {
@@ -170,7 +185,7 @@ Street.prototype = {
 				   //      var segment_points = that.segment_points;
 			        }
 			    } else {
-					$.getJSON('track.study1.json', function(track) {
+					load_json('track.study1.json', function(track) {
 					    var cfg = {ver2: false, deviation_mult: 2, distance_mult: 0.1, scale: 1000.0}; 
 					    var scale = cfg.scale;
 		                var origin = new THREE.Vector2(0, 0);
@@ -189,7 +204,8 @@ Street.prototype = {
 			                p.clone().addScaledVector(t, a1_length),
 			                p2.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation + Math.PI + a2_deviation), a2_length),
 			                p2);
-			            that.add_street_segment(segment);
+			            that.segments.push(segment);
+			            //that.add_street_segment(segment);
 			            t.copy(segment.derivative(1)).normalize();
 			            p.copy(p2);
 			            return segment.length();
@@ -231,25 +247,26 @@ Street.prototype = {
 			            }
 			          } else
 			            proc_prev_sign(prev,1);
+			          next();
 
-			        var segments = that.segments;
-				        segments[0].accumulated_road_length = 0;
-				        for (var i = 1; i < segments.length; i++) {
-							segments[i].accumulated_road_length = segments[i-1].accumulated_road_length + segments[i-1].road_length;
-				        }
-				        var segment_points = that.segment_points;
+			   //      var segments = that.segments;
+				  //       segments[0].accumulated_road_length = 0;
+			   //      for (var i = 1; i < segments.length; i++) {
+						// segments[i].accumulated_road_length = segments[i-1].accumulated_road_length + segments[i-1].road_length;
+			   //      }
+			   //      var segment_points = that.segment_points;
 
 					}); // getJSON
 			    }
-			    next();
 			}, function(next) {
+				that.segments = that.segments.map(function(v){return that.add_street_segment(v);});
 				that.poly_bezier = new Bezier.PolyBezier(that.segments.map(function(v){return v.curve}));
 				that.poly_bezier.cacheLengths();
 				for (var i = 0; i < that.segments.length; i++)
 					that.segments[i].accumulated_road_length = that.poly_bezier.acc_lengths[i];
 				next();
     		}, function(next) {
-		        $.getJSON('track.study1.json', function(track) {
+		        load_json('track.study1.json', function(track) {
 		        	var segments = that.segments;
 		            var ps = track.points; //$.extend(true, [], track.points);
 		            for (var i = 0; i < ps.length; i++) {
@@ -268,18 +285,41 @@ Street.prototype = {
 			        for (var i = 0; i < segments.length; i++) {
 			        	var pi = pb.parts[i];
 			        	var vertices = segments[i].geometry.vertices;
+			        	//var lut_heights = [];
 			        	for (var j = 0; j <= segment_points; j++) {
 			        		var t = t0 + j/segment_points * pi;
-			        		//vertices[j*2].y = vertices[j*2+1].y = tpb.get(t).y;
+			        		var y = tpb.get(t).y
+			        		vertices[j*2].y = vertices[j*2+1].y = y;
+			        		//lut_heights.push(y);
+			        		segments[i].lut[j].height = y;
 			        	}
+			        	//segments[i].lut_heights = lut_heights;
 			        	segments[i].geometry.verticesNeedUpdate = true;
 			        	t0 = pb.bounds[i];
 			        }
 			        next();
 			    });
+			}, function(next) {
+				if (!isNode) {
+				    var mat = new THREE.MeshBasicMaterial({
+				            map: Street.road_tex,
+				            color: 0x5d5d88,
+				        });
+					that.segments.forEach(function(v){
+						v.geometry.computeBoundingSphere();
+						v.mesh = new THREE.Mesh(v.geometry, mat);
+						scene.add(v.mesh);
+					});
+				}
+				that.loaded = true;
+				next();
 			}
     	], callback);
     } // create_road
 };
 
-module.exports = Street;
+if (typeof module !== 'undefined' && module.exports) {
+	module.exports = Street;
+} else {
+	this.Street = Street;
+}
