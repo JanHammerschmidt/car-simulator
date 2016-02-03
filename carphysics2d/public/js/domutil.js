@@ -9,3 +9,5 @@ function $e( id )
 {
 	return document.getElementById(id);
 }
+
+module.exports = $e;

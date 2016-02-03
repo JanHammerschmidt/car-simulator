@@ -29,3 +29,5 @@ InputState.prototype.set = function( v )
 		if( this.hasOwnProperty(k) )
 			this[k] = v;
 };
+
+module.exports = InputState

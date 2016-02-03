@@ -34,7 +34,7 @@ var Terrain = require('../terrain.js');
 
 var Car = require("../../carphysics2d/public/js/Car.js");
 var Stats = require('../../carphysics2d/public/js/Stats.js');
-require('script!../../carphysics2d/public/js/ConfigPanel.js');
+var ConfigPanel = require('../../carphysics2d/public/js/ConfigPanel.js');
 require('!style!css!../../carphysics2d/public/js/car_config.css');
 
 var pointInPolygon = require('point-in-polygon-extended').pointInPolyRaycast; //pointInPolyWindingNumber

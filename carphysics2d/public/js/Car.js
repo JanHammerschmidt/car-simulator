@@ -1,9 +1,9 @@
 /*global $e, GMath, Vec2, InputState */
 
-require('script!./domutil.js');
-require('script!./Vec2.js');
+var $e = require('./domutil.js');
+var Vec2 = require('./Vec2.js');
 require('script!./GMath.js');
-require('script!./InputState.js');
+var InputState = require('./InputState.js');
 
 "use strict";
 

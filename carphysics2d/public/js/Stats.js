@@ -1,7 +1,7 @@
 /*global $e */
 //"use strict";
 
-require('script!./domutil.js');
+var $e = require('./domutil.js');
 
 
 /**

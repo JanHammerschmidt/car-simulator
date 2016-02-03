@@ -80,3 +80,5 @@ Vec2.prototype.normalize = function()
 {
 	this.setLen(1.0);
 };
+
+module.exports = Vec2;

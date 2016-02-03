@@ -113,3 +113,6 @@ var keyboard_input = {
         });
     }
 }
+
+window.wingman_input = wingman_input;
+window.keyboard_input = keyboard_input;

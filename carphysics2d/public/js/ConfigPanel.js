@@ -2,6 +2,8 @@
 
 //"use strict";
 
+var $e = require('./domutil.js');
+
 /**
  *  UI for user config car panel
  */
@@ -75,3 +77,5 @@ ConfigPanel.prototype.render = function()
 	}
 	$e('config_table').innerHTML = str;
 };
+
+module.exports = ConfigPanel;

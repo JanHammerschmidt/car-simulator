@@ -40,7 +40,7 @@ function generateTexture() {
 
 }
 
-create_city_geometry = function(street, num_buildings)
+var create_city_geometry = function(street, num_buildings)
 {
 	num_buildings = num_buildings || 2000;
 
