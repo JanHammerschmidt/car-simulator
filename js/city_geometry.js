@@ -122,7 +122,7 @@ create_city_geometry = function(street, num_buildings)
     texture.anisotropy = renderer.getMaxAnisotropy();
     texture.needsUpdate = true;
 
-    var mesh = new THREE.Mesh(city, new THREE.MeshLambertMaterial({
+    var mesh = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(city), new THREE.MeshLambertMaterial({
         map: texture,
         vertexColors: THREE.VertexColors
     }));

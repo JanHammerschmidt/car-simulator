@@ -44,7 +44,7 @@ function load_car_parts(callback, meshtype) {
                 var material = new THREE.MeshFaceMaterial(materials);
                 //var ext = new THREE.Mesh(geometry, material);
                 //ext.position.set(-0.90351, 0.905721, -0.625575);
-                car_body = new THREE.Mesh(geometry, material);
+                car_body = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(geometry), material);
                 // car_body.add(ext);
                 next();
             });

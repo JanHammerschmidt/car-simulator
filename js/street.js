@@ -307,8 +307,9 @@ Street.prototype = {
 				        });
 					that.segments.forEach(function(v){
 						v.geometry.computeBoundingSphere();
-						v.mesh = new THREE.Mesh(v.geometry, mat);
-						scene.add(v.mesh);
+						// v.mesh = new THREE.Mesh(v.geometry, mat);
+						// scene.add(v.mesh);
+						scene.add(new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(v.geometry), mat));
 					});
 				}
 				that.loaded = true;

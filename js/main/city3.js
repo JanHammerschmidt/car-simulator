@@ -215,17 +215,16 @@ function init() {
     scene.add(light);
 
     var terrain = new Terrain();
-    var mesh = terrain.create_mesh();
     terrain.adjust_height(function() {
         terrain.rotate();
-        scene.add(mesh);
+        scene.add(terrain.create_mesh());
     });
 
     street = new Street();
     street.create_road(function() {
         //scene.add(street);
         var city_mesh = create_city_geometry(street);
-        //scene.add(city_mesh);
+        scene.add(city_mesh);
 
         load_model_obj('models/stop_sign_obj/stop_sign.obj', function(obj) {
             obj.rotateY(-Math.PI);
