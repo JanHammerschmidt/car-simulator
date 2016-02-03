@@ -4,10 +4,12 @@ module.exports = {
         path: __dirname,
         filename: "webpack.bundle.js"
     },
-    /*module: {
+    module: {
         loaders: [
-            { test: /\.css$/, loader: "style!css" }
+            /*{ test: /js\/.*\.js$/, exclude: /node_modules|bower_components|js\/lib/, loader: "babel-loader"}*/
+            { test: /city3/, loader: "babel-loader"}
+            /*{ test: /\.css$/, loader: "style!css" }*/
         ]
-    },*/
+    },
     devtool: 'source-map'
 };
