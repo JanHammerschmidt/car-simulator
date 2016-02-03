@@ -9,9 +9,9 @@ var do_sound = false;
 
 window.CARDBOARD_DEBUG = true;
 
-require('script!../lib/jquery.js');
-require('script!../lib/dat.gui.js');
-require("script!../lib/async.js");
+//require('script!../lib/jquery.js');
+//require('script!../lib/dat.gui.js');
+//require("script!../lib/async.js");
 require("../../three.js/examples/js/loaders/MTLLoader.js");
 require("../../three.js/examples/js/loaders/OBJMTLLoader.js");
 require("../../three.js/examples/js/controls/FirstPersonControls2.js");
