@@ -73,7 +73,7 @@ var car2d, car_model, car_stats;
 var street, stop_sign;
 var vr_manager;
 var gauge_kmh_slope, gauge_needle;
-var osc_port;
+var osc_port, terrain;
 // var engine_started = false;
 
 init();
@@ -214,7 +214,7 @@ function init() {
     light.position.set(0.75, 1, 0.25);
     scene.add(light);
 
-    var terrain = new Terrain();
+    terrain = new Terrain();
     terrain.adjust_height(function() {
         terrain.rotate();
         scene.add(terrain.create_mesh());
@@ -481,7 +481,7 @@ function animate(time) {
             car_model.rotation.y = -car2d.heading;
             car_model.position.x = -car2d.position.y;
             car_model.position.z = car2d.position.x;
-            //debugger;
+            car_model.position.y = terrain.p2height({x:car_model.position.x,y:car_model.position.z});
             var pos = street.get_road_position(car_model.position, car_stats);
             car_stats.add('road position', pos ); // should be [m]
             car_stats.add('car.x', car_model.position.x);
