@@ -397,12 +397,15 @@ function init() {
 
 function animate(time) {
 
-    requestAnimationFrame(animate);
     if (time === undefined)
         time = performance.now() / 1000;
     else
         time /= 1000.;
     var dt = Math.max(time - lastTime, 0);
+    if (dt <= 0) {
+        requestAnimationFrame(animate);
+        return;
+    }
     if (dt > 0.1) { // Timestep too large - max out at 1/10th of a second.
         //console.log("warning: dt too high!", dt, "ms");
         dt = 0.1;
@@ -419,7 +422,6 @@ function animate(time) {
         if (do_sound) {
             osc_port.send_float('/rpm', 0.1 + car2d.engine.rel_rpm() * 0.8);
         }
-
 
         var accel = null,
             steering = null,
@@ -522,6 +524,7 @@ function animate(time) {
     } else {
         controls.update(time - lastTime);
     }
+    requestAnimationFrame(animate);
     if (do_vr) {
         car_model.updateMatrixWorld(true); // TODO: make more efficient
         //console.log(camera.parent && camera.parent.position,camera.position);
