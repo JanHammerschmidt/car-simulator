@@ -489,9 +489,11 @@
     var that = this;
     this.lengths = this.curves.map(function(v) { return v.length(); }); // absolute lengths
     this.acc_lengths = []; this.lengths.reduce(function(a,b,i) { return that.acc_lengths[i] = a+b; }, 0); // accumulated absolute lenghts
+    this.acc_lengths2 = [0].concat(this.acc_lengths.slice(0,-1));
     this.total_length = this.acc_lengths[this.acc_lengths.length-1]; // this.length();
     this.parts = this.lengths.map(function(v) { return v / that.total_length; }); // relative lenghts
     this.bounds = this.acc_lengths.map(function(v) {return v / that.total_length; }); // acc. rel. lengths
+    this.bounds2 = [0].concat(this.bounds.slice(0,-1));
     //this.bounds2 = []; this.parts.reduce(function(a,b,i) { return that.bounds2[i] = a+b; }, 0);
   }
   PolyBezier.prototype.get = function(t) {
