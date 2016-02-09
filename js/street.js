@@ -302,16 +302,21 @@ Street.prototype = {
 			    });
 			}, function(next) {
 				if (!isNode) {
-				    var mat = new THREE.MeshBasicMaterial({
-				            map: Street.road_tex,
-				            color: 0x5d5d88,
-				        });
+					that.street_mesh = new THREE.Object3D();
 					that.segments.forEach(function(v){
+					    var mat = new THREE.MeshBasicMaterial({
+					            map: Street.road_tex,
+					            color: 0x5EFF00, //0x5d5d88,
+					            side:THREE.DoubleSide
+					        });						
 						v.geometry.computeBoundingSphere();
+						v.geometry.boundingSphere.radius *= 1.1;
+						v.mesh = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(v.geometry), mat); 
+						//v.material = v.mesh.material;
 						// v.mesh = new THREE.Mesh(v.geometry, mat);
-						// scene.add(v.mesh);
-						scene.add(new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(v.geometry), mat));
+						that.street_mesh.add(v.mesh);
 					});
+					scene.add(that.street_mesh);
 				}
 				that.loaded = true;
 				next();
