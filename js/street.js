@@ -262,8 +262,9 @@ Street.prototype = {
 				that.segments = that.segments.map(function(v){return that.add_street_segment(v);});
 				that.poly_bezier = new Bezier.PolyBezier(that.segments.map(function(v){return v.curve}));
 				that.poly_bezier.cacheLengths();
-				for (var i = 0; i < that.segments.length; i++)
-					that.segments[i].accumulated_road_length = that.poly_bezier.acc_lengths[i];
+				that.segments[0].accumulated_road_length = 0;
+				for (var i = 1; i < that.segments.length; i++)
+					that.segments[i].accumulated_road_length = that.poly_bezier.acc_lengths[i-1];
 				next();
     		}, function(next) {
 		        load_json('track.study1.json', function(track) {
