@@ -332,7 +332,7 @@ function init() {
         lf.add(light.position, 'x');
         lf.add(light.position, 'y');
         lf.add(light.position, 'z');
-        car_model.add(light);
+        car_model_slope.add(light);
 
         if (start_from_end_of_street) {
             var curve = street.segments[street.segments.length-1].curve;
