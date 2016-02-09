@@ -165,8 +165,8 @@ Car.Engine = function() {
 	this.torque = 0; // [N*m]
 	this.min_throttle = 0.07; // [rel.]
 	this.torque_map = new Car.TorqueMap();
-	this.max_torque = 240; // [N*m]
-	this.max_rpm = 7000;
+	this.max_torque = 600; // 240; // [N*m]
+	this.max_rpm = 10000; //7000;
 	this.engine_braking_coefficient = 0.9;
 	this.inertia = 0.13; // [kg m^2]
 };
@@ -331,6 +331,7 @@ Car.prototype.doPhysics = function( dt )
 	var sn = Math.sin(this.heading);
 	var cs = Math.cos(this.heading);
 
+
 	// Weight on axles based on centre of gravity and weight shift due to forward/reverse acceleration
 	var axleWeightFront = cfg.mass * (this.axleWeightRatioFront * cfg.gravity - cfg.weightTransfer * this.accel_c.x * cfg.cgHeight / this.wheelBase);
 	var axleWeightRear = cfg.mass * (this.axleWeightRatioRear * cfg.gravity + cfg.weightTransfer * this.accel_c.x * cfg.cgHeight / this.wheelBase);
@@ -366,6 +367,7 @@ Car.prototype.doPhysics = function( dt )
 	var tractionForce_cx = throttle - brake * GMath.sign(this.velocity_c.x);
 	var tractionForce_cy = 0;
 
+	// var 
 	var dragForce_cx = -cfg.rollResist * this.velocity_c.x - cfg.airResist * this.velocity_c.x * Math.abs(this.velocity_c.x);
 	var dragForce_cy = -cfg.rollResist * this.velocity_c.y - cfg.airResist * this.velocity_c.y * Math.abs(this.velocity_c.y);
 	var resistances = -dragForce_cx;
