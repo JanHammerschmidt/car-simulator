@@ -496,33 +496,23 @@
     this.bounds2 = [0].concat(this.bounds.slice(0,-1));
     //this.bounds2 = []; this.parts.reduce(function(a,b,i) { return that.bounds2[i] = a+b; }, 0);
   }
-  PolyBezier.prototype.get = function(t) {
+  
+  PolyBezier.prototype.get = function(t) { return this._get(t, Bezier.prototype.get); }
+  PolyBezier.prototype.derivative = function(t) { return this._get(t, Bezier.prototype.derivative); }
+
+  PolyBezier.prototype._get = function(t, func) {
     var last = this.curves.length-1;
-    if (t < 0 || last < 0) return this.curves[0].get(t / this.parts[0]);
-    if (t >= this.bounds[last-1]) return this.curves[last].get((t-this.bounds[last-1])/this.parts[last]);
+    if (t < 0 || last < 0) return func.call(this.curves[0], t / this.parts[0]);
+    if (t >= this.bounds[last-1]) return func.call(this.curves[last], (t-this.bounds[last-1])/this.parts[last]);
     for (var i = 0; i < last; i++) {
       if (t <= this.bounds[i]) {
         if (i > 0)
           t -= this.bounds[i-1];
-        return this.curves[i].get(t / this.parts[i]);
+        return func.call(this.curves[i], t / this.parts[i]);
       }
     }
     debugger;
   }
-  PolyBezier.prototype.derivative = function(t) { // TODO: zusammenführen
-    var last = this.curves.length-1;
-    if (t < 0 || last < 0) return this.curves[0].derivative(t / this.parts[0]);
-    if (t >= this.bounds[last-1]) return this.curves[last].derivative((t-this.bounds[last-1])/this.parts[last]);
-    for (var i = 0; i < last; i++) {
-      if (t <= this.bounds[i]) {
-        if (i > 0)
-          t -= this.bounds[i-1];
-        return this.curves[i].derivative(t / this.parts[i]);
-      }
-    }
-    debugger;    
-  }
-
 
   /**
    * Bezier curve constructor. The constructor argument can be one of three things:
