@@ -69,7 +69,7 @@ function load_model_obj(fname, f) {
 
 var light, controls;
 var lastTime;
-var car2d, car_model, car_stats;
+var car2d, car_model, car_model_slope, car_stats;
 var street, stop_sign;
 var vr_manager;
 var gauge_kmh_slope, gauge_needle;
@@ -292,7 +292,9 @@ function init() {
         // pos.add(vehicle_box.position, 'z');
 
         car_model = new THREE.Object3D();
-        car_model.add(vehicle_box);
+        car_model_slope = new THREE.Object3D();
+        car_model.add(car_model_slope);
+        car_model_slope.add(vehicle_box);
 
         scene.add(car_model);
 
@@ -350,7 +352,7 @@ function init() {
             var f = gui.addFolder('camera');
             f.addxyz(camera_first_person_object.position);
             camera_first_person_object.add(camera);
-            car_model.add(camera_first_person_object);
+            car_model_slope.add(camera_first_person_object);
             if (do_vr) {
                 camera_first_person_object.rotation.y = Math.PI;
                 controls = new THREE.VRControls(camera);
@@ -381,7 +383,7 @@ function init() {
         gauge.position.set(0.365, 1.111, 0.806);
     // camera_first_person_object.position.copy(gauge.position);
     // camera.position.z = -0.3;
-        car_model.add(gauge);
+        car_model_slope.add(gauge);
         var gf = gui.addFolder('gauge');
         gf.addxyz(gauge.position, 0.01);
         gf.addxyz(gauge_needle.rotation);
@@ -476,39 +478,81 @@ function animate(time) {
             // vehicle.setSteering(steering * 0.6, 1);
                     //debugger;
         }
-        car2d.update(dt * 1000);
-        if (car_model) {
+        car2d.update(dt * 1000);        
+        if (car_model) {            
             car_model.rotation.y = -car2d.heading;
             car_model.position.x = -car2d.position.y;
             car_model.position.z = car2d.position.x;
-            car_model.position.y = terrain.p2height({x:car_model.position.x,y:car_model.position.z});
+
+            car_model.position.y = terrain.p2height({x:car_model.position.x,y:car_model.position.z}) + street.street_mesh.position.y;
+            // car_model_slope.rotation.x = 0;
+            // car_model_slope.rotation.y = 0;
+
+            var on_track = false;
+            if (true) {
+                var p = new THREE.Vector3(-car2d.position.y, car_model.position.y, car2d.position.x);
+                for (var i = 0; i < street.segments.length; i++) {
+                    var prev_state = 0;
+                    var state = 0;
+                    var segment = street.segments[i];
+                    var s = segment.mesh;
+                    if (s.material.color.getHex() == new THREE.Color(0x5EFF00).getHex())
+                        prev_state = 2;
+                    else if (s.material.color.getHex() == new THREE.Color(0xFF0000).getHex())
+                        prev_state = 1;                    
+                    var boundingSphere = s.geometry.boundingSphere;
+                    var prev_color = s.material.color;
+                    if (p.distanceTo(boundingSphere.center) <= boundingSphere.radius) {
+                        var poly = segment.poly;
+                        if (pointInPolygon([-car2d.position.y, car2d.position.x], poly)) {
+                            s.material.color = new THREE.Color(0x5EFF00);
+                            on_track = true;
+                            state = 2;
+                        }
+                        else {
+                            s.material.color = new THREE.Color(0xFF0000);
+                            state = 1;
+                        }
+                    } else {
+                        s.material.color = new THREE.Color(0x5d5d88);
+                    }
+                    if (prev_color.getHex() != s.material.color.getHex()) {
+                        s.material.needsUpdate = true;
+                        //console.log(i, state, prev_state);
+                    }                
+                }
+            }
             var pos = street.get_road_position(car_model.position, car_stats);
+            if (on_track) {
+                var t = pos / street.poly_bezier.total_length;
+                car_stats.add('road t', t);
+                car_model.position.y = street.height_profile.get(t).y + street.street_mesh.position.y;
+                
+                var d = street.poly_bezier.derivative(t);
+                const street_rot = Math.atan2(d.x,d.y);
+                const car_rot = -car2d.heading;
+                // car_model.rotation.y = 
+                // car_stats.add('d.x', d.x);
+                // car_stats.add('d.y', d.y);
+
+
+                d = street.height_profile.derivative(t);
+                d.x *= street.poly_bezier.total_length / street.height_profile.total_length;
+                // car_stats.add('d.x', d.x);
+                // car_stats.add('d.y', d.y);
+                // car_model_slope.rotation.x = -Math.atan2(d.y,d.x);
+                const axis = new THREE.Vector3(1,0,0).applyEuler(new THREE.Euler(0, street_rot-car_rot,0));
+                car_model_slope.quaternion.setFromAxisAngle(axis, -Math.atan2(d.y,d.x));
+                car_stats.add('slope', car_model_slope.rotation.x * 180 / Math.PI);
+            } else
+                car_model_slope.quaternion.set(0,0,0,1);
+
             car_stats.add('road position', pos ); // should be [m]
             car_stats.add('car.x', car_model.position.x);
             car_stats.add('car.z', car_model.position.z);
+            car_stats.add('car.y', car_model.position.y);
         }
         car_stats.render();
-        if (false) {
-            var p = new THREE.Vector3(-car2d.position.y, 0.1, car2d.position.x);
-            for (var i = 0; i < street.segments.length; i++) {
-                var s = street.segments[i];
-                var boundingSphere = s.geometry.boundingSphere;
-                var prev_color = s.material.color;
-                if (p.distanceTo(boundingSphere.center) <= boundingSphere.radius) {
-                    var poly = s.poly;
-                    if (pointInPolygon([-car2d.position.y, car2d.position.x], poly))
-                        s.material.color = new THREE.Color(0x5EFF00);
-                    else
-                        s.material.color = new THREE.Color(0xFF0000);
-                } else {
-                    s.material.color = new THREE.Color(0x5d5d88);
-                }
-                if (prev_color != s.material.color) {
-                    s.material.needsUpdate = true;
-                    //console.log(s.material.color);
-                }                
-            }
-        }
     }
 
     if (do_chase_cam) {
