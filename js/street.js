@@ -298,6 +298,7 @@ Street.prototype = {
 			        	segments[i].geometry.verticesNeedUpdate = true;
 			        	t0 = pb.bounds[i];
 			        }
+			        that.height_profile = tpb;
 			        next();
 			    });
 			}, function(next) {
