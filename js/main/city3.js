@@ -348,6 +348,12 @@ function init() {
             console.log(angle * 180 / Math.PI);
             car2d.heading = angle;
         }
+        if (true) {
+            var p = Street.xytovec3(street.poly_bezier.get(0.3));
+            car2d.setFromPosition3d(p);
+            if (!do_first_person_cam)
+                camera.position.set(-20,30,car2d.position.x);
+        }
 
         if (true && do_first_person_cam && !do_chase_cam) {
             var camera_first_person_object = new THREE.Object3D();
