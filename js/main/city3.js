@@ -498,7 +498,7 @@ function animate(time) {
             // car_model_slope.rotation.y = 0;
 
             var on_track = false;
-            if (true) {
+            if (street.loaded) {
                 var p = new THREE.Vector3(-car2d.position.y, car_model.position.y, car2d.position.x);
                 for (var i = 0; i < street.segments.length; i++) {
                     var prev_state = 0;
@@ -509,7 +509,7 @@ function animate(time) {
                         prev_state = 2;
                     else if (s.material.color.getHex() == new THREE.Color(0xFF0000).getHex())
                         prev_state = 1;                    
-                    var boundingSphere = s.geometry.boundingSphere;
+                    var boundingSphere = segment.geometry.boundingSphere;
                     var prev_color = s.material.color;
                     if (p.distanceTo(boundingSphere.center) <= boundingSphere.radius) {
                         var poly = segment.poly;
