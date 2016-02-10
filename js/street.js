@@ -17,12 +17,12 @@ function load_json(file, callback) {
 	}
 }
 
-var Street = function(no_load_texture, lut_points, street_width, segment_points)
+var Street = function(no_load_texture, lut_points_per_meter, street_width, segment_points_per_meter)
 {
 	this.loaded = false;
 	this.street_width = street_width || 20;
-	this.lut_points = lut_points || 20;
-	this.segment_points = segment_points || 20;
+	this.lut_points_per_meter = lut_points_per_meter || 0.1;
+	this.segment_points_per_meter = segment_points_per_meter || 0.1;
 	this.segments = [];
 	this._dists = [];
 
@@ -100,15 +100,17 @@ Street.prototype = {
 		var l = new THREE.Vector2().copy(segment.lut[i1]).sub(segment.lut[i0]);
 		var ll = l.length(); l.divideScalar(ll);
 		var tsub = l.dot(new THREE.Vector2().copy(xy).sub(segment.lut[i0])) / ll;
+		const lut_points = segment.lut_points;
 		stats.add('i0', i0);
 		stats.add('tsub', tsub);
-		stats.add('p_i0', i0/this.lut_points * segment.road_length);
-		stats.add('p_i1', i1/this.lut_points * segment.road_length);
-		var tseg = (i0+tsub)/this.lut_points;
-		return segment.accumulated_road_length + tseg * segment.road_length;
+		stats.add('p_i0', i0/lut_points * segment.road_length);
+		stats.add('p_i1', i1/lut_points * segment.road_length);
+		var tseg = (i0+tsub)/lut_points;
+		return segment.accumulated_road_length + tseg*segment.road_length
+		// return {'pos': segment.accumulated_road_length + tseg*segment.road_length, 't': + tseg};
 		debugger;
 		var d = p[3] / (p[2] + p[3]); // interpolation factor // TODO: only valid if projected onto (middle) bezier curve!
-		return segment.accumulated_road_length + (d*p[0] + (1-d)*p[1]) / this.lut_points * segment.road_length;
+		return segment.accumulated_road_length + (d*p[0] + (1-d)*p[1]) / lut_points * segment.road_length;
 	},
 
     create_street_geometry: function(segments, pathfunc) {
@@ -126,19 +128,20 @@ Street.prototype = {
     },
 
     add_street_segment: function(curve) {
-        //street_segments.push(curve);
-        //street_luts.push(curve.getLUT(20));
 
         var street_width = this.street_width;
+        const segment_points = Math.round(this.segment_points_per_meter * curve.length());
 
-        var geo = this.create_street_geometry(this.segment_points, function(t) {
+        var geo = this.create_street_geometry(segment_points, function(t) {
             return [curve.offset(t, 0.5*street_width), curve.offset(t, -0.5*street_width)];
         });
 
         var street = {}; 
+        street.segment_points = segment_points;
         street.geometry = geo.geo;
         street.poly = geo.poly;
-        street.lut = curve.getLUT(this.lut_points);
+        street.lut_points = Math.round(this.lut_points_per_meter * curve.length());
+        street.lut = curve.getLUT(street.lut_points);
         street.road_length = curve.length();
         street.curve = curve;
 
@@ -280,24 +283,26 @@ Street.prototype = {
 		            }
 		            tpb.cacheLengths();
 
-					var pb = that.poly_bezier,
-						segment_points = that.segment_points;
+					var pb = that.poly_bezier;
 			        var t0 = 0;
-			        for (var i = 0; i < segments.length; i++) {
+			        segments.forEach(function(s,i) {
 			        	var pi = pb.parts[i];
-			        	var vertices = segments[i].geometry.vertices;
-			        	//var lut_heights = [];
+			        	var vertices = s.geometry.vertices;
+			        	var segment_points = s.segment_points;
 			        	for (var j = 0; j <= segment_points; j++) {
 			        		var t = t0 + j/segment_points * pi;
 			        		var y = tpb.get(t).y
 			        		vertices[j*2].y = vertices[j*2+1].y = y;
-			        		//lut_heights.push(y);
-			        		segments[i].lut[j].height = y;
 			        	}
-			        	//segments[i].lut_heights = lut_heights;
-			        	segments[i].geometry.verticesNeedUpdate = true;
+			        	var lut_points = s.lut_points;
+			        	s.lut.forEach(function(l,i) {
+			        		var t = i/lut_points;
+			        		l.height = tpb.get(t0 + i/lut_points*pi).y; // TODO: do we really need that?
+			        		l.normal = s.curve.normal(t);
+			        	});
+			        	s.geometry.verticesNeedUpdate = true;
 			        	t0 = pb.bounds[i];
-			        }
+			        });
 			        that.height_profile = tpb;
 			        next();
 			    });
