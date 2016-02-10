@@ -321,6 +321,16 @@ Street.prototype = {
 						//v.material = v.mesh.material;
 						// v.mesh = new THREE.Mesh(v.geometry, mat);
 						that.street_mesh.add(v.mesh);
+
+						if (true) {
+							const sphere = new THREE.SphereGeometry(0.3);
+							const material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+							v.lut.forEach(function(l) {
+								var mesh = new THREE.Mesh(sphere, material);
+								mesh.position.set(l.x,l.height,l.y);
+								that.street_mesh.add(mesh);							
+							})
+						}
 					});
 					scene.add(that.street_mesh);
 				}
