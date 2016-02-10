@@ -531,10 +531,9 @@ function animate(time) {
                     }                
                 }
             }
-            var pos = street.get_road_position(car_model.position, car_stats);
+            var t = street.get_road_position2(car_model.position, car_stats);
             if (on_track) {
-                var t = pos / street.poly_bezier.total_length;
-                car_stats.add('road t', t);
+                // car_stats.add('road t', t);
                 car_model.position.y = street.height_profile.get(t).y + street.street_mesh.position.y;
                 
                 var d = street.poly_bezier.derivative(t);
@@ -556,7 +555,7 @@ function animate(time) {
             } else
                 car_model_slope.quaternion.set(0,0,0,1);
 
-            car_stats.add('road position', pos ); // should be [m]
+            car_stats.add('road position', t * street.poly_bezier.total_length ); // should be [m]
             car_stats.add('car.x', car_model.position.x);
             car_stats.add('car.z', car_model.position.z);
             car_stats.add('car.y', car_model.position.y);
