@@ -68,7 +68,8 @@ var Car = function( opts )
 	this.speed = 0;
 };
 
-Car.prototype.position3d = function() { return new THREE.Vector3(-this.position.y, 0, this.position.x); };
+Car.prototype.setFromPosition3d = function(v) { this.position.x = v.z; this.position.y = -v.x; }
+Car.prototype.setPosition3d = function(v) { v.x = -this.position.y; v.z = this.position.x; };
 Car.prototype.quaternion = function() { return new THREE.Quaternion().setFromAxisAngle(
 														new THREE.Vector3(0,1,0),-this.heading)};
 Car.prototype.kmh = function() { return this.velocity_c.x * 3600 / 1000 };
