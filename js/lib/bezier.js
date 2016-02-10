@@ -499,6 +499,7 @@
   
   PolyBezier.prototype.get = function(t) { return this._get(t, Bezier.prototype.get); }
   PolyBezier.prototype.derivative = function(t) { return this._get(t, Bezier.prototype.derivative); }
+  PolyBezier.prototype.normal = function(t) { return this._get(t, Bezier.prototype.normal); }
 
   PolyBezier.prototype._get = function(t, func) {
     var last = this.curves.length-1;
