@@ -76,6 +76,35 @@ Street.prototype = {
 		return find_two_smallest_values(dists)
 	},
 
+	get_road_position2: function(vec3, stats) {
+		var xy = new THREE.Vector2().copy(Street.vec3toxy(vec3)); // 2d point
+		var dists = this.lut.map(function(l) {return distSq2d(xy,l)}); // distances of xy to each lut-point
+		var nearest = find_two_smallest_values(dists);
+		var i = nearest[0]; // get nearest point
+		var p = this.lut[i]; 
+		var d = p.d; // get derivative at this point
+		var dp = d.dot(xy.clone().sub(p)); // before or after this point? (and how far?)
+		if (!dp) // directly on the normal line of nearest point
+			return p.t;		
+		var i2;
+		if (dp > 0) { // behind point/normal
+			if (i >= this.lut_points) // after end of street
+				return 1;
+			i2 = i+1;
+		} else {
+			if (i <= 0) // before beginning of street
+				return 0;
+			i2 = i-1;
+		}
+		var p2 = this.lut[i2];
+		var dp2 = p2.d.dot(xy.clone().sub(p2));
+		Math.sign(dp) == -Math.sign(dp2) || console.log("!! Math.sign(dp) != -Math.sign(dp2)");
+		var v = dp > 0 ? dp / (dp-dp2) : (-dp / (dp2-dp)); // get interpolation factor
+		var t = (p.t * (1-v) + p2.t * v); // linear interpolation between the two t-values
+		stats.add('t2', t);
+		return t;
+		// dp = Math.abs(dp); dp2 = Math.abs(dp2);
+	},
 	get_road_position: function(vec3, stats) {
 		var dists = this._dists, segments = this.segments;
 		// var v = new THREE.Vector2(x,y);
