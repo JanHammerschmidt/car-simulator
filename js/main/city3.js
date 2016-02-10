@@ -563,7 +563,7 @@ function animate(time) {
             controls.tick(car2d.position3d(), car2d.quaternion(), dt);
         if (true && do_orbit_controls && controls)
             controls.update();
-        if (false && do_vr && controls)
+        if (true && do_vr && controls)
             controls.update();
     } else {
         controls.update(time - lastTime);
