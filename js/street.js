@@ -304,6 +304,18 @@ Street.prototype = {
 			        	t0 = pb.bounds[i];
 			        });
 			        that.height_profile = tpb;
+					var lut_points = Math.round(that.lut_points_per_meter * that.poly_bezier.total_length);
+					that.lut = [];
+					for (var i = 0; i <= lut_points; i++) {
+						var t = i/lut_points;
+						var p = that.poly_bezier.get(t);
+						p.normal = that.poly_bezier.normal(t);
+						p.d = new THREE.Vector2().copy(that.poly_bezier.derivative(t)).normalize();
+						p.t = t;
+						that.lut.push(p);
+					}
+					that.lut_points = lut_points;
+
 			        next();
 			    });
 			}, function(next) {
