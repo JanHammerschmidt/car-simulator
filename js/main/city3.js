@@ -570,8 +570,8 @@ function animate(time) {
     }
     requestAnimationFrame(animate);
     if (do_vr) {
-        car_model.updateMatrixWorld(true); // TODO: make more efficient
-        //console.log(camera.parent && camera.parent.position,camera.position);
+        if (car_model)
+            car_model.updateMatrixWorld(true);
         vr_manager.render(scene, camera);
     } else
         renderer.render(scene, camera);
