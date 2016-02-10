@@ -225,6 +225,9 @@ function init() {
         //scene.add(street);
         var city_mesh = create_city_geometry(street);
         scene.add(city_mesh);
+        street.street_mesh.position.y = 0.53;
+        var f = gui.addFolder('street position');
+        f.addnum(street.street_mesh.position, 'y'); //.onChange(function() {camera.updateProjectionMatrix()});
 
         load_model_obj('models/stop_sign_obj/stop_sign.obj', function(obj) {
             obj.rotateY(-Math.PI);
