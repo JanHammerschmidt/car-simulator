@@ -532,6 +532,23 @@ function animate(time) {
                 }
             }
             var t = street.get_road_position2(car_model.position, car_stats);
+            if (!on_track) {
+                const p = street.poly_bezier.get(t);
+                const xy = new THREE.Vector2().copy(Street.vec3toxy(car_model.position));
+                const normal = new THREE.Vector2().copy(street.poly_bezier.normal(t));
+                const dp = normal.dot(xy.clone().sub(p));
+                if (true && Math.abs(dp) > 10) {
+                    // if (dp > 0)
+                    //     xy.addScaledVector(normal, -(dp-10));
+                    // else
+                    //     xy.addScaledVector(normal, -dp-10)
+                    xy.addScaledVector(normal, -dp - (dp > 0 ? -10 : 10));
+                    car_model.position.x = xy.x;
+                    car_model.position.z = xy.y;
+                    car2d.setFromPosition3d(car_model.position);
+                }
+                on_track = true;
+            }                
             if (on_track) {
                 // car_stats.add('road t', t);
                 car_model.position.y = street.height_profile.get(t).y + street.street_mesh.position.y;
