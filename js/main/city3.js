@@ -567,10 +567,15 @@ function animate(time) {
                 // car_stats.add('d.y', d.y);
                 // car_model_slope.rotation.x = -Math.atan2(d.y,d.x);
                 const axis = new THREE.Vector3(1,0,0).applyEuler(new THREE.Euler(0, street_rot-car_rot,0));
-                car_model_slope.quaternion.setFromAxisAngle(axis, -Math.atan2(d.y,d.x));
-                car_stats.add('slope', car_model_slope.rotation.x * 180 / Math.PI);
-            } else
+                const slope = Math.atan2(d.y,d.x);
+                car_model_slope.quaternion.setFromAxisAngle(axis, -slope);
+                //car_stats.add('slope', -car_model_slope.rotation.x * 180 / Math.PI);
+                car2d.alpha = Math.cos(street_rot-car_rot) * slope;
+                car_stats.add('slope', car2d.alpha * 180 / Math.PI);
+            } else {
                 car_model_slope.quaternion.set(0,0,0,1);
+                car2d.alpha = 0;
+            }
 
             car_stats.add('road position', t * street.poly_bezier.total_length ); // should be [m]
             car_stats.add('car.x', car_model.position.x);

@@ -40,6 +40,7 @@ var Car = function( opts )
 	this.yawRate = 0.0;   // angular velocity in radians
 	this.steer = 0.0;	// amount of steering input (-1.0..1.0)
 	this.steerAngle = 0.0;  // actual front wheel steer angle (-maxSteer..maxSteer)
+	this.alpha = 0.0; // uphill angle (can be negative)
 
 	//  State of inputs
 	this.inputs = new InputState();
@@ -290,7 +291,9 @@ Car.prototype.tick = function(dt) {
 	this.gearbox.tick(dt);
 	this.engine.update_torque(this.gearbox.gear_change() ? 0 : this.inputs.throttle);
 	var F = this.gearbox.torque2force_engine2wheels(this.engine, this, this.speed, dt);
-	var mass_factor = this.gearbox.gears_mass_factors[this.gearbox.gear];
+	const uphill_resistance = this.config.mass * this.config.gravity * Math.sin(this.alpha);
+	F -= uphill_resistance;
+	const mass_factor = this.gearbox.gears_mass_factors[this.gearbox.gear];
 	if (F > 0) {
 		F /= mass_factor;
 	} else {
