@@ -107,7 +107,7 @@ class App {
         // if (this.camera_change == "fly_cam")
         //     this.cameras["fly_cam"][1].enabled = true;
         this.camera = this.camera_change;
-        console.log("this.camera", this.camera);
+        //console.log("this.camera", this.camera);
     }
 
     toggle_camera() {
@@ -239,9 +239,6 @@ class App {
             //         });
             //     });
             // }
-        });
-        this.car_loaded_event.then( () => {
-            console.log("car loaded (from init_first_person_cam2)");
         });
 
         let f = this.gui.addFolder('first person cam');
@@ -455,10 +452,6 @@ class App {
             //console.log("warning: dt too high!", dt, "ms");
             dt = 0.1;
         }
-        // console.log(dt);
-        // if (do_vr && controls)
-        //     controls.update();
-
 
 
         if (car2d) {
@@ -481,9 +474,6 @@ class App {
                 steering = wingman_input.steering;
             }
             if (accel != null) {
-                //debugger;
-                // car_model.rotation.
-                // car2d.heading
                 var inputs = car2d.inputs;
                 //console.log('accel', accel, 'steering', steering);
                 if (accel > 0) {
@@ -622,9 +612,7 @@ class App {
         if (car_model && this.camera == "chase_cam") //"chase_cam" in this.cameras)
             this.cameras["chase_cam"][1].tick(car_model.position, car2d.quaternion(), dt);
         if (this.camera == "fly_cam")
-        //if ("fly_cam" in this.cameras)
             this.cameras["fly_cam"][1].update(dt);
-        //if (car2d && "first_person_cam" in this.cameras)
 
                  
         // } else if (do_first_person_cam) {
@@ -650,19 +638,4 @@ class App {
 }
 
 let app = new App();
-//app.say_hello();
 
-
-// init();
-//animate();
-
-function init() {
-
-
-    camera.lookAt(new THREE.Vector3(0, 0, 1));
-
-    ///////////////////////////////////////////////
-
-}
-
-    
