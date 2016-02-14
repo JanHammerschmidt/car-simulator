@@ -12,10 +12,10 @@ window.CARDBOARD_DEBUG = true;
 //require('script!../lib/jquery.js');
 //require('script!../lib/dat.gui.js');
 //require("script!../lib/async.js");
-require("../../three.js/examples/js/loaders/MTLLoader.js");
-require("../../three.js/examples/js/loaders/OBJMTLLoader.js");
-require("../../three.js/examples/js/controls/FirstPersonControls2.js");
-require("../../three.js/examples/js/controls/OrbitControls.js");
+require("../../node_modules/three/examples/js/loaders/MTLLoader.js");
+require("../../node_modules/three/examples/js/loaders/OBJMTLLoader.js");
+require("../../node_modules/three/examples/js/controls/OrbitControls.js");
+require("../FirstPersonControls2.js");
 //require("../../three.js/examples/js/controls/FlyControls.js");
 
 require("script!/Users/jhammers/Dropbox/Eigene Dateien/phd/Projekte/1_Auto Projekt/simulator/webvr-boilerplate/js/deps/webvr-polyfill.js");
