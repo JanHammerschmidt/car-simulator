@@ -610,7 +610,7 @@ class App {
         }
 
         if (car_model && this.camera == "chase_cam") //"chase_cam" in this.cameras)
-            this.cameras["chase_cam"][1].tick(car_model.position, car2d.quaternion(), dt);
+            this.cameras["chase_cam"][1].tick(car_model.position, new THREE.Quaternion().multiplyQuaternions(car_model.quaternion, car_model_slope.quaternion), dt);
         if (this.camera == "fly_cam")
             this.cameras["fly_cam"][1].update(dt);
 
