@@ -18,11 +18,10 @@ require("../../node_modules/three/examples/js/controls/OrbitControls.js");
 require("../FirstPersonControls2.js");
 //require("../../three.js/examples/js/controls/FlyControls.js");
 
-require("script!/Users/jhammers/Dropbox/Eigene Dateien/phd/Projekte/1_Auto Projekt/simulator/webvr-boilerplate/js/deps/webvr-polyfill.js");
-require("../../three.js/examples/js/controls/VRControls.js");
-require("../../three.js/examples/js/effects/VREffect.js");
-require("script!../../webvr-boilerplate/build/webvr-manager.js");
-
+require("script!../../bower_components/webvr-boilerplate/js/deps/webvr-polyfill.js");
+require("script!../../bower_components/webvr-boilerplate/js/deps/VREffect.js");
+require("script!../../bower_components/webvr-boilerplate/build/webvr-manager.js");
+require("script!../../bower_components/webvr-boilerplate/js/deps/VRControls.js");
 
 
 require("script!../cam_controls.js");
