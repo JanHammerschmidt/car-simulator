@@ -91,7 +91,7 @@ class App {
         });
         
         this.init_street();
-        this.init_cameras("fly_cam"); //"first_person_cam";
+        this.init_cameras("first_person_cam");
         this.init_car();
 
         this.last_time = performance.now();
@@ -106,6 +106,16 @@ class App {
         //     this.cameras["fly_cam"][1].enabled = false;
         // if (this.camera_change == "fly_cam")
         //     this.cameras["fly_cam"][1].enabled = true;
+
+        if (this.camera == "orbit_cam")
+            this.cameras["orbit_cam"][1].enabled = false;
+        if (this.camera_change == "orbit_cam")
+            this.cameras["orbit_cam"][1].enabled = true;
+
+        // if (this.camera_change == "fly_cam" || this.camera_change == "chase_cam") {
+        //     this.cameras[this.camera_change][0].matrixWorldInverse.copy(
+        //            this.cameras[this.camera][0].matrixWorldInverse);
+        // }
         this.camera = this.camera_change;
         //console.log("this.camera", this.camera);
     }
@@ -122,7 +132,8 @@ class App {
     init_cameras(def_cam) {
         this.init_chase_cam();
         this.init_first_person_cam();
-        this.init_fly_cam();
+        //this.init_fly_cam();
+        this.init_orbit_cam();
         this.camera = def_cam;
         this.camera_change = this.camera;
         this.gui.add(this, "camera_change", Object.keys(this.cameras)).onChange(() => this.update_camera() );
@@ -222,7 +233,7 @@ class App {
         let camera = get_camera();
         camera.lookAt(new THREE.Vector3(0, 0, 1));
         
-        var camera_first_person_object = new THREE.Object3D();
+        let camera_first_person_object = new THREE.Object3D();
         camera_first_person_object.position.set(0.37,1.36,0.09);
         camera_first_person_object.add(camera);
         this.car_loaded_event.then( () => {
@@ -243,12 +254,31 @@ class App {
 
         let f = this.gui.addFolder('first person cam');
         f.addxyz(camera_first_person_object.position);
-        f.add(camera, 'fov').onChange(() => camera.updateProjectionMatrix()); // TODO: check!
-        f.add(camera, 'near').onChange(function() {camera.updateProjectionMatrix()});
-        f.add(camera, 'far').onChange(function() {camera.updateProjectionMatrix()});
+        f.add(camera, 'fov').onChange(() => camera.updateProjectionMatrix());
+        f.add(camera, 'near').onChange(() => camera.updateProjectionMatrix());
+        f.add(camera, 'far').onChange(() => camera.updateProjectionMatrix());
         
         this.cameras["first_person_cam"] = [camera, null];
     }
+
+    init_orbit_cam() {
+        let camera = get_camera();
+        camera.lookAt(new THREE.Vector3(0, 0, 1));
+        camera.position.z = -0.01;
+
+        let cam = new THREE.Object3D();
+        cam.position.set(0.37,1.36,0.09);
+        cam.add(camera);
+        this.car_loaded_event.then( () => {
+            car_model_slope.add(cam);
+        });
+
+        let controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enablePan = false;
+
+        this.cameras['orbit_cam'] = [camera, controls];
+
+    }    
 
     init_fly_cam() {
         let camera = get_camera();
@@ -411,13 +441,6 @@ class App {
             //         camera.position.set(-20,30,car2d.position.x);
             // }
 
-            // if (true && do_first_person_cam && !do_chase_cam) {
-            //     if (do_orbit_controls && !do_vr) {
-            //         camera.position.z = -5;
-            //         controls = new THREE.OrbitControls(camera, renderer.domElement);
-            //         controls.enablePan = false;
-            //     }
-            // }
 
             gauge_needle = new THREE.Mesh(
                 new THREE.BoxGeometry(0.04, 0.004, 0.002),
@@ -613,18 +636,12 @@ class App {
             this.cameras["chase_cam"][1].tick(car_model.position, new THREE.Quaternion().multiplyQuaternions(car_model.quaternion, car_model_slope.quaternion), dt);
         if (this.camera == "fly_cam")
             this.cameras["fly_cam"][1].update(dt);
+        if (this.camera == "orbit_cam")
+            this.cameras["orbit_cam"][1].update();
 
                  
-        // } else if (do_first_person_cam) {
-        //     if (false && car2d)
-        //         controls.tick(car2d.position3d(), car2d.quaternion(), dt);
-        //     if (true && do_orbit_controls && controls)
-        //         controls.update();
         //     if (true && do_vr && controls)
         //         controls.update();
-        // } else {
-        //     controls.update(dt);
-        // }
         requestAnimationFrame(this.animate.bind(this));
         if (do_vr) {
             if (car_model)
