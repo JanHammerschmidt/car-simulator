@@ -1,3 +1,5 @@
+'use strict';
+
 var isNode = typeof window == 'undefined'; // || this != window;
 
 var Bezier = require('./lib/bezier.js');

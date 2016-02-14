@@ -1,3 +1,5 @@
+'use strict';
+
 //var THREE = THREE || require('three');
 var Street = require('./street.js');
 

@@ -1,3 +1,5 @@
+'use strict';
+
 var fs = require('fs');
 var jsonfile = require('jsonfile');
 var Street = require('./js/street.js');
