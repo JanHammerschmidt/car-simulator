@@ -95,7 +95,9 @@ class App {
         this.init_first_person_cam();
         this.init_fly_cam();
         this.camera = "fly_cam"; //"first_person_cam";
-        this.gui.add(this, "camera", ["chase_cam", "first_person_cam", "fly_cam"]);
+        this.camera_change = this.camera;
+        this.gui.add(this, "camera_change", ["chase_cam", "first_person_cam", "fly_cam"]).onChange(() => this.update_camera() );
+        this.update_camera();
 
         this.init_car();
 
@@ -104,6 +106,16 @@ class App {
         requestAnimationFrame(this.animate.bind(this));
 
         this.gui.close();
+    }
+
+    update_camera() {
+        if (this.camera == "fly_cam") {
+            this.cameras["fly_cam"][1].enabled = false;
+            console.log("fly_cam disabled");
+        }
+        if (this.camera_change == "fly_cam")
+            this.cameras["fly_cam"][1].enabled = true;
+        this.camera = this.camera_change;
     }
 
     init_sound() {
