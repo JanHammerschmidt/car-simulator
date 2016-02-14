@@ -27,19 +27,28 @@
 	<script>
 
 		var scene = new THREE.Scene();
-		var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+		function get_camera(fov, near_plane, far_plane) {
+			_fov = fov || 70;
+			_near_plane = near_plane || 0.1;
+			_far_plane = far_plane || 1000;
+	
+			let camera = new THREE.PerspectiveCamera( _fov, window.innerWidth / window.innerHeight, _near_plane, _far_plane );
+	
+			window.addEventListener( 'resize', function () {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+			}, false );
+
+			return camera;
+		}
+		
 
 		var renderer = new THREE.WebGLRenderer({antialias: false});
 		renderer.setSize( window.innerWidth, window.innerHeight );
 		document.body.appendChild( renderer.domElement )
 
 		window.addEventListener( 'resize', function () {
-
-			camera.aspect = window.innerWidth / window.innerHeight;
-			camera.updateProjectionMatrix();
-
 			renderer.setSize( window.innerWidth, window.innerHeight );
-
 		}, false );
 
 		function addDefaultLight() {
