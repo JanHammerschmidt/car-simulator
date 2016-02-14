@@ -91,14 +91,7 @@ class App {
         });
         
         this.init_street();
-        this.init_chase_cam();
-        this.init_first_person_cam();
-        this.init_fly_cam();
-        this.camera = "fly_cam"; //"first_person_cam";
-        this.camera_change = this.camera;
-        this.gui.add(this, "camera_change", ["chase_cam", "first_person_cam", "fly_cam"]).onChange(() => this.update_camera() );
-        this.update_camera();
-
+        this.init_cameras("fly_cam"); //"first_person_cam";
         this.init_car();
 
         this.last_time = performance.now();
@@ -109,13 +102,38 @@ class App {
     }
 
     update_camera() {
-        if (this.camera == "fly_cam") {
-            this.cameras["fly_cam"][1].enabled = false;
-            console.log("fly_cam disabled");
-        }
-        if (this.camera_change == "fly_cam")
-            this.cameras["fly_cam"][1].enabled = true;
+        // if (this.camera == "fly_cam")
+        //     this.cameras["fly_cam"][1].enabled = false;
+        // if (this.camera_change == "fly_cam")
+        //     this.cameras["fly_cam"][1].enabled = true;
         this.camera = this.camera_change;
+        console.log("this.camera", this.camera);
+    }
+
+    toggle_camera() {
+        let cams = Object.keys(this.cameras);
+        let i = cams.indexOf(this.camera) + 1;
+        if (i >= cams.length)
+            i = 0;
+        this.camera_change = cams[i];
+        this.update_camera();
+    }
+
+    init_cameras(def_cam) {
+        this.init_chase_cam();
+        this.init_first_person_cam();
+        this.init_fly_cam();
+        this.camera = def_cam;
+        this.camera_change = this.camera;
+        this.gui.add(this, "camera_change", Object.keys(this.cameras)).onChange(() => this.update_camera() );
+        this.update_camera();
+
+        $(() => {
+            document.addEventListener('keydown', ev => {
+                if (ev.keyCode == 67)
+                    this.toggle_camera();
+            });        
+        });
     }
 
     init_sound() {
@@ -601,9 +619,10 @@ class App {
             car_stats.render();
         }
 
-        if (car_model && "chase_cam" in this.cameras)
+        if (car_model && this.camera == "chase_cam") //"chase_cam" in this.cameras)
             this.cameras["chase_cam"][1].tick(car_model.position, car2d.quaternion(), dt);
-        if ("fly_cam" in this.cameras)
+        if (this.camera == "fly_cam")
+        //if ("fly_cam" in this.cameras)
             this.cameras["fly_cam"][1].update(dt);
         //if (car2d && "first_person_cam" in this.cameras)
 
