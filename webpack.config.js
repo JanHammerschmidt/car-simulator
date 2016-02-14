@@ -1,8 +1,8 @@
 module.exports = {
-    entry: "./webpack.entry.js",
+    entry: "./webpack/entry.js",
     output: {
         path: __dirname,
-        filename: "webpack.bundle.js"
+        filename: "./webpack/bundle.js"
     },
     module: {
         loaders: [
