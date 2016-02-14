@@ -12,34 +12,34 @@ window.CARDBOARD_DEBUG = true;
 //require('script!../lib/jquery.js');
 //require('script!../lib/dat.gui.js');
 //require("script!../lib/async.js");
-require("../../node_modules/three/examples/js/loaders/MTLLoader.js");
-require("../../node_modules/three/examples/js/loaders/OBJMTLLoader.js");
-require("../../node_modules/three/examples/js/controls/OrbitControls.js");
-require("../FirstPersonControls2.js");
+require("../node_modules/three/examples/js/loaders/MTLLoader.js");
+require("../node_modules/three/examples/js/loaders/OBJMTLLoader.js");
+require("../node_modules/three/examples/js/controls/OrbitControls.js");
+require("./FirstPersonControls2.js");
 //require("../../three.js/examples/js/controls/FlyControls.js");
 
-require("script!../../bower_components/webvr-boilerplate/js/deps/webvr-polyfill.js");
-require("script!../../bower_components/webvr-boilerplate/js/deps/VREffect.js");
-require("script!../../bower_components/webvr-boilerplate/build/webvr-manager.js");
-require("script!../../bower_components/webvr-boilerplate/js/deps/VRControls.js");
+require("script!../bower_components/webvr-boilerplate/js/deps/webvr-polyfill.js");
+require("script!../bower_components/webvr-boilerplate/js/deps/VREffect.js");
+require("script!../bower_components/webvr-boilerplate/build/webvr-manager.js");
+require("script!../bower_components/webvr-boilerplate/js/deps/VRControls.js");
 
 
-require("script!../cam_controls.js");
-var load_car = require("../load_car.js");
-require('script!../wingman_input.js');
-var Street = require('../street.js');
-var create_city_geometry = require('../city_geometry.js');
-var Terrain = require('../terrain.js');
+require("script!./cam_controls.js");
+var load_car = require("./load_car.js");
+require('script!./wingman_input.js');
+var Street = require('./street.js');
+var create_city_geometry = require('./city_geometry.js');
+var Terrain = require('./terrain.js');
 
-var Car = require("../../carphysics2d/public/js/Car.js");
-var Stats = require('../../carphysics2d/public/js/Stats.js');
-var ConfigPanel = require('../../carphysics2d/public/js/ConfigPanel.js');
-require('!style!css!../../carphysics2d/public/js/car_config.css');
+var Car = require("../carphysics2d/public/js/Car.js");
+var Stats = require('../carphysics2d/public/js/Stats.js');
+var ConfigPanel = require('../carphysics2d/public/js/ConfigPanel.js');
+require('!style!css!../carphysics2d/public/js/car_config.css');
 
 var pointInPolygon = require('point-in-polygon-extended').pointInPolyRaycast; //pointInPolyWindingNumber
 
 
-$('body').append(require('html!../../carphysics2d/public/js/car_config.html'));
+$('body').append(require('html!../carphysics2d/public/js/car_config.html'));
 
 // renderer.shadowMap.enabled = true;
 // //renderer.shadowMapSoft = true;
@@ -82,7 +82,7 @@ init();
 function init() {
 
     if (do_sound) {
-        require('script!../../bower_components/osc.js/dist/osc-browser');
+        require('script!../bower_components/osc.js/dist/osc-browser');
         osc.WebSocketPort.prototype.send_float = function(addr, val) {
             this.send({address: addr, args: [val]});
         };
