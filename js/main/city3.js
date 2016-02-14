@@ -153,7 +153,7 @@ function init() {
 
     var tex_loader = new THREE.TextureLoader();
 
-    $('body').css('cursor', 'url(cursor.png), auto')
+    //$('body').css('cursor', 'url(cursor.png), auto')
 
     renderer.setClearColor(0xd8e7ff);
 
