@@ -1,2 +1,2 @@
-// require("../js/main/loader.js");
-require("../js/main.js");
+ require("../js/main/loader.js");
+// require("../js/main.js");

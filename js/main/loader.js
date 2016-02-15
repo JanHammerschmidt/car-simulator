@@ -1,13 +1,14 @@
-require("../../three.js/examples/js/controls/OrbitControls.js");
-require("../../three.js/examples/js/loaders/MTLLoader.js");
-require("../../three.js/examples/js/loaders/OBJMTLLoader.js");
-require('script!../lib/dat.gui.js');
-var load_car = require("../load_car.js");
+require("../../node_modules/three/examples/js/controls/OrbitControls.js");
+require("../../node_modules/three/examples/js/loaders/MTLLoader.js");
+require("../../node_modules/three/examples/js/loaders/OBJMTLLoader.js");
+// let dat = require('../../bower_components/dat-gui/build/dat.gui.js');
+let load_car = require("../load_car.js");
 
+let camera = THREE.get_camera();
 camera.position.z = 30;
 var orbit = new THREE.OrbitControls(camera, renderer.domElement);
 
-addDefaultLight();
+THREE.addDefaultLight();
 
 var gui = new dat.GUI();
 
@@ -55,18 +56,18 @@ TrafficLight.load_model(function() {
 });
 
 
-if (false) {
+if (false) { // eslint-disable-line
 	load_car.load_car(function(car) {
 		scene.add(car);
 	});
-} else if (true) {
+} else if (true) { // eslint-disable-line
 	var loader = new THREE.OBJMTLLoader();
 	loader.load(
-		  // "models/traffic lights/3D model traffic lights/test.obj", "models/traffic lights/3D model traffic lights/test.mtl",
+		// "models/traffic lights/3D model traffic lights/test.obj", "models/traffic lights/3D model traffic lights/test.mtl",
 		// "models/stop_sign/stop_sign.obj", "models/stop_sign/stop_sign.mtl",
 		//"models/traffic_lights_obj/semaforo.obj", "models/traffic_lights_obj/semaforo.mtl",
 		"models/traffic_lights.obj", "models/traffic_lights.mtl",
-		 // "models/stop_sign_obj/stop_sign.obj", "models/stop_sign_obj/stop_sign.mtl",
+		// "models/stop_sign_obj/stop_sign.obj", "models/stop_sign_obj/stop_sign.mtl",
 		//"models/osm/textures/map_small_blender.obj", "models/osm/textures/map_small_blender.mtl",
 		// "models/not good.obj", "models/not good.mtl", // <-- gar nicht soo schlecht!
 		function(obj) {
@@ -79,13 +80,18 @@ if (false) {
 					gui.add(o, 'visible');
 					if (o.children.length > 0) {
 						var f = gui.addFolder(o.name + " (" + i + ")");
-						do_gui(o,f);
+						do_gui(o, f);
 					} else {
-						var c = {color:o.material.color.getHex()};
-						gui.addColor(c, 'color').onChange(function() { o.material.color.setHex(c.color); render(); });
+						var c = {
+							color: o.material.color.getHex()
+						};
+						gui.addColor(c, 'color').onChange(function() {
+							o.material.color.setHex(c.color);
+							render();
+						});
 						gui.__controllers.forEach(function(c) {
-			            	if (c.__onChange === undefined)
-			                	c.onChange(render);
+							if (c.__onChange === undefined)
+								c.onChange(render);
 						});
 					}
 					// o.children.forEach(function(p) {
@@ -95,25 +101,25 @@ if (false) {
 
 					// });
 					// f.open();
-				});				
+				});
 			}
 			do_gui(obj, gui);
 
 			setInterval(function() {
-				var obj2 = obj;
+				//var obj2 = obj;
 			}, 500);
 		},
 		// Function called when downloads progress
-		function ( xhr ) {
+		function ( /*xhr*/ ) {
 			//console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
 		},
 		// Function called when downloads error
-		function ( xhr ) {
+		function ( /*xhr*/ ) {
 			console.log( 'An error happened' );
 		}
 	);
-} else if (true) {
-	var loader = new THREE.JSONLoader();
+} else if (true) { // eslint-disable-line
+	let loader = new THREE.JSONLoader();
 	loader.load(//'models/stop-sign/stop_sign.json', 
 		// 'models/stop_sign.json',
 		"models/osm/textures/map_textures.json",
@@ -123,11 +129,11 @@ if (false) {
 			scene.add(mesh);
 		});
 } else {
-	var loader = new THREE.ObjectLoader();
+	let loader = new THREE.ObjectLoader();
 	var obj = loader.parse('models/semaforo7.json');
 	scene.add(obj);
 }
-scene.add(buildAxes( 1000 ));
+scene.add(THREE.buildAxes( 1000 ));
 
 function render() {
 	renderer.render(scene, camera);
