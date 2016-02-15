@@ -111,6 +111,10 @@ class App {
         if (this.camera_change == "orbit_cam")
             this.cameras["orbit_cam"][1].enabled = true;
 
+        if (this.camera_change == "fly_cam") {
+            this.cameras["fly_cam"][0].position.copy(car_model.position.clone().add(this.camera_first_person_object.position));
+        }
+
         // if (this.camera_change == "fly_cam" || this.camera_change == "chase_cam") {
         //     this.cameras[this.camera_change][0].matrixWorldInverse.copy(
         //            this.cameras[this.camera][0].matrixWorldInverse);
@@ -131,7 +135,7 @@ class App {
     init_cameras(def_cam) {
         this.init_chase_cam();
         this.init_first_person_cam();
-        //this.init_fly_cam();
+        this.init_fly_cam();
         this.init_orbit_cam();
         this.camera = def_cam;
         this.camera_change = this.camera;
@@ -232,12 +236,12 @@ class App {
         let camera = THREE.get_camera();
         camera.lookAt(new THREE.Vector3(0, 0, 1));
         
-        let camera_first_person_object = new THREE.Object3D();
-        camera_first_person_object.position.set(0.37,1.36,0.09);
-        camera_first_person_object.add(camera);
+        this.camera_first_person_object = new THREE.Object3D();
+        this.camera_first_person_object.position.set(0.37,1.36,0.09);
+        this.camera_first_person_object.add(camera);
         this.car_loaded_event.then( () => {
             console.log("car loaded (from init_first_person_cam())");
-            car_model_slope.add(camera_first_person_object);
+            car_model_slope.add(this.camera_first_person_object);
             // if (do_vr) {
             //     camera_first_person_object.rotation.y = Math.PI;
             //     controls = new THREE.VRControls(camera);
@@ -252,7 +256,7 @@ class App {
         });
 
         let f = this.gui.addFolder('first person cam');
-        f.addxyz(camera_first_person_object.position);
+        f.addxyz(this.camera_first_person_object.position);
         f.add(camera, 'fov').onChange(() => camera.updateProjectionMatrix());
         f.add(camera, 'near').onChange(() => camera.updateProjectionMatrix());
         f.add(camera, 'far').onChange(() => camera.updateProjectionMatrix());
@@ -274,6 +278,7 @@ class App {
 
         let controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enablePan = false;
+        controls.enabled = false;
 
         this.cameras['orbit_cam'] = [camera, controls];
 
