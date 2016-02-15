@@ -1,0 +1,25 @@
+{
+  "name": "simulator",
+  "version": "0.0.3",
+  "description": "",
+  "main": "compute_terrain.js",
+  "dependencies": {
+    "jsonfile": "^2.2.3",
+    "osc-min": "^1.1.1",
+    "osc": "^2.0.2",
+    "point-in-polygon-extended": "^0.0.1",
+    "three": "^0.73.2",
+    "udp": "^1.0.0"
+  },
+  "devDependencies": {
+    "css-loader": "^0.23.1",
+    "html-loader": "^0.4.0",
+    "script-loader": "^0.6.1",
+    "style-loader": "^0.13.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "jhammers",
+  "license": "ISC"
+}
