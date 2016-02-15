@@ -51,7 +51,7 @@
 			renderer.setSize( window.innerWidth, window.innerHeight );
 		}, false );
 
-		function addDefaultLight() {
+		THREE.addDefaultLight = function() {
 
 			var ambientLight = new THREE.AmbientLight(0xAAAAAA);
 			scene.add(ambientLight);
@@ -93,7 +93,7 @@ function _buildAxis( src, dst, colorHex, dashed ) {
     return axis;
 }
 
-function buildAxes( length ) {
+THREE.buildAxes = function(length) {
     var axes = new THREE.Object3D();
 
     axes.add( _buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( length, 0, 0 ), 0xFF0000, false ) ); // +X
