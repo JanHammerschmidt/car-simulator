@@ -1,8 +1,5 @@
 'use strict';
 
-var do_chase_cam = false;
-var do_first_person_cam = true;
-var do_orbit_controls = false;
 var do_vr = false;
 var start_from_end_of_street = false;
 var do_sound = false;
@@ -18,8 +15,10 @@ require("../node_modules/three/examples/js/controls/OrbitControls.js");
 require("./FirstPersonControls2.js");
 //require("../../three.js/examples/js/controls/FlyControls.js");
 
-require("script!./cam_controls.js");
-require('script!./wingman_input.js');
+let chase_cam = require("./cam_controls.js").chase_cam;
+let input = require('./wingman_input.js');
+let wingman_input = input.wingman_input;
+let keyboard_input = input.keyboard_input;
 
 var load_car = require("./load_car.js");
 var Street = require('./street.js');
@@ -57,7 +56,7 @@ dat.GUI.prototype.addxyz = function(object, prec) {
 
 function load_model_obj(fname, f) {
     var loader = new THREE.OBJMTLLoader();
-    loader.load(fname, fname.slice(0,-3) + "mtl", f, undefined, function(x) { console.log("error loading", fname); });
+    loader.load(fname, fname.slice(0,-3) + "mtl", f, undefined, err => { console.log("error loading", fname, err); });
 }
 
 var car2d, car_model, car_model_slope, car_stats;
@@ -218,7 +217,7 @@ class App {
     }
 
     init_chase_cam() {
-        let camera = get_camera();
+        let camera = THREE.get_camera();
 
         let controls = new chase_cam(camera, new THREE.Vector3(0,5,0), new THREE.Vector3(0,20,-40)); //new THREE.Vector3(0,20,-40));
         var f = this.gui.addFolder('chase_cam');
@@ -230,7 +229,7 @@ class App {
     }
 
     init_first_person_cam() {
-        let camera = get_camera();
+        let camera = THREE.get_camera();
         camera.lookAt(new THREE.Vector3(0, 0, 1));
         
         let camera_first_person_object = new THREE.Object3D();
@@ -262,7 +261,7 @@ class App {
     }
 
     init_orbit_cam() {
-        let camera = get_camera();
+        let camera = THREE.get_camera();
         camera.lookAt(new THREE.Vector3(0, 0, 1));
         camera.position.z = -0.01;
 
@@ -281,7 +280,7 @@ class App {
     }    
 
     init_fly_cam() {
-        let camera = get_camera();
+        let camera = THREE.get_camera();
 
         let controls = new THREE.FirstPersonControls2(camera, renderer.domElement);
         //controls.dragToLook = true;
@@ -344,7 +343,7 @@ class App {
     }  
 
     init_car() {
-        load_car.load_car((car_body, wheel) => {
+        load_car.load_car((car_body/*, wheel*/) => {
 
             var glass_mat = new THREE.MeshLambertMaterial({
                 color: 0xEEEEEE,
@@ -389,22 +388,8 @@ class App {
 
             car_stats = new Stats.Stats();
             car2d = new Car.Car({stats:car_stats});
-            var car_config_panel = new ConfigPanel(car2d);
+            let car_config_panel = new ConfigPanel(car2d); //eslint-disable-line no-unused-vars
 
-            if (false) {
-                var x = 0.83,
-                    y = 0.17,
-                    z1 = 1.42,
-                    z2 = 1.47;        
-
-                var connection_points = [[-x,-z1,y],[x,-z1,y],[-x,z2,y],[x,z2,y]];
-
-                for (var i = 0; i < 2; i++) {
-                    var w = wheel.clone();
-                    w.position.fromArray(connection_points[i]);
-                    vehicle_box.add(w);
-                }
-            }
             keyboard_input.init();
             $(function() {
                 document.addEventListener('keydown', function(ev) {
@@ -434,13 +419,12 @@ class App {
                 console.log(angle * 180 / Math.PI);
                 car2d.heading = angle;
             }
-            // if (true) {
-            //     var p = Street.xytovec3(street.poly_bezier.get(0.3));
-            //     car2d.setFromPosition3d(p);
-            //     if (!do_first_person_cam)
-            //         camera.position.set(-20,30,car2d.position.x);
-            // }
-
+            if (true) {
+                var p = Street.xytovec3(street.poly_bezier.get(0.3));
+                car2d.setFromPosition3d(p);
+                // if (!do_first_person_cam)
+                //     camera.position.set(-20,30,car2d.position.x);
+            }
 
             gauge_needle = new THREE.Mesh(
                 new THREE.BoxGeometry(0.04, 0.004, 0.002),
@@ -654,5 +638,5 @@ class App {
     }    
 }
 
-let app = new App();
+let app = new App(); // eslint-disable-line no-unused-vars
 

@@ -1,0 +1,30 @@
+{
+    "extends": [
+        "eslint-config-defaults/configurations/eslint.js"
+    ],
+    "parserOptions": {
+        "ecmaVersion": 6,
+        "sourceType": "script",
+        "ecmaFeatures": {
+        }
+    },
+    "env": {
+        "browser": true,
+        "commonjs": true,
+        "node": true,
+        "jquery": true,
+        "es6": true
+    },
+    "globals": {
+        "THREE": true,
+        "renderer": true,
+        "scene": true,
+        "dat": true,
+        "osc": true,
+        "WebVRManager": true,
+        "console": true
+    },
+    "rules": {
+        "no-console": 0
+    }
+}

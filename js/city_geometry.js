@@ -32,7 +32,7 @@ function generateTexture() {
     canvas2.width = 512;
     canvas2.height = 1024;
 
-    var context = canvas2.getContext('2d');
+    context = canvas2.getContext('2d');
     context.imageSmoothingEnabled = false;
     context.imageImageSmoothingEnabled = false;
     context.mozImageSmoothingEnabled = false;
@@ -95,7 +95,7 @@ var create_city_geometry = function(street, num_buildings)
             continue;
 
 
-        var geometry = building.geometry;
+        geometry = building.geometry;
 
         var value = 1 - Math.random() * Math.random();
         var color = new THREE.Color().setRGB(value + Math.random() * 0.1, value, value + Math.random() * 0.1);

@@ -1,4 +1,4 @@
-require("script!./lib/async.js");
+let async = require("../bower_components/async/dist/async.js");
 
 function load_car_parts(callback, meshtype) {
 

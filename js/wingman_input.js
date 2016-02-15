@@ -38,9 +38,9 @@ var wingman_input = {
     }
 }
 
-function clamp(x, a, b) {
-    return Math.min(Math.max(x, a), b)
-}
+// function clamp(x, a, b) {
+//     return Math.min(Math.max(x, a), b)
+// }
 
 var keyboard_input = {
 
@@ -114,5 +114,6 @@ var keyboard_input = {
     }
 }
 
-window.wingman_input = wingman_input;
-window.keyboard_input = keyboard_input;
+module.exports = {'wingman_input': wingman_input, 'keyboard_input': keyboard_input}
+// window.wingman_input = wingman_input;
+// window.keyboard_input = keyboard_input;

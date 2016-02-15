@@ -1,15 +1,15 @@
-var first_person_cam = function(camera, initial_pos, displacement, direction) {
-    this.camera = camera;
-    this.displacement = displacement;
-    this.direction = direction;
+// var first_person_cam = function(camera, initial_pos, displacement, direction) {
+//     this.camera = camera;
+//     this.displacement = displacement;
+//     this.direction = direction;
 
-    this.tick = function(position, quaternion, dt) {
-        this.camera.position.copy(position.clone().add(
-            this.displacement.clone().applyQuaternion(quaternion)));
-        this.camera.lookAt(position.clone().add(
-            this.direction.clone().applyQuaternion(quaternion)));
-    }
-}
+//     this.tick = function(position, quaternion, dt) {
+//         this.camera.position.copy(position.clone().add(
+//             this.displacement.clone().applyQuaternion(quaternion)));
+//         this.camera.lookAt(position.clone().add(
+//             this.direction.clone().applyQuaternion(quaternion)));
+//     }
+// }
 
 var chase_cam = function(camera, pos, dist_vector) {
 
@@ -48,3 +48,5 @@ var chase_cam = function(camera, pos, dist_vector) {
         //console.log(dt, target, this.pos);
     }
 }
+
+module.exports = {'chase_cam': chase_cam}

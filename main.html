@@ -9,10 +9,10 @@
 	</style>
 </head>
 <body>
-	<script src="js/lib/three.js"></script>
-	<script src="js/lib/jquery.js"></script>
-	<script src="js/lib/async.js"></script>
-	<script src="js/lib/dat.gui.js"></script>
+	<script src="node_modules/three/three.js"></script>
+	<script src="bower_components/jquery/dist/jquery.min.js"></script>
+	<!--<script src="bower_components/async/dist/async.min.js"></script>-->
+	<script src="bower_components/dat-gui/build/dat.gui.js"></script>
 	
 	<!--<script src="three.js/examples/js/controls/OrbitControls.js"></script>
 	<script src="three.js/examples/js/controls/FirstPersonControls.js"></script>
@@ -27,7 +27,7 @@
 	<script>
 
 		var scene = new THREE.Scene();
-		function get_camera(fov, near_plane, far_plane) {
+		THREE.get_camera = function(fov, near_plane, far_plane) {
 			_fov = fov || 70;
 			_near_plane = near_plane || 0.1;
 			_far_plane = far_plane || 1000;

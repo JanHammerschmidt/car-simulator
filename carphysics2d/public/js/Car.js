@@ -1,6 +1,5 @@
-/*global $e, GMath, Vec2, InputState */
+/*global GMath*/
 
-var $e = require('./domutil.js');
 var Vec2 = require('./Vec2.js');
 require('script!./GMath.js');
 var InputState = require('./InputState.js');
@@ -175,10 +174,10 @@ Car.Engine = function() {
 
 Car.Engine.prototype = {
 	update_torque: function(throttle) { // throttle (0..1)
-	    if (throttle < this.min_throttle && this.rpm() < 700) // ansonsten: Schubabschaltung!
-	        throttle = this.min_throttle;
-	    this.torque = this.max_torque * this.torque_map.get_torque(throttle, this.rel_rpm()); // [N*m]
-	    this.torque_out = this.torque - this.engine_braking_coefficient * Math.pow(Math.max(this.rpm(),0) / 60, 1.1); // TODO: check "transmission (or: engine) efficiency" [maybe just 0.7]
+        if (throttle < this.min_throttle && this.rpm() < 700) // ansonsten: Schubabschaltung!
+            throttle = this.min_throttle;
+        this.torque = this.max_torque * this.torque_map.get_torque(throttle, this.rel_rpm()); // [N*m]
+        this.torque_out = this.torque - this.engine_braking_coefficient * Math.pow(Math.max(this.rpm(), 0) / 60, 1.1); // TODO: check "transmission (or: engine) efficiency" [maybe just 0.7]
 	},
 	rpm: function() { return this.angular_velocity * 60 / (2*Math.PI); },
 	rel_rpm: function() { return this.rpm() / this.max_rpm; },
@@ -414,8 +413,8 @@ Car.prototype.doPhysics = function( dt )
 	this.position.y += this.velocity.y * dt;
 
 	// Pre-calc heading vector
-	var sn = Math.sin(this.heading);
-	var cs = Math.cos(this.heading);
+	sn = Math.sin(this.heading);
+	cs = Math.cos(this.heading);
 
 	// Get velocity in local car coordinates
 	this.velocity_c.x = cs * this.velocity.x + sn * this.velocity.y;
