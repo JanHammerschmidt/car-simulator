@@ -1,0 +1,26 @@
+{
+  "name": "simulator",
+  "description": "",
+  "main": "main.html",
+  "authors": [
+    "jhammers"
+  ],
+  "license": "ISC",
+  "moduleType": [],
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "async": "^1.5.2",
+    "jquery": "^2.2.0",
+    "osc.js": "~2.0.2",
+    "dat-gui": "dat.gui.js#^0.5.1",
+    "webvr-boilerplate": "git://github.com/the-cable-center/webvr-boilerplate"
+  }
+}
