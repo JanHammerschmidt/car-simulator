@@ -30,7 +30,7 @@ var Stats = require('../carphysics2d/public/js/Stats.js');
 var ConfigPanel = require('../carphysics2d/public/js/ConfigPanel.js');
 require('!style!css!../carphysics2d/public/js/car_config.css');
 
-var pointInPolygon = require('point-in-polygon-extended').pointInPolyRaycast; //pointInPolyWindingNumber
+//var pointInPolygon = require('point-in-polygon-extended').pointInPolyRaycast; //pointInPolyWindingNumber
 
 
 $('body').append(require('html!../carphysics2d/public/js/car_config.html'));
@@ -529,39 +529,7 @@ class App {
                 // car_model_slope.rotation.y = 0;
 
                 var on_track = false;
-                if (street.loaded) {
-                    var p = new THREE.Vector3(-car2d.position.y, car_model.position.y, car2d.position.x);
-                    for (var i = 0; i < street.segments.length; i++) {
-                        var prev_state = 0;
-                        var state = 0;
-                        var segment = street.segments[i];
-                        var s = segment.mesh;
-                        if (s.material.color.getHex() == new THREE.Color(0x5EFF00).getHex())
-                            prev_state = 2;
-                        else if (s.material.color.getHex() == new THREE.Color(0xFF0000).getHex())
-                            prev_state = 1;                    
-                        var boundingSphere = segment.geometry.boundingSphere;
-                        var prev_color = s.material.color;
-                        if (p.distanceTo(boundingSphere.center) <= boundingSphere.radius) {
-                            var poly = segment.poly;
-                            if (pointInPolygon([-car2d.position.y, car2d.position.x], poly)) {
-                                s.material.color = new THREE.Color(0x5EFF00);
-                                on_track = true;
-                                state = 2;
-                            }
-                            else {
-                                s.material.color = new THREE.Color(0xFF0000);
-                                state = 1;
-                            }
-                        } else {
-                            s.material.color = new THREE.Color(0x5d5d88);
-                        }
-                        if (prev_color.getHex() != s.material.color.getHex()) {
-                            s.material.needsUpdate = true;
-                            //console.log(i, state, prev_state);
-                        }                
-                    }
-                }
+
                 var t = street.get_road_position2(car_model.position, car_stats);
                 if (!on_track) {
                     const p = street.poly_bezier.get(t);
