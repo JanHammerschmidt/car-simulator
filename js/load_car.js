@@ -60,7 +60,7 @@ function load_car_parts(callback, meshtype) {
                 mats[3].map = textures[0];
                 mats[4].map = textures[1];
                 //car_body = new meshtype(geo, new THREE.MeshFaceMaterial(mats));
-                var door = new THREE.Mesh(geo, new THREE.MeshFaceMaterial(mats));
+                var door = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(geo), new THREE.MeshFaceMaterial(mats));
                 door.position.set(0.90351, -0.905721, 0.625575);
                 car_body.add(door);
                 next();
@@ -75,7 +75,7 @@ function load_car_parts(callback, meshtype) {
                     materials[0].color.set(0xFFFFFF);
                     materials[1].color.set(9869980); //, 6250851
                     var material = new THREE.MeshFaceMaterial(materials);
-                    var object = new THREE.Mesh(geometry, material);
+                    var object = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(geometry), material);
                     //object.position.set(-0.90351, 0.905721, -0.625575);
                     car_body.add(object);
                     next();
@@ -97,12 +97,12 @@ function load_car_parts(callback, meshtype) {
                 results[1][1][1].color.set(0xFFFFFF);
                 results[2][1][0].map = textures[4];
                 //results[2]
-                for (var i = 0; i < 3; i++)
-                    results[i] = new THREE.Mesh(results[i][0], new THREE.MeshFaceMaterial(results[i][1]));
+                for (let i = 0; i < 3; i++)
+                    results[i] = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(results[i][0]), new THREE.MeshFaceMaterial(results[i][1]));
                 results[2].position.set(-.0659582, 732697e-9, .00550807);
 
                 wheel = results[0];
-                for (var i = 1; i < 3; i++)
+                for (let i = 1; i < 3; i++)
                     wheel.add(results[i]);
 
                 next();
