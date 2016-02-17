@@ -71,8 +71,8 @@ Street.vec3toxy = function(vec3) {
         y: vec3.z
     };
 }
-Street.xytovec3 = function(v) {
-    return new THREE.Vector3(v.x, 0.1, v.y);
+Street.xytovec3 = function(v,y) {
+    return new THREE.Vector3(v.x, y || 0.1, v.y);
 }
 
 Street.prototype = {

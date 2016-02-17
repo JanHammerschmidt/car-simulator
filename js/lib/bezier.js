@@ -445,7 +445,7 @@
   var PolyBezier = function(curves) {
     this.curves = [];
     this._3d = false;
-    if(!!curves) {
+    if(curves) {
       this.curves = curves;
       this._3d = this.curves[0]._3d;
     }
