@@ -105,12 +105,14 @@ class App {
         
         this.init_car2d();
         this.init_street();
-        this.init_cameras("fly_cam");
+        this.init_cameras("first_person_cam");
         this.init_car();
         this.load_stop_sign();
         this.init_gauge();
+        keyboard_input.init();
 
         this.place_stop_sign(0.1);
+        this.jump_to_street_position(0.4, true);
 
         this.last_time = performance.now();
         console.log("1st animate");
@@ -392,10 +394,25 @@ class App {
         });        
     }
 
-    jump_to_street_position(t) {
+    jump_to_street_position(t, reverse) {
+        reverse = reverse || false;
+        // if (start_from_end_of_street) {
+        //     var curve = street.segments[street.segments.length-1].curve;
+        //     //curve = street.segments[3].curve;
+        //     var p = Street.xytovec3(curve.get(1));
+        //     car2d.position.x = p.z;
+        //     car2d.position.y = -p.x;
+        //     var d = curve.derivative(1);
+        //     var angle = -Math.atan2(d.x,d.y) + Math.PI;
+        //     console.log(angle * 180 / Math.PI);
+        //     car2d.heading = angle;
+        // }
         this.street_loaded.then(street => {
-            var p = Street.xytovec3(street.poly_bezier.get(t));
+            const p = Street.xytovec3(street.poly_bezier.get(t));
             this.car2d.setFromPosition3d(p);
+            const d = street.poly_bezier.derivative(t);
+            const angle = -Math.atan2(d.x,d.y) + (reverse ? Math.PI : 0);
+            this.car2d.heading = angle;
             // if (!do_first_person_cam)
             //     camera.position.set(-20,30,car2d.position.x);            
         })
@@ -410,48 +427,27 @@ class App {
     init_car() {
         load_car.load_car((car_body/*, wheel*/) => {
 
-            var glass_mat = new THREE.MeshLambertMaterial({
-                color: 0xEEEEEE,
-                transparent: true,
-                opacity: 0.5
-            });
+            // var glass_mat = new THREE.MeshLambertMaterial({
+            //     color: 0xEEEEEE,
+            //     transparent: true,
+            //     opacity: 0.5
+            // });
 
             car_body.rotateX(-Math.PI / 2);
-            var vehicle_box = car_body;        
-            // if (false) {
-            //     car_body.geometry.computeBoundingBox();
-            //     var bbox = car_body.geometry.boundingBox;
-            //     var bbox_size = bbox.size(), bbox_center = bbox.center();
-            //     var bbox_geometry = new THREE.BoxGeometry(bbox_size.x * 0.9, bbox_size.y * 0.3, bbox_size.z * 0.4);
-            //     bbox_geometry.translate(bbox_center.x, bbox_center.y, bbox_center.z);
-            //     vehicle_box = new THREE.Mesh(bbox_geometry, glass_mat, 200); //new THREE.Object3D()
-            //     vehicle_box.add(car_body);
-            // }
 
-            vehicle_box.position.y = 0.29;
-            // gui.addFolder('car position').add(vehicle_box.position, 'y', 'test');
+            car_body.position.y = 0.29;
+            // gui.addFolder('car position').addnum(car_body.position, 'y');
             // //vehicle_box.castShadow = vehicle_box.receiveShadow = true;
-            // //debugger;
-            // //vehicle_box.rotation.x = -Math.PI / 2;
-            // var rot = gui.addFolder('car rotation');
-            // rot.add(vehicle_box.rotation, 'x');
-            // rot.add(vehicle_box.rotation, 'y');
-            // rot.add(vehicle_box.rotation, 'z');
-            // var pos = gui.addFolder('position');
-            // pos.add(vehicle_box.position, 'x');
-            // pos.add(vehicle_box.position, 'y');
-            // pos.add(vehicle_box.position, 'z');
 
             this.car_model = new THREE.Object3D();
             this.car_model_slope = new THREE.Object3D();
             this.car_model.add(this.car_model_slope);
-            this.car_model_slope.add(vehicle_box);
+            this.car_model_slope.add(car_body);
 
             scene.add(this.car_model);
 
             this.car_loaded.resolve();
 
-            keyboard_input.init();
             $(() => {
                 document.addEventListener('keydown', ev => {
                     if (ev.keyCode == 87)
@@ -468,18 +464,6 @@ class App {
             lf.add(light.position, 'y');
             lf.add(light.position, 'z');
             this.car_model_slope.add(light);
-
-            // if (start_from_end_of_street) {
-            //     var curve = street.segments[street.segments.length-1].curve;
-            //     //curve = street.segments[3].curve;
-            //     var p = Street.xytovec3(curve.get(1));
-            //     car2d.position.x = p.z;
-            //     car2d.position.y = -p.x;
-            //     var d = curve.derivative(1);
-            //     var angle = -Math.atan2(d.x,d.y) + Math.PI;
-            //     console.log(angle * 180 / Math.PI);
-            //     car2d.heading = angle;
-            // }
 
         });        
     }
