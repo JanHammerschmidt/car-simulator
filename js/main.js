@@ -1,13 +1,18 @@
 'use strict';
 
-var do_vr = false;
-var do_sound = false;
+let cfg = {
+    do_vr: true,
+    do_sound: false
+}
 
-//window.CARDBOARD_DEBUG = true;
+if (cfg.do_vr) {
+    // window.CARDBOARD_DEBUG = true;
+    require("script!../bower_components/webvr-boilerplate/js/deps/webvr-polyfill.js");
+    require("script!../bower_components/webvr-boilerplate/js/deps/VREffect.js");
+    require("script!../bower_components/webvr-boilerplate/build/webvr-manager.js");
+    require("script!../bower_components/webvr-boilerplate/js/deps/VRControls.js");
+}
 
-//require('script!../lib/jquery.js');
-//require('script!../lib/dat.gui.js');
-//require("script!../lib/async.js");
 require("../node_modules/three/examples/js/loaders/MTLLoader.js");
 require("../node_modules/three/examples/js/loaders/OBJMTLLoader.js");
 require("../node_modules/three/examples/js/controls/OrbitControls.js");
@@ -163,6 +168,27 @@ class App {
         this.gui.close();
     }
 
+    init_cameras(default_cam) {
+        this.init_first_person_view();
+        this.init_chase_cam();
+        this.init_first_person_cam();
+        this.init_fly_cam();
+        this.init_orbit_cam();
+        if (cfg.do_vr)
+            this.init_vr();
+        this.camera = default_cam;
+        this.camera_change = this.camera;
+        this.gui.add(this, "camera_change", Object.keys(this.cameras)).onChange(() => this.update_camera() );
+        this.update_camera();
+
+        $(() => {
+            document.addEventListener('keydown', ev => {
+                if (ev.keyCode == 67)
+                    this.toggle_camera();
+            });        
+        });
+    }    
+
     update_camera() {
         // if (this.camera == "fly_cam")
         //     this.cameras["fly_cam"][1].enabled = false;
@@ -198,24 +224,6 @@ class App {
         this.update_camera();
     }
 
-    init_cameras(def_cam) {
-        this.init_chase_cam();
-        this.init_first_person_cam();
-        this.init_fly_cam();
-        this.init_orbit_cam();
-        this.camera = def_cam;
-        this.camera_change = this.camera;
-        this.gui.add(this, "camera_change", Object.keys(this.cameras)).onChange(() => this.update_camera() );
-        this.update_camera();
-
-        $(() => {
-            document.addEventListener('keydown', ev => {
-                if (ev.keyCode == 67)
-                    this.toggle_camera();
-            });        
-        });
-    }
-
     init_sound() {
         require('script!../bower_components/osc.js/dist/osc-browser');
         osc.WebSocketPort.prototype.send_float = function(addr, val) {
@@ -239,52 +247,6 @@ class App {
                 osc_port.close(1000);
             });
         });       
-    }
-
-    init_vr() {
-        require("script!../bower_components/webvr-boilerplate/js/deps/webvr-polyfill.js");
-        require("script!../bower_components/webvr-boilerplate/js/deps/VREffect.js");
-        require("script!../bower_components/webvr-boilerplate/build/webvr-manager.js");
-        require("script!../bower_components/webvr-boilerplate/js/deps/VRControls.js");
-
-        window.WebVRConfig = {
-          /**
-           * webvr-polyfill configuration
-           */
-
-          // Forces availability of VR mode.
-          //FORCE_ENABLE_VR: true, // Default: false.
-          // Complementary filter coefficient. 0 for accelerometer, 1 for gyro.
-          //K_FILTER: 0.98, // Default: 0.98.
-          // How far into the future to predict during fast motion.
-          //PREDICTION_TIME_S: 0.040, // Default: 0.040 (in seconds).
-          // Flag to disable touch panner. In case you have your own touch controls
-          //TOUCH_PANNER_DISABLED: true, // Default: false.
-          // Enable yaw panning only, disabling roll and pitch. This can be useful for
-          // panoramas with nothing interesting above or below.
-          //YAW_ONLY: true, // Default: false.
-
-          /**
-           * webvr-boilerplate configuration
-           */
-          // Forces distortion in VR mode.
-          //FORCE_DISTORTION: true, // Default: false.
-          // Override the distortion background color.
-          //DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
-          // Prevent distortion from happening.
-          //PREVENT_DISTORTION: true, // Default: false.
-          // Show eye centers for debugging.
-          //SHOW_EYE_CENTERS: true, // Default: false.
-        };
-        //var WebVRManager = require("../../webvr-boilerplate/src/webvr-manager.js");
-        //var WebVRManager = require("script!../../webvr-boilerplate/build/webvr-manager.js");
-        var effect = new THREE.VREffect(renderer);
-        effect.setSize(window.innerWidth, window.innerHeight); // TODO: do you really need this?
-        this.vr_manager = new WebVRManager(renderer, effect);
-        //vr_manager.
-        $(document).ready(function() {
-            $("img[title='Fullscreen mode']").css('bottom', '').css('right', '').css('left','0px').css('top','0px');
-        });
     }
 
     load_stop_sign() {
@@ -350,27 +312,75 @@ class App {
         this.cameras['chase_cam'] = [camera, controls];
     }
 
+    init_first_person_view() {
+        this.camera_first_person_object = new THREE.Object3D();
+        this.camera_first_person_object.position.set(0.37,1.36,0.09);
+        this.car_loaded.then( () => {
+            this.car_model_slope.add(this.camera_first_person_object);
+        });        
+    }
+
+    init_vr() {
+
+        window.WebVRConfig = {
+          /**
+           * webvr-polyfill configuration
+           */
+
+          // Forces availability of VR mode.
+          //FORCE_ENABLE_VR: true, // Default: false.
+          // Complementary filter coefficient. 0 for accelerometer, 1 for gyro.
+          //K_FILTER: 0.98, // Default: 0.98.
+          // How far into the future to predict during fast motion.
+          //PREDICTION_TIME_S: 0.040, // Default: 0.040 (in seconds).
+          // Flag to disable touch panner. In case you have your own touch controls
+          //TOUCH_PANNER_DISABLED: true, // Default: false.
+          // Enable yaw panning only, disabling roll and pitch. This can be useful for
+          // panoramas with nothing interesting above or below.
+          //YAW_ONLY: true, // Default: false.
+
+          /**
+           * webvr-boilerplate configuration
+           */
+          // Forces distortion in VR mode.
+          //FORCE_DISTORTION: true, // Default: false.
+          // Override the distortion background color.
+          //DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
+          // Prevent distortion from happening.
+          //PREVENT_DISTORTION: true, // Default: false.
+          // Show eye centers for debugging.
+          //SHOW_EYE_CENTERS: true, // Default: false.
+        };
+        //var WebVRManager = require("../../webvr-boilerplate/src/webvr-manager.js");
+        //var WebVRManager = require("script!../../webvr-boilerplate/build/webvr-manager.js");
+        var effect = new THREE.VREffect(renderer);
+        effect.setSize(window.innerWidth, window.innerHeight); // TODO: do you really need this?
+        this.vr_manager = new WebVRManager(renderer, effect);
+        //vr_manager.
+        $(document).ready(function() {
+            $("img[title='Fullscreen mode']").css('bottom', '').css('right', '').css('left','0px').css('top','0px');
+        });
+
+        const camera = THREE.get_camera();
+        camera.lookAt(new THREE.Vector3(0, 0, 1));
+        const vr_cam = new THREE.Object3D();
+        vr_cam.rotation.y = Math.PI;
+        vr_cam.add(camera);
+        this.camera_first_person_object.add(vr_cam);
+        const controls = new THREE.VRControls(camera);
+        $(document).ready(function() {
+            document.addEventListener('keydown', function(ev) {
+                if (ev.keyCode == 13)
+                    controls.resetSensor();
+            });
+        });
+        this.cameras["vr_cam"] = [camera, controls];
+    }
+
     init_first_person_cam() {
         let camera = THREE.get_camera();
         camera.lookAt(new THREE.Vector3(0, 0, 1));
-        
-        this.camera_first_person_object = new THREE.Object3D();
-        this.camera_first_person_object.position.set(0.37,1.36,0.09);
         this.camera_first_person_object.add(camera);
-        this.car_loaded.then( () => {
-            this.car_model_slope.add(this.camera_first_person_object);
-            // if (do_vr) {
-            //     camera_first_person_object.rotation.y = Math.PI;
-            //     controls = new THREE.VRControls(camera);
-            //     console.log(camera.parent);
-            //     $(document).ready(function() {
-            //         document.addEventListener('keydown', function(ev) {
-            //             if (ev.keyCode == 13)
-            //                 controls.resetSensor();
-            //         });
-            //     });
-            // }
-        });
 
         let f = this.gui.addFolder('first person cam');
         f.addxyz(this.camera_first_person_object.position);
@@ -558,7 +568,7 @@ class App {
 
 
         this.gauge_needle.rotation.z = -0.806 + this.gauge_kmh_slope * (Math.max(car2d.kmh(),0) - 10);
-        if (do_sound) {
+        if (cfg.do_sound) {
             this.osc_port.send_float('/rpm', 0.1 + car2d.engine.rel_rpm() * 0.8);
         }
 
@@ -684,16 +694,16 @@ class App {
         if (this.camera == "orbit_cam")
             this.cameras["orbit_cam"][1].update();
 
-                 
-        //     if (true && do_vr && controls)
-        //         controls.update();
         requestAnimationFrame(this.animate.bind(this));
-        if (do_vr) {
+
+        if (this.camera == "vr_cam") {
+            this.cameras["vr_cam"][1].update();
             if (car_model)
                 car_model.updateMatrixWorld(true);
-            this.vr_manager.render(scene, camera);
-        } else
+            this.vr_manager.render(scene, this.cameras["vr_cam"][0]);
+        } else {
             renderer.render(scene, this.cameras[this.camera][0]);
+        }            
 
         this.last_time = time;
     }    
