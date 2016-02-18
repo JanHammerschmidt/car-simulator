@@ -77,21 +77,7 @@ Street.xytovec3 = function(v,y) {
 
 Street.prototype = {
 
-    // street_segment: function(lut) {
-    // 	this.lut = lut
-    // }
-
-    find_two_nearest_points: function(segment, xy) {
-        var lut = segment.lut;
-        var dists = this._dists;
-        dists.length = lut.length;
-        for (var i = 0, len = lut.length; i < len; i++) {
-            dists[i] = distSq2d(lut[i], xy);
-        }
-        return find_two_smallest_values(dists)
-    },
-
-    get_road_position2: function(vec3, stats) {
+    get_road_position: function(vec3, stats) {
         var xy = new THREE.Vector2().copy(Street.vec3toxy(vec3)); // 2d point
         var dists = this.lut.map(function(l) {
             return distSq2d(xy, l)

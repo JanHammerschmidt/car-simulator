@@ -1,7 +1,7 @@
 'use strict';
 
 let cfg = {
-    do_vr: true,
+    do_vr: false,
     do_sound: false
 }
 
@@ -565,8 +565,6 @@ class App {
         const street = this.street;
         const car_stats = this.car_stats;
 
-
-
         this.gauge_needle.rotation.z = -0.806 + this.gauge_kmh_slope * (Math.max(car2d.kmh(),0) - 10);
         if (cfg.do_sound) {
             this.osc_port.send_float('/rpm', 0.1 + car2d.engine.rel_rpm() * 0.8);
@@ -634,7 +632,7 @@ class App {
 
             var on_track = false;
 
-            var t = street.get_road_position2(car_model.position, car_stats);
+            var t = street.get_road_position(car_model.position, car_stats);
             if (!on_track) {
                 const p = street.poly_bezier.get(t);
                 const xy = new THREE.Vector2().copy(Street.vec3toxy(car_model.position));
