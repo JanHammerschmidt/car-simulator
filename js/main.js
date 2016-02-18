@@ -1,7 +1,6 @@
 'use strict';
 
 var do_vr = false;
-var start_from_end_of_street = false;
 var do_sound = false;
 
 //window.CARDBOARD_DEBUG = true;
@@ -32,7 +31,6 @@ require('!style!css!../carphysics2d/public/js/car_config.css');
 
 //var pointInPolygon = require('point-in-polygon-extended').pointInPolyRaycast; //pointInPolyWindingNumber
 
-
 $('body').append(require('html!../carphysics2d/public/js/car_config.html'));
 
 // renderer.shadowMap.enabled = true;
@@ -59,22 +57,53 @@ function load_model_obj(fname, f) {
     loader.load(fname, fname.slice(0,-3) + "mtl", f, undefined, err => { console.log("error loading", fname, err); });
 }
 
-// var car2d, car_model, car_model_slope, car_stats;
-// var vr_manager;
-// var gauge_kmh_slope, gauge_needle;
-// var osc_port, terrain;
-// var engine_started = false;
+class TrafficLight extends THREE.Object3D {
+    constructor() {
+        super();
+        const model = TrafficLight._model.clone();
+        const lights = model.children[1];
+        this.colors = lights.children.slice(1).map(function(v) {return v.material.color;}); // green, yellow, red
+        this.lights_on = [0x49e411, 0xd2c100, 0x960101];
+        this.lights_off = [0x142d0b, 0x262300, 0x1f0000];
+        this.state = 0;
+        this.add(model);            
+    }
+
+    set(state) {
+        var lights_off = this.lights_off;
+        this.colors.forEach(function(c,i) {
+            c.setHex(lights_off[i]);
+        });
+        this.colors[state].setHex(this.lights_on[state]);
+        this.state = state;
+    }
+
+    static load_model() {
+        TrafficLight.loaded = new Promise(resolve => {
+            setTimeout(() => {
+                load_model_obj('models/traffic_lights.obj', obj => {
+                    obj.rotateY(Math.PI);
+                    obj.scale.multiplyScalar(1.2);
+                    obj.position.y = -0.1;
+                    TrafficLight._model = obj;
+                    resolve(obj);
+                });
+            }, 1000);
+        });
+    }
+}
 
 class Event extends Promise {
     constructor() {
         let r = null;
         super(resolve => {
-            r = resolve;
+            r = resolve;            
         });
         this.resolve = r;
         console.assert(this.resolve != null);
     }
 }
+
 
 class App {
     constructor() {
@@ -90,8 +119,8 @@ class App {
 
         this.car_loaded = new Event();
         this.street_loaded = new Event();
-        this.stop_sign_loaded = new Event();
 
+        TrafficLight.load_model();
         this.terrain = new Terrain();
         this.terrain.adjust_height(() => {
             this.terrain.rotate();
@@ -111,8 +140,21 @@ class App {
         this.init_gauge();
         keyboard_input.init();
 
-        this.place_stop_sign(0.1);
-        this.jump_to_street_position(0.4, true);
+        this.stop_sign_loaded.then(stop_sign => {
+            this.place_sign(stop_sign.clone(), 0.1);
+        });
+        TrafficLight.loaded.then(() => {
+            const light = new TrafficLight();
+            this.place_sign(light, 0.2);
+            setInterval(() => {
+                light.state += 1;
+                if (light.state > 2)
+                    light.state = 0;
+                light.set(light.state);
+            },500);
+        });
+        
+        //this.jump_to_street_position(0.15, false);
 
         this.last_time = performance.now();
         console.log("1st animate");
@@ -246,25 +288,26 @@ class App {
     }
 
     load_stop_sign() {
-        load_model_obj('models/stop_sign_obj/stop_sign.obj', obj => {
-            obj.rotateY(-Math.PI);
-            obj.rotateX(Math.PI / 2);
-            obj.position.y = -2;
-            let stop_sign = new THREE.Object3D();
-            stop_sign.add(obj);
-            this.stop_sign_loaded.resolve(stop_sign);
+        this.stop_sign_loaded = new Promise(resolve => {
+            load_model_obj('models/stop_sign_obj/stop_sign.obj', obj => {
+                obj.rotateY(Math.PI);
+                obj.rotateX(Math.PI / 2);
+                obj.position.y = -1.5;
+                let stop_sign = new THREE.Object3D();
+                stop_sign.add(obj);
+                resolve(stop_sign);
+            });
         });
     }
 
-    place_stop_sign(t) {
-        Promise.all([this.stop_sign_loaded, this.street_loaded]).then(([stop_sign, street]) => {
+    place_sign(sign, t) {
+        this.street_loaded.then(street => {
             const street_bezier = street.poly_bezier;
             const p = new THREE.Vector2().copy(street_bezier.get(t));
             const n = new THREE.Vector2().copy(street_bezier.normal(t));
             const d = street_bezier.derivative(t);
             const y = street.height_profile.get(t).y;
             p.addScaledVector(n, 0.5 * street.street_width);
-            const sign = stop_sign.clone();
             sign.position.copy(Street.xytovec3(p,y));
             sign.rotation.y = Math.atan2(d.x,d.y);
             scene.add(sign);
