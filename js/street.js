@@ -104,7 +104,7 @@ Street.prototype = {
         Math.sign(dp) == -Math.sign(dp2) || console.log("!! Math.sign(dp) != -Math.sign(dp2)");
         var v = dp > 0 ? dp / (dp - dp2) : (-dp / (dp2 - dp)); // get interpolation factor
         var t = (p.t * (1 - v) + p2.t * v); // linear interpolation between the two t-values
-        stats.add('t2', t);
+        stats.add('t', t);
         return t;
         // dp = Math.abs(dp); dp2 = Math.abs(dp2);
     },
@@ -139,8 +139,8 @@ Street.prototype = {
         street.segment_points = segment_points;
         street.geometry = geo.geo;
         street.poly = geo.poly;
-        street.lut_points = Math.round(this.lut_points_per_meter * curve.length());
-        street.lut = curve.getLUT(street.lut_points);
+        // street.lut_points = Math.round(this.lut_points_per_meter * curve.length());
+        // street.lut = curve.getLUT(street.lut_points);
         street.road_length = curve.length();
         street.curve = curve;
 
@@ -307,12 +307,12 @@ Street.prototype = {
                             var y = tpb.get(t).y
                             vertices[j * 2].y = vertices[j * 2 + 1].y = y;
                         }
-                        var lut_points = s.lut_points;
-                        s.lut.forEach(function(l, i) {
-                            var t = i / lut_points;
-                            l.height = tpb.get(t0 + i / lut_points * pi).y; // TODO: do we really need that?
-                            l.normal = s.curve.normal(t);
-                        });
+                        // var lut_points = s.lut_points;
+                        // s.lut.forEach(function(l, i) {
+                        //     var t = i / lut_points;
+                        //     l.height = tpb.get(t0 + i / lut_points * pi).y; // TODO: do we really need that?
+                        //     l.normal = s.curve.normal(t);
+                        // });
                         s.geometry.verticesNeedUpdate = true;
                         t0 = pb.bounds[i];
                     });
@@ -325,6 +325,7 @@ Street.prototype = {
                         p.normal = that.poly_bezier.normal(t);
                         p.d = new THREE.Vector2().copy(that.poly_bezier.derivative(t)).normalize();
                         p.t = t;
+                        p.height = tpb.get(t).y;
                         that.lut.push(p);
                     }
                     that.lut_points = lut_points;
@@ -361,13 +362,19 @@ Street.prototype = {
         const material = new THREE.MeshBasicMaterial({
             color: 0xffff00
         });
-        this.segments.forEach(v => {
-            v.lut.forEach(l => {
-                var mesh = new THREE.Mesh(sphere, material);
-                mesh.position.set(l.x, l.height, l.y);
-                this.street_mesh.add(mesh);
-            })
-        });
+        for (let l of this.lut) {
+            let mesh = new THREE.Mesh(sphere, material);
+            mesh.position.set(l.x, l.height, l.y);
+            this.street_mesh.add(mesh);            
+        }
+
+        // this.segments.forEach(v => {
+        //     v.lut.forEach(l => {
+        //         var mesh = new THREE.Mesh(sphere, material);
+        //         mesh.position.set(l.x, l.height, l.y);
+        //         this.street_mesh.add(mesh);
+        //     })
+        // });
     }
 };
 

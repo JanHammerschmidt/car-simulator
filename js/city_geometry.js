@@ -1,8 +1,14 @@
 'use strict';
 
-function distSq(x1, y1, x2, y2) {
-    var dx = x2 - x1,
-        dy = y2 - y1;
+// function distSq(x1, y1, x2, y2) {
+//     var dx = x2 - x1,
+//         dy = y2 - y1;
+//     return dx * dx + dy * dy;
+// }
+
+function distSq2d(p1, p2) {
+    var dx = p2.x - p1.x,
+        dy = p2.y - p1.y;
     return dx * dx + dy * dy;
 }
 
@@ -68,14 +74,12 @@ var create_city_geometry = function(street, num_buildings)
         var min_dist = 9999999,
             idx = 0,
             point = 0;
-        for (var i = 0; i < street.segments.length; i++) {
-            for (var j = 0; j < street.segments[i].lut.length; j++) {
-                var ds = distSq(street.segments[i].lut[j].x, street.segments[i].lut[j].y, p.x, p.z);
-                if (ds < min_dist) {
-                    min_dist = ds;
-                    idx = i;
-                    point = j;
-                }
+        for (let l of street.lut) {
+            const ds = distSq2d(l,p);
+            if (ds < min_dist) {
+                min_dist = ds;
+                idx = i;
+                point = j;
             }
         }
         return [min_dist, idx, point];

@@ -20,9 +20,10 @@ function distSq2d(p1, p2) {
 var street = new Street(true);
 street.create_road(function() {
     console.log('done loading');
-    var points = street.segments.reduce(function(p, s) {
-        return p.concat(s.lut);
-    }, []);
+    const points = street.lut;
+    // var points = street.segments.reduce(function(p, s) {
+    //     return p.concat(s.lut);
+    // }, []);
 
     var tpoints = new Terrain().vertices();
     var zvalues = tpoints.map(function(p) {
