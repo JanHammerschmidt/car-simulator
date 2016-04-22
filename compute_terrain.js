@@ -34,15 +34,15 @@ street.create_road(function() {
         // if (p.x == 0 && p.y == 0)
         //  debugger;
         var nearest_distance = Number.MAX_VALUE;
-        // var nearest_height = 0;
+        var nearest_height = 0;
         points.forEach(function(v) {
             var distsq = distSq2d(p, v);
             if (distsq < nearest_distance) {
                 nearest_distance = distsq;
-                // nearest_height = v.height;
+                nearest_height = v.height;
             }
             var w2 = 1 / (1 + distsq); // pretty good: already smooth, but quite a difference between street & terrain
-            var w = Math.exp(-distsq * 0.1); // good, but needs a smoothing postprocessing step..
+            var w = Math.exp(-distsq * 0.01); // good, but needs a smoothing postprocessing step..
             // if (p.x == 0 && p.y == 0)
             //  console.log(w);
             n += v.height * w;
@@ -50,6 +50,7 @@ street.create_road(function() {
             n2 += v.height * w2;
             d2 += w2;
         });
+        // return nearest_height;
         //p.z = n/d;
         //return nearest_height;
         if (isNaN(n2 / d2))
