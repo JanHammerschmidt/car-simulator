@@ -23,6 +23,7 @@ let chase_cam = require("./cam_controls.js").chase_cam;
 let input = require('./wingman_input.js');
 let wingman_input = input.wingman_input;
 let keyboard_input = input.keyboard_input;
+let picking_controls = require("./PickingControls.js");
 
 var load_car = require("./load_car.js");
 var Street = require('./street.js');
@@ -170,9 +171,10 @@ class App {
 
     init_cameras(default_cam) {
         this.init_first_person_view();
-        this.init_chase_cam();
         this.init_first_person_cam();
+        this.init_chase_cam();
         this.init_fly_cam();
+        this.init_picking_controls();
         this.init_orbit_cam();
         if (cfg.do_vr)
             this.init_vr();
@@ -195,16 +197,26 @@ class App {
         // if (this.camera_change == "fly_cam")
         //     this.cameras["fly_cam"][1].enabled = true;
 
-        if (this.camera == "orbit_cam")
-            this.cameras["orbit_cam"][1].enabled = false;
-        if (this.camera_change == "orbit_cam")
-            this.cameras["orbit_cam"][1].enabled = true;
+        if ("orbit_cam" in this.cameras) {
+            let orbit_controls = this.cameras["orbit_cam"][1];
+            if (this.camera == "orbit_cam") orbit_controls.enabled = false;
+            if (this.camera_change == "orbit_cam") orbit_controls.enabled = true;
+        }
+        if ("picking_cam" in this.cameras) {
+            let picking_controls = this.cameras["picking_cam"][1];
+            if (this.camera == "picking_cam") picking_controls.disable();
+            if (this.camera_change == "picking_cam")
+                picking_controls.enable(this.cameras[this.camera][0]);
+        }
 
         if (this.camera_change == "fly_cam") {
-            this.car_loaded.then(() => {
-                this.cameras["fly_cam"][0].position.copy(
-                    this.car_model.position.clone().add(this.camera_first_person_object.position));
-            });
+            if (this.camera == "first_person_cam") {
+                this.car_loaded.then(() => {
+                    this.cameras["fly_cam"][0].position.copy(
+                        this.car_model.position.clone().add(this.camera_first_person_object.position));
+                });                
+            } else
+                this.cameras["fly_cam"][0].copy(this.cameras[this.camera][0]);
         }
 
         // if (this.camera_change == "fly_cam" || this.camera_change == "chase_cam") {
@@ -318,6 +330,31 @@ class App {
         this.car_loaded.then( () => {
             this.car_model_slope.add(this.camera_first_person_object);
         });        
+    }
+
+    init_picking_controls() {
+        let controls = new picking_controls(window, scene);
+        this.cameras['picking_cam'] = [controls.camera, controls];        
+        this.car_loaded.then(() => {
+            //controls.objects.push(this.car_model);
+            controls.objects.push(this.car_model);
+        });
+        $(() => {
+            document.addEventListener('keydown', ev => {
+                if (this.camera == 'picking_cam') {
+                    if (ev.keyCode == 79) // 'o'   
+                        controls.update(true);
+                    else if (ev.keyCode == 76) { // 'L'
+                        controls.remove_selected_faces();
+                        // this.car_model_slope.children[0].children[0].children[1].geometry.faces = []
+                    }
+                    else if (ev.keyCode == 75) // 'K'
+                        controls.extend();
+                    else if (ev.keyCode == 186) // 'ö' (';')
+                        controls.undo_last_select();
+                }
+            });
+        });
     }
 
     init_vr() {
@@ -691,6 +728,8 @@ class App {
             this.cameras["fly_cam"][1].update(dt);
         if (this.camera == "orbit_cam")
             this.cameras["orbit_cam"][1].update();
+        if (this.camera == "picking_cam")
+            this.cameras["picking_cam"][1].update();
 
         requestAnimationFrame(this.animate.bind(this));
 

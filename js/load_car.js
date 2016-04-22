@@ -76,6 +76,7 @@ function load_car_parts(callback, meshtype) {
                     materials[1].color.set(9869980); //, 6250851
                     var material = new THREE.MeshFaceMaterial(materials);
                     var object = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(geometry), material);
+                    //var object = new THREE.Mesh(geometry, material);
                     //object.position.set(-0.90351, 0.905721, -0.625575);
                     car_body.add(object);
                     next();
