@@ -450,22 +450,41 @@ class App {
 
     init_fly_cam() {
         let camera = THREE.get_camera();
-
+        let speeds = {
+            "normal": 30,
+            "fast": 100,
+            "slow": 1,
+            "very fast": 300,
+            "very slow": 5
+        };
         let controls = new THREE.FirstPersonControls2(camera, renderer.domElement);
         //controls.dragToLook = true;
-        controls.movementSpeed = 30;
+        controls.movementSpeed = speeds["normal"];
         controls.lookSpeed = 0.2;
         controls.lookVertical = true;
         $(document).ready(function() {
+            let mod = false;
             document.addEventListener('keydown', function(ev) {
-                if (ev.keyCode == 16)
-                    controls.movementSpeed = 100;
-                else if (ev.keyCode == 17)
-                    controls.movementSpeed = 5;
+                if (ev.keyCode == 16) // shift
+                    controls.movementSpeed = speeds[mod ? "very fast" : "fast"];
+                else if (ev.keyCode == 17) // ctlr
+                    controls.movementSpeed = speeds[mod ? "very slow" : "slow"];
+                else if (ev.keyCode == 18) { // alt
+                    mod = true;
+                    let speed = controls.movementSpeed;
+                    if (speed == speeds["slow"]) controls.movementSpeed = speeds["very slow"];
+                    else if (speed == speeds["fast"]) controls.movementSpeed = speeds["very fast"];
+                }
             });
             document.addEventListener('keyup', function(ev) {
                 if (ev.keyCode == 16 || ev.keyCode == 17)
-                    controls.movementSpeed = 30;
+                    controls.movementSpeed = speeds["normal"];
+                else if (ev.keyCode == 18) {
+                    mod = false;
+                    let speed = controls.movementSpeed;
+                    if (speed == speeds["very slow"]) controls.movementSpeed = speeds["slow"];
+                    else if (speed == speeds["very fast"]) controls.movementSpeed = speeds["fast"];
+                }
             });
         });
 
