@@ -18,40 +18,31 @@ function load_json(file, callback) {
     }
 }
 
-var Street = function(no_load_texture, lut_points_per_meter, street_width, segment_points_per_meter) {
-    this.loaded = false;
-    this.street_width = street_width || 20;
-    this.lut_points_per_meter = lut_points_per_meter || 0.1;
-    this.segment_points_per_meter = segment_points_per_meter || 0.1;
-    this.segments = [];
-    this._dists = [];
+class Street {
+    constructor(no_load_texture, lut_points_per_meter, street_width, segment_points_per_meter) {
+        this.loaded = false;
+        this.street_width = street_width || 20;
+        this.lut_points_per_meter = lut_points_per_meter || 0.1;
+        this.segment_points_per_meter = segment_points_per_meter || 0.1;
+        this.segments = [];
+        this._dists = [];
 
 
-    if (!no_load_texture && Street.road_tex === undefined) {
-        var road_tex = new THREE.TextureLoader().load('textures/road.jpg');
-        road_tex.anisotropy = renderer.getMaxAnisotropy();
-        road_tex.wrapT = THREE.RepeatWrapping;
-        road_tex.repeat.set(1, 5);
-        Street.road_tex = road_tex;
+        if (!no_load_texture && Street.road_tex === undefined) {
+            var road_tex = new THREE.TextureLoader().load('textures/road.jpg');
+            road_tex.anisotropy = renderer.getMaxAnisotropy();
+            road_tex.wrapT = THREE.RepeatWrapping;
+            road_tex.repeat.set(1, 5);
+            Street.road_tex = road_tex;
+        }
     }
-}
 
+    vec3toxy(vec3) { return { x: vec3.x, y: vec3.z }; }
 
+    xytovec3(v,y) { return new THREE.Vector3(v.x, y || 0.1, v.y); }
 
-Street.vec3toxy = function(vec3) {
-    return {
-        x: vec3.x,
-        y: vec3.z
-    };
-}
-Street.xytovec3 = function(v,y) {
-    return new THREE.Vector3(v.x, y || 0.1, v.y);
-}
-
-Street.prototype = {
-
-    get_road_position: function(vec3, stats) {
-        var xy = new THREE.Vector2().copy(Street.vec3toxy(vec3)); // 2d point
+    get_road_position(vec3, stats) {
+        var xy = new THREE.Vector2().copy(this.vec3toxy(vec3)); // 2d point
         var dists = this.lut.map(function(l) {
             return misc.distSq2d(xy, l)
         }); // distances of xy to each lut-point
@@ -80,9 +71,9 @@ Street.prototype = {
         stats.add('t', t);
         return t;
         // dp = Math.abs(dp); dp2 = Math.abs(dp2);
-    },
+    }
 
-    create_street_geometry: function(segments, pathfunc) {
+    create_segment_geometry(segments, pathfunc) {
         var polygon = Array((segments + 1) * 2);
         var geo = new THREE.PlaneGeometry(3, segments, 1, segments); //width, height, widthSegments, heightSegments
         for (var i = 0; i <= segments; i++) {
@@ -97,14 +88,14 @@ Street.prototype = {
             geo: geo,
             poly: polygon
         };
-    },
+    }
 
-    add_street_segment: function(curve) {
+    add_street_segment(curve) {
 
         var street_width = this.street_width;
         const segment_points = Math.round(this.segment_points_per_meter * curve.length());
 
-        var geo = this.create_street_geometry(segment_points, function(t) {
+        var geo = this.create_segment_geometry(segment_points, function(t) {
             return [curve.offset(t, 0.5 * street_width), curve.offset(t, -0.5 * street_width)];
         });
 
@@ -121,216 +112,229 @@ Street.prototype = {
 
         //scene.add(street);
         return street;
-    },
+    }
 
-    create_road: function(callback) {
+    create_random_segments() {
+        var origin = new THREE.Vector2(0, 0);
+        var p = new THREE.Vector2(0, 0); // current point
+        var t = new THREE.Vector2(0, 1); // current tangent
+        for (var i = 0; i < 3; i++) {
+            var dev = 0;
+            var p_deviation = rand(-dev * Math.PI, dev * Math.PI); // deviation from current tangent (0.25)
+            var distance = rand(80, 100); //distance from current point
+            var a2_deviation = rand(-dev * Math.PI, dev * Math.PI); // deviation of second (remote) bezier point from straight line
+            var a1_length = rand(10, 0.5 * distance),
+                a2_length = (10, 0.5 * distance); // distances of bezier points from main points
+            var p2 = p.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation), distance);
+            var segment = new Bezier(
+                p,
+                p.clone().addScaledVector(t, a1_length),
+                p2.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation + Math.PI + a2_deviation), a2_length),
+                p2);
+            t.copy(segment.derivative(1)).normalize();
+            p.copy(p2);
+            this.segments.push(segment);
+        }
+    }
+
+    create_segments_from_json() {
+        return new Promise(resolve => {
+            let that = this;
+            load_json('track.study1.json', function(track) {
+                var cfg = {
+                    ver2: true,
+                    deviation_mult: 0.0, //3.0, // max. ~5.4
+                    distance_mult: 0.07, // 0.1
+                    scale: 1000.0
+                };
+                var scale = cfg.scale;
+                var origin = new THREE.Vector2(0, 0);
+                var p = new THREE.Vector2(0, 0);
+                var t = new THREE.Vector2(0, 1); // tangent
+                var first = true,
+                    prev = null;
+                var cur_percent = 0;
+                var signs = track.signs;
+
+                function do_bezier(p_deviation, distance) {
+                    var a2_deviation = p_deviation;
+                    var a1_length = 0.4 * distance,
+                        a2_length = 0.4 * distance;
+                    var p2 = p.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation), distance);
+                    var segment = new Bezier(
+                        p,
+                        p.clone().addScaledVector(t, a1_length),
+                        p2.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation + Math.PI + a2_deviation), a2_length),
+                        p2);
+                    that.segments.push(segment);
+                    //that.add_street_segment(segment);
+                    t.copy(segment.derivative(1)).normalize();
+                    p.copy(p2);
+                    return segment.length();
+                }
+
+                function proc_sign(sign) {
+                    var p_deviation = (sign.type == 13 ? -0.2 : 0.2) * sign.intensity * sign.duration * cfg.deviation_mult;
+                    var distance = (sign.duration) * scale * cfg.distance_mult;
+                    return do_bezier(p_deviation, distance) / scale;
+                }
+
+                function proc_prev_sign(prev, cur_percent) {
+                    var p_deviation = (prev.type == 13 ? -0.2 : 0.2) * Math.PI;
+                    var distance = (cur_percent - prev.percent) * scale;
+                    do_bezier(p_deviation, distance);
+                }
+                for (var i = 0; i < signs.length; i++) {
+                    var sign = signs[i];
+                    if (sign.type >= 13) {
+                        if (cfg.ver2) {
+                            // var p0 = p.clone();
+                            var percent1 = (sign.percent - cur_percent);
+                            if (percent1 > 0) {
+                                do_bezier(0, percent1 * scale);
+                            }
+                            cur_percent += Math.max(percent1, 0) + proc_sign(sign);
+                        } else {
+                            if (first) {
+                                do_bezier(0, sign.percent * scale);
+                                first = false;
+                            } else {
+                                proc_prev_sign(prev, sign.percent);
+                            }
+                            prev = sign;
+                        }
+                    }
+                }
+                if (cfg.ver2) {
+                    if (cur_percent < 1) {
+                        do_bezier(0, (1 - cur_percent) * scale);
+                    }
+                } else
+                    proc_prev_sign(prev, 1);
+                resolve();
+            }); // getJSON
+        });
+    }
+
+    apply_height_from_json() {
+        return new Promise(resolve => {
+            let that = this;
+            load_json('track.study1.json', function(track) {
+                var segments = that.segments;
+                var ps = track.points; //$.extend(true, [], track.points);
+                var scale_x = that.poly_bezier.total_length / track.points[track.points.length - 1].x;
+                for (let i = 0; i < ps.length; i++) {
+                    ps[i].x *= scale_x;
+                    ps[i].y = (ps[i].y - 82) * 0.3; // <-- y scale <-- 0.3 (testweise vllt auch 1.3)
+                }
+                var tpb = new Bezier.PolyBezier(); // track height profile's poly bezier
+                for (let i = 0; i < ps.length - 2; i += 3) {
+                    tpb.addCurve(new Bezier(ps[i], ps[i + 1], ps[i + 2], ps[i + 3]));
+                }
+                tpb.cacheLengths();
+
+                var pb = that.poly_bezier;
+                var t0 = 0;
+                segments.forEach(function(s, i) {
+                    var pi = pb.parts[i];
+                    var vertices = s.geometry.vertices;
+                    var segment_points = s.segment_points;
+                    for (var j = 0; j <= segment_points; j++) {
+                        var t = t0 + j / segment_points * pi;
+                        var y = tpb.get(t).y
+                        vertices[j * 2].y = vertices[j * 2 + 1].y = y;
+                    }
+                    // var lut_points = s.lut_points;
+                    // s.lut.forEach(function(l, i) {
+                    //     var t = i / lut_points;
+                    //     l.height = tpb.get(t0 + i / lut_points * pi).y; // TODO: do we really need that?
+                    //     l.normal = s.curve.normal(t);
+                    // });
+                    s.geometry.verticesNeedUpdate = true;
+                    t0 = pb.bounds[i];
+                });
+                that.height_profile = tpb;
+                var lut_points = Math.round(that.lut_points_per_meter * that.poly_bezier.total_length);
+                that.lut = [];
+                for (var i = 0; i <= lut_points; i++) {
+                    var t = i / lut_points;
+                    var p = that.poly_bezier.get(t);
+                    p.normal = that.poly_bezier.normal(t);
+                    p.d = new THREE.Vector2().copy(that.poly_bezier.derivative(t)).normalize();
+                    p.t = t;
+                    p.height = tpb.get(t).y;
+                    that.lut.push(p);
+                }
+                that.lut_points = lut_points;
+
+                resolve();
+            });
+        });
+    }
+
+    create_geometry() {
+        this.segments = this.segments.map(v => {
+            return this.add_street_segment(v);
+        });
+        this.poly_bezier = new Bezier.PolyBezier(this.segments.map(v => {
+            return v.curve
+        }));
+        this.poly_bezier.cacheLengths();
+        this.segments[0].accumulated_road_length = 0;
+        for (var i = 1; i < this.segments.length; i++)
+            this.segments[i].accumulated_road_length = this.poly_bezier.acc_lengths[i - 1];
+    }
+
+    create_mesh() {
+        let mat = new THREE.MeshBasicMaterial({
+            map: Street.road_tex,
+            color: 0x5d5d88,
+            side: THREE.DoubleSide,
+            wireframe: false
+        });                    
+        this.street_mesh = new THREE.Object3D();
+        this.segments.forEach(v => {
+            v.geometry.computeBoundingSphere();
+            v.geometry.boundingSphere.radius *= 1.1;
+            v.mesh = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(v.geometry), mat);
+            //v.material = v.mesh.material;
+            // v.mesh = new THREE.Mesh(v.geometry, mat);
+            this.street_mesh.add(v.mesh);
+        });
+        scene.add(this.street_mesh);
+    }
+
+
+    create_road(callback) {
         var that = this;
         async.series([
 
             function(next) {
                 if (false) { //eslint-disable-line no-constant-condition
-                    var origin = new THREE.Vector2(0, 0);
-                    var p = new THREE.Vector2(0, 0); // current point
-                    var t = new THREE.Vector2(0, 1); // current tangent
-                    for (var i = 0; i < 3; i++) {
-                        var dev = 0;
-                        var p_deviation = rand(-dev * Math.PI, dev * Math.PI); // deviation from current tangent (0.25)
-                        var distance = rand(80, 100); //distance from current point
-                        var a2_deviation = rand(-dev * Math.PI, dev * Math.PI); // deviation of second (remote) bezier point from straight line
-                        var a1_length = rand(10, 0.5 * distance),
-                            a2_length = (10, 0.5 * distance); // distances of bezier points from main points
-                        var p2 = p.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation), distance);
-                        var segment = new Bezier(
-                            p,
-                            p.clone().addScaledVector(t, a1_length),
-                            p2.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation + Math.PI + a2_deviation), a2_length),
-                            p2);
-                        t.copy(segment.derivative(1)).normalize();
-                        p.copy(p2);
-                        this.segments.push(segment);
-                        next();
-                        //this.add_street_segment(segment);
-                        //      var segments = that.segments;
-                        //      segments[0].accumulated_road_length = 0;
-                        //      for (var i = 1; i < segments.length; i++) {
-                        // segments[i].accumulated_road_length = segments[i-1].accumulated_road_length + segments[i-1].road_length;
-                        //      }
-                        //      var segment_points = that.segment_points;
-                    }
+                    that.create_random_segments();
+                    next();
                 } else {
-                    load_json('track.study1.json', function(track) {
-                        var cfg = {
-                            ver2: true,
-                            deviation_mult: 5.4,
-                            distance_mult: 0.1,
-                            scale: 1000.0
-                        };
-                        var scale = cfg.scale;
-                        var origin = new THREE.Vector2(0, 0);
-                        var p = new THREE.Vector2(0, 0);
-                        var t = new THREE.Vector2(0, 1); // tangent
-                        var first = true,
-                            prev = null;
-                        var cur_percent = 0;
-                        var signs = track.signs;
-
-                        function do_bezier(p_deviation, distance) {
-                            var a2_deviation = p_deviation;
-                            var a1_length = 0.4 * distance,
-                                a2_length = 0.4 * distance;
-                            var p2 = p.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation), distance);
-                            var segment = new Bezier(
-                                p,
-                                p.clone().addScaledVector(t, a1_length),
-                                p2.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation + Math.PI + a2_deviation), a2_length),
-                                p2);
-                            that.segments.push(segment);
-                            //that.add_street_segment(segment);
-                            t.copy(segment.derivative(1)).normalize();
-                            p.copy(p2);
-                            return segment.length();
-                        }
-
-                        function proc_sign(sign) {
-                            var p_deviation = (sign.type == 13 ? -0.2 : 0.2) * sign.intensity * sign.duration * cfg.deviation_mult;
-                            var distance = (sign.duration) * scale * cfg.distance_mult;
-                            return do_bezier(p_deviation, distance) / scale;
-                        }
-
-                        function proc_prev_sign(prev, cur_percent) {
-                            var p_deviation = (prev.type == 13 ? -0.2 : 0.2) * Math.PI;
-                            var distance = (cur_percent - prev.percent) * scale;
-                            do_bezier(p_deviation, distance);
-                        }
-                        for (var i = 0; i < signs.length; i++) {
-                            var sign = signs[i];
-                            if (sign.type >= 13) {
-                                if (cfg.ver2) {
-                                    // var p0 = p.clone();
-                                    var percent1 = (sign.percent - cur_percent);
-                                    if (percent1 > 0) {
-                                        do_bezier(0, percent1 * scale);
-                                    }
-                                    cur_percent += Math.max(percent1, 0) + proc_sign(sign);
-                                } else {
-                                    if (first) {
-                                        do_bezier(0, sign.percent * scale);
-                                        first = false;
-                                    } else {
-                                        proc_prev_sign(prev, sign.percent);
-                                    }
-                                    prev = sign;
-                                }
-                            }
-                        }
-                        if (cfg.ver2) {
-                            if (cur_percent < 1) {
-                                do_bezier(0, (1 - cur_percent) * scale);
-                            }
-                        } else
-                            proc_prev_sign(prev, 1);
-                        next();
-
-                        //      var segments = that.segments;
-                        //       segments[0].accumulated_road_length = 0;
-                        //      for (var i = 1; i < segments.length; i++) {
-                        // segments[i].accumulated_road_length = segments[i-1].accumulated_road_length + segments[i-1].road_length;
-                        //      }
-                        //      var segment_points = that.segment_points;
-
-                    }); // getJSON
+                    that.create_segments_from_json().then( () => { next(); } );
                 }
             },
             function(next) {
-                that.segments = that.segments.map(function(v) {
-                    return that.add_street_segment(v);
-                });
-                that.poly_bezier = new Bezier.PolyBezier(that.segments.map(function(v) {
-                    return v.curve
-                }));
-                that.poly_bezier.cacheLengths();
-                that.segments[0].accumulated_road_length = 0;
-                for (var i = 1; i < that.segments.length; i++)
-                    that.segments[i].accumulated_road_length = that.poly_bezier.acc_lengths[i - 1];
+                that.create_geometry();
                 next();
             },
             function(next) {
-                load_json('track.study1.json', function(track) {
-                    var segments = that.segments;
-                    var ps = track.points; //$.extend(true, [], track.points);
-                    var scale_x = that.poly_bezier.total_length / track.points[track.points.length - 1].x;
-                    for (let i = 0; i < ps.length; i++) {
-                        ps[i].x *= scale_x;
-                        ps[i].y = (ps[i].y - 82) * 1.3; // <-- y scale <-- 0.3
-                    }
-                    var tpb = new Bezier.PolyBezier(); // track height profile's poly bezier
-                    for (let i = 0; i < ps.length - 2; i += 3) {
-                        tpb.addCurve(new Bezier(ps[i], ps[i + 1], ps[i + 2], ps[i + 3]));
-                    }
-                    tpb.cacheLengths();
-
-                    var pb = that.poly_bezier;
-                    var t0 = 0;
-                    segments.forEach(function(s, i) {
-                        var pi = pb.parts[i];
-                        var vertices = s.geometry.vertices;
-                        var segment_points = s.segment_points;
-                        for (var j = 0; j <= segment_points; j++) {
-                            var t = t0 + j / segment_points * pi;
-                            var y = tpb.get(t).y
-                            vertices[j * 2].y = vertices[j * 2 + 1].y = y;
-                        }
-                        // var lut_points = s.lut_points;
-                        // s.lut.forEach(function(l, i) {
-                        //     var t = i / lut_points;
-                        //     l.height = tpb.get(t0 + i / lut_points * pi).y; // TODO: do we really need that?
-                        //     l.normal = s.curve.normal(t);
-                        // });
-                        s.geometry.verticesNeedUpdate = true;
-                        t0 = pb.bounds[i];
-                    });
-                    that.height_profile = tpb;
-                    var lut_points = Math.round(that.lut_points_per_meter * that.poly_bezier.total_length);
-                    that.lut = [];
-                    for (var i = 0; i <= lut_points; i++) {
-                        var t = i / lut_points;
-                        var p = that.poly_bezier.get(t);
-                        p.normal = that.poly_bezier.normal(t);
-                        p.d = new THREE.Vector2().copy(that.poly_bezier.derivative(t)).normalize();
-                        p.t = t;
-                        p.height = tpb.get(t).y;
-                        that.lut.push(p);
-                    }
-                    that.lut_points = lut_points;
-
-                    next();
-                });
+                that.apply_height_from_json().then( () => { next(); } );
             },
             function(next) {
                 if (!isNode) {
-                    let mat = new THREE.MeshBasicMaterial({
-                        map: Street.road_tex,
-                        color: 0x5d5d88,
-                        side: THREE.DoubleSide,
-                        wireframe: false
-                    });                    
-                    that.street_mesh = new THREE.Object3D();
-                    that.segments.forEach(function(v) {
-                        v.geometry.computeBoundingSphere();
-                        v.geometry.boundingSphere.radius *= 1.1;
-                        v.mesh = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(v.geometry), mat);
-                        //v.material = v.mesh.material;
-                        // v.mesh = new THREE.Mesh(v.geometry, mat);
-                        that.street_mesh.add(v.mesh);
-                    });
-                    scene.add(that.street_mesh);
+                    that.create_mesh();
                 }
                 that.loaded = true;
                 next();
             }
         ], callback);
-    }, // create_road
-    show_lut_points: function() {
+    }
+
+    show_lut_points() {
         const sphere = new THREE.SphereGeometry(0.3);
         const material = new THREE.MeshBasicMaterial({
             color: 0xffff00
@@ -349,7 +353,7 @@ Street.prototype = {
         //     })
         // });
     }
-};
+}
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Street;

@@ -282,7 +282,7 @@ class App {
             const d = street_bezier.derivative(t);
             const y = street.height_profile.get(t).y;
             p.addScaledVector(n, 0.5 * street.street_width);
-            sign.position.copy(Street.xytovec3(p,y));
+            sign.position.copy(street.xytovec3(p,y));
             sign.rotation.y = Math.atan2(d.x,d.y);
             scene.add(sign);
         });
@@ -302,7 +302,7 @@ class App {
     //                 var p = segment.curve.offset(t, street.street_width/2 * (start_from_end_of_street ? -1 : 1));
     //                 var d = segment.curve.derivative(t);
     //                 var sign = stop_sign.clone();
-    //                 sign.position.copy(Street.xytovec3(p));
+    //                 sign.position.copy(street.xytovec3(p));
     //                 sign.position.y -= 2;
     //                 //console.log(Math.atan2(d.x,d.y));
     //                 sign.rotation.y = Math.atan2(d.x,d.y) + (start_from_end_of_street ? Math.PI : 0); //pos * Math.PI / 200;
@@ -508,7 +508,7 @@ class App {
         // if (start_from_end_of_street) {
         //     var curve = street.segments[street.segments.length-1].curve;
         //     //curve = street.segments[3].curve;
-        //     var p = Street.xytovec3(curve.get(1));
+        //     var p = street.xytovec3(curve.get(1));
         //     car2d.position.x = p.z;
         //     car2d.position.y = -p.x;
         //     var d = curve.derivative(1);
@@ -517,7 +517,7 @@ class App {
         //     car2d.heading = angle;
         // }
         this.street_loaded.then(street => {
-            const p = Street.xytovec3(street.poly_bezier.get(t));
+            const p = street.xytovec3(street.poly_bezier.get(t));
             this.car2d.setFromPosition3d(p);
             const d = street.poly_bezier.derivative(t);
             const angle = -Math.atan2(d.x,d.y) + (reverse ? Math.PI : 0);
@@ -691,7 +691,7 @@ class App {
             var t = street.get_road_position(car_model.position, car_stats);
             if (!on_track) {
                 const p = street.poly_bezier.get(t);
-                const xy = new THREE.Vector2().copy(Street.vec3toxy(car_model.position));
+                const xy = new THREE.Vector2().copy(street.vec3toxy(car_model.position));
                 const normal = new THREE.Vector2().copy(street.poly_bezier.normal(t));
                 const dp = normal.dot(xy.clone().sub(p));
                 if (true && Math.abs(dp) > 10) {
