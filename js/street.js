@@ -5,6 +5,8 @@ let THREE = isNode ? module.require('three') : window.THREE;
 
 var Bezier = require('./lib/bezier.js');
 let async = require("../bower_components/async/dist/async.js");
+let misc = require("./misc.js");
+let rand = misc.rand;
 
 function load_json(file, callback) {
     if (isNode) {
@@ -14,10 +16,6 @@ function load_json(file, callback) {
     } else {
         $.getJSON(file, callback);
     }
-}
-
-function rand(min, max) {
-    return Math.random() * (max - min) + min
 }
 
 var Street = function(no_load_texture, lut_points_per_meter, street_width, segment_points_per_meter) {
@@ -38,32 +36,7 @@ var Street = function(no_load_texture, lut_points_per_meter, street_width, segme
     }
 }
 
-function find_two_smallest_values(array) {
-    console.assert(array.length >= 2);
-    var first = Number.MAX_VALUE;
-    var second = Number.MAX_VALUE;
-    var ifirst = 0,
-        isecond = 0;
-    for (var i = 0, len = array.length; i < len; i++) {
-        var d = array[i];
-        if (d < first) {
-            second = first;
-            isecond = ifirst;
-            first = d;
-            ifirst = i;
-        } else if (d < second) {
-            second = d;
-            isecond = i;
-        }
-    }
-    return [ifirst, isecond, first, second];
-}
 
-function distSq2d(p1, p2) {
-    var dx = p2.x - p1.x,
-        dy = p2.y - p1.y;
-    return dx * dx + dy * dy;
-}
 
 Street.vec3toxy = function(vec3) {
     return {
@@ -80,9 +53,9 @@ Street.prototype = {
     get_road_position: function(vec3, stats) {
         var xy = new THREE.Vector2().copy(Street.vec3toxy(vec3)); // 2d point
         var dists = this.lut.map(function(l) {
-            return distSq2d(xy, l)
+            return misc.distSq2d(xy, l)
         }); // distances of xy to each lut-point
-        var nearest = find_two_smallest_values(dists);
+        var nearest = misc.find_two_smallest_values(dists);
         var i = nearest[0]; // get nearest point
         var p = this.lut[i];
         var d = p.d; // get derivative at this point
