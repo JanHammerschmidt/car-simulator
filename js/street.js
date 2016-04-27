@@ -26,6 +26,8 @@ class Street {
         this.segment_points_per_meter = segment_points_per_meter || 0.1;
         this.segments = [];
         this._dists = [];
+        this.height_profile = new Bezier({x:0,y:0},{x:1,y:0},{x:2,y:0},{x:3,y:0});
+        this.height_profile.total_length = 3;
 
 
         if (!no_load_texture && Street.road_tex === undefined) {
@@ -116,10 +118,10 @@ class Street {
 
     create_random_segments() {
         var origin = new THREE.Vector2(0, 0);
-        var p = new THREE.Vector2(0, 0); // current point
+        var p = new THREE.Vector2(0, 0); // current/starting point
         var t = new THREE.Vector2(0, 1); // current tangent
-        for (var i = 0; i < 3; i++) {
-            var dev = 0;
+        for (var i = 0; i < 20; i++) {
+            const dev = 0.25;
             var p_deviation = rand(-dev * Math.PI, dev * Math.PI); // deviation from current tangent (0.25)
             var distance = rand(80, 100); //distance from current point
             var a2_deviation = rand(-dev * Math.PI, dev * Math.PI); // deviation of second (remote) bezier point from straight line
@@ -149,7 +151,7 @@ class Street {
                 };
                 var scale = cfg.scale;
                 var origin = new THREE.Vector2(0, 0);
-                var p = new THREE.Vector2(0, 0);
+                var p = new THREE.Vector2(0, 0); // current/starting point
                 var t = new THREE.Vector2(0, 1); // tangent
                 var first = true,
                     prev = null;
@@ -254,22 +256,24 @@ class Street {
                     t0 = pb.bounds[i];
                 });
                 that.height_profile = tpb;
-                var lut_points = Math.round(that.lut_points_per_meter * that.poly_bezier.total_length);
-                that.lut = [];
-                for (var i = 0; i <= lut_points; i++) {
-                    var t = i / lut_points;
-                    var p = that.poly_bezier.get(t);
-                    p.normal = that.poly_bezier.normal(t);
-                    p.d = new THREE.Vector2().copy(that.poly_bezier.derivative(t)).normalize();
-                    p.t = t;
-                    p.height = tpb.get(t).y;
-                    that.lut.push(p);
-                }
-                that.lut_points = lut_points;
-
                 resolve();
             });
         });
+    }
+
+    calculate_lut_points() {
+        let lut_points = Math.round(this.lut_points_per_meter * this.poly_bezier.total_length);
+        this.lut = [];
+        for (var i = 0; i <= lut_points; i++) {
+            var t = i / lut_points;
+            var p = this.poly_bezier.get(t);
+            p.normal = this.poly_bezier.normal(t);
+            p.d = new THREE.Vector2().copy(this.poly_bezier.derivative(t)).normalize();
+            p.t = t;
+            p.height = this.height_profile.get(t).y
+            this.lut.push(p);
+        }
+        this.lut_points = lut_points;
     }
 
     create_geometry() {
@@ -305,12 +309,12 @@ class Street {
     }
 
 
-    create_road(callback) {
+    create_road(random, callback) {
         var that = this;
         async.series([
 
             function(next) {
-                if (false) { //eslint-disable-line no-constant-condition
+                if (random) {
                     that.create_random_segments();
                     next();
                 } else {
@@ -322,9 +326,13 @@ class Street {
                 next();
             },
             function(next) {
-                that.apply_height_from_json().then( () => { next(); } );
+                if (random)
+                    next();
+                else
+                    that.apply_height_from_json().then( () => { next(); } );
             },
             function(next) {
+                that.calculate_lut_points();
                 if (!isNode) {
                     that.create_mesh();
                 }

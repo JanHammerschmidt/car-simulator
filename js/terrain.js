@@ -36,20 +36,25 @@ Terrain.prototype = {
     vertices: function() {
         return this.geometry.vertices; //.map(function(v){return v.;});
     },
-    p2height: function(p) {
-        const that = this;
-        var dx = (p.x - that._x0) * that.widthSegments / that.width;
-        var dy = (that._y0 - p.y) * that.heightSegments / that.height;
+    p2height: function(p) { // based on bilinear interpolation
+        if (!this.zvalues)
+            return 0;
+        var dx = (p.x - this._x0) * this.widthSegments / this.width;
+        var dy = (this._y0 - p.y) * this.heightSegments / this.height;
         const x = Math.floor(dx);
         dx -= x;
         const y = Math.floor(dy);
         dy -= y;
-        const z = that.zvalues;
-        const w1 = that.widthSegments + 1;
+        const z = this.zvalues;
+        const w1 = this.widthSegments + 1;
         return z[x + y * w1] * (1 - dx) * (1 - dy) + z[x + 1 + y * w1] * dx * (1 - dy) +
             z[x + (y + 1) * w1] * (1 - dx) * dy + z[x + 1 + (y + 1) * w1] * dx * dy;
     },
-    adjust_height: function(callback) {
+    adjust_height: function(no_adjustment, callback) {
+        if (no_adjustment) {
+            callback && callback();
+            return;
+        }
         var that = this;
         $.getJSON('terrain.json', function(obj) {
             console.assert(obj.length == that.vertices().length);

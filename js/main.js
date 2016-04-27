@@ -2,7 +2,8 @@
 
 let cfg = {
     do_vr: false,
-    do_sound: false
+    do_sound: false,
+    random_street: true
 }
 
 if (cfg.do_vr) {
@@ -128,7 +129,7 @@ class App {
 
         TrafficLight.load_model();
         this.terrain = new Terrain();
-        this.terrain.adjust_height(() => {
+        this.terrain.adjust_height(cfg.random_street, () => {
             this.terrain.rotate();
             scene.add(this.terrain.create_mesh());
         });
@@ -493,8 +494,9 @@ class App {
 
     init_street() {
         this.street = new Street();
-        this.street.create_road(() => {
+        this.street.create_road(cfg.random_street, () => {
             //scene.add(street);
+            this.street.show_lut_points();
             this.street_loaded.resolve(this.street);
 
             this.street.street_mesh.position.y = 0.53;
