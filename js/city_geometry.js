@@ -1,16 +1,7 @@
 'use strict';
 
-// function distSq(x1, y1, x2, y2) {
-//     var dx = x2 - x1,
-//         dy = y2 - y1;
-//     return dx * dx + dy * dy;
-// }
-
-function distSq2d(p1, p2) {
-    var dx = p2.x - p1.x,
-        dy = p2.y - p1.y;
-    return dx * dx + dy * dy;
-}
+const misc = require("./misc.js");
+const distSq2d = misc.distSq2d;
 
 function generateTexture() {
 
@@ -74,7 +65,8 @@ var create_city_geometry = function(street, num_buildings)
         var min_dist = 9999999,
             idx = 0,
             point = 0;
-        for (let l of street.lut) {
+        for (var i = 0; i < street.lut.length; i++) {
+            const l = street.lut[i];
             const ds = distSq2d(l,p);
             if (ds < min_dist) {
                 min_dist = ds;
@@ -87,6 +79,7 @@ var create_city_geometry = function(street, num_buildings)
     for (var i = 0; i < num_buildings; i++) {
         building.position.x = Math.floor(Math.random() * 200 - 100) * 10;
         building.position.z = Math.floor(Math.random() * 200 - 100) * 10;
+        building.position.y = building.position.z; // this is just for nearestPoint (uses .x / .y)
         var pp = nearestPoint(building.position);
         if (pp[0] < 400)
             continue;
@@ -95,9 +88,9 @@ var create_city_geometry = function(street, num_buildings)
         building.rotation.y = Math.random();
         building.scale.x = building.scale.z = Math.random() * Math.random() * Math.random() * Math.random() * 50 + 20;
         building.scale.y = (Math.random() * Math.random() * Math.random() * building.scale.x) * 8 + 18;
-        if (Math.sqrt(2)*building.scale.x > dist)
+        if (Math.sqrt(2)*building.scale.x > dist) // why is this dist .. and not a fixed value, like (again) 400?
             continue;
-
+        building.position.y = 0;
 
         geometry = building.geometry;
 
