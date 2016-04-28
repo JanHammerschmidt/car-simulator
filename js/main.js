@@ -145,6 +145,7 @@ class App {
         this.init_car();
         this.load_stop_sign();
         this.init_gauge();
+        this.add_crossing(0.13);
         keyboard_input.init();
 
         this.stop_sign_loaded.then(stop_sign => {
@@ -611,6 +612,31 @@ class App {
         //gf.open();
         // this.gauge = gauge;
         this.gauge_needle = gauge_needle;
+    }
+
+    add_crossing(t) {
+        this.street_loaded.then( street => {
+            const crossing = new Street();
+            this.crossing = crossing;
+            crossing.starting_point.copy(street.poly_bezier.get(t))
+            crossing.starting_tangent.copy(street.poly_bezier.normal(t));
+            crossing.starting_point.addScaledVector(crossing.starting_tangent, -street.street_width/2);
+            crossing.create_road(true, () => {
+                crossing.street_mesh.position.y = 0.54;
+            });
+        });
+
+        // this.street = new Street();
+        // this.street.create_road(cfg.random_street, () => {
+        //     //scene.add(street);
+        //     this.street.show_lut_points();
+        //     this.street_loaded.resolve(this.street);
+
+        //     this.street.street_mesh.position.y = 0.53;
+        //     var f = this.gui.addFolder('street position');
+        //     f.addnum(this.street.street_mesh.position, 'y');       
+        // });        
+
     }
 
     animate(time) {
