@@ -168,6 +168,10 @@ class App {
         requestAnimationFrame(this.animate.bind(this));
 
         this.gui.close();
+
+        this.active = true;
+        $(window).focus(() => { this.active = true; });
+        $(window).blur(() => { this.active = false; });        
     }
 
     init_cameras(default_cam) {
@@ -752,7 +756,10 @@ class App {
         if (this.camera == "picking_cam")
             this.cameras["picking_cam"][1].update();
 
-        requestAnimationFrame(this.animate.bind(this));
+        if (this.active)
+            requestAnimationFrame(this.animate.bind(this));
+        else
+            setTimeout(() => {this.animate();}, 500);
 
         if (this.camera == "vr_cam") {
             this.cameras["vr_cam"][1].update();
