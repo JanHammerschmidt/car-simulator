@@ -4,7 +4,7 @@ var isNode = (typeof window == 'undefined'); // || this != window;
 let THREE = isNode ? module.require('three') : window.THREE;
 
 var Bezier = require('./lib/bezier.js');
-let async = require("../bower_components/async/dist/async.js");
+// let async = require("../bower_components/async/dist/async.js");
 let misc = require("./misc.js");
 let rand = misc.rand;
 
@@ -310,36 +310,23 @@ class Street {
 
 
     create_road(random, callback) {
-        var that = this;
-        async.series([
-
-            function(next) {
-                if (random) {
-                    that.create_random_segments();
-                    next();
-                } else {
-                    that.create_segments_from_json().then( () => { next(); } );
-                }
-            },
-            function(next) {
-                that.create_geometry();
-                next();
-            },
-            function(next) {
-                if (random)
-                    next();
-                else
-                    that.apply_height_from_json().then( () => { next(); } );
-            },
-            function(next) {
-                that.calculate_lut_points();
-                if (!isNode) {
-                    that.create_mesh();
-                }
-                that.loaded = true;
-                next();
+        (random 
+            ? new Promise(resolve => { this.create_random_segments(); resolve() }) 
+            : this.create_segments_from_json()
+        ).then(() => {
+            this.create_geometry();
+            return (random
+                ? Promise.resolve()
+                : this.apply_height_from_json()
+            );
+        }).then( () => {
+            this.calculate_lut_points();
+            if (!isNode) {
+                this.create_mesh();
             }
-        ], callback);
+            this.loaded = true;            
+            callback();
+        });
     }
 
     show_lut_points() {
