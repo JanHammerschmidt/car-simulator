@@ -179,8 +179,8 @@ class App {
         this.init_first_person_cam();
         this.init_chase_cam();
         this.init_fly_cam();
-        this.init_picking_controls();
-        this.init_orbit_cam();
+        // this.init_picking_controls();
+        //this.init_orbit_cam();
         if (cfg.do_vr)
             this.init_vr();
         this.camera = default_cam;
@@ -215,13 +215,14 @@ class App {
         }
 
         if (this.camera_change == "fly_cam") {
+            this.fly_cam.copy(this.cameras[this.camera][0]);
+            this.fly_controls.headingFromCameraMatrix(this.cameras[this.camera][0].matrixWorld);
             if (this.camera == "first_person_cam") {
                 this.car_loaded.then(() => {
-                    this.cameras["fly_cam"][0].position.copy(
+                    this.fly_cam.position.copy(
                         this.car_model.position.clone().add(this.camera_first_person_object.position));
-                });                
-            } else
-                this.cameras["fly_cam"][0].copy(this.cameras[this.camera][0]);
+                });
+            }
         }
 
         // if (this.camera_change == "fly_cam" || this.camera_change == "chase_cam") {
@@ -318,15 +319,16 @@ class App {
     // }
 
     init_chase_cam() {
-        let camera = THREE.get_camera();
+        this.chase_camera = THREE.get_camera();
 
-        let controls = new chase_cam(camera, new THREE.Vector3(0,5,0), new THREE.Vector3(0,20,-40)); //new THREE.Vector3(0,20,-40));
+        let controls = new chase_cam(this.chase_camera, new THREE.Vector3(0,5,0), new THREE.Vector3(0,20,-40)); //new THREE.Vector3(0,20,-40));
         var f = this.gui.addFolder('chase_cam');
         f.add(controls.dist_vector, 'x');
         f.add(controls.dist_vector, 'y');
         f.add(controls.dist_vector, 'z');
 
-        this.cameras['chase_cam'] = [camera, controls];
+        this.cameras['chase_cam'] = [this.chase_camera, controls];
+        this.chase_controls = controls;
     }
 
     init_first_person_view() {
@@ -434,23 +436,24 @@ class App {
     }
 
     init_orbit_cam() {
-        let camera = THREE.get_camera();
+        const camera = THREE.get_camera();
         camera.lookAt(new THREE.Vector3(0, 0, 1));
         camera.position.z = -0.01;
 
-        let cam = new THREE.Object3D();
+        const cam = new THREE.Object3D();
         cam.position.set(0.37,1.36,0.09);
         cam.add(camera);
         this.car_loaded.then( () => {
             this.car_model_slope.add(cam);
         });
 
-        let controls = new THREE.OrbitControls(camera, renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enablePan = false;
         controls.enabled = false;
 
         this.cameras['orbit_cam'] = [camera, controls];
-
+        this.orbit_cam = camera;
+        this.orbit_controls = controls;
     }    
 
     init_fly_cam() {
@@ -494,6 +497,8 @@ class App {
         });
 
         this.cameras['fly_cam'] = [camera, controls];
+        this.fly_cam = camera;
+        this.fly_controls = controls;
     }
 
     init_street() {
@@ -506,7 +511,7 @@ class App {
             this.street.street_mesh.position.y = 0.53;
             var f = this.gui.addFolder('street position');
             f.addnum(this.street.street_mesh.position, 'y');       
-        });        
+        });
     }
 
     jump_to_street_position(t, reverse) {

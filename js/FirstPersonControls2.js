@@ -35,10 +35,10 @@ THREE.FirstPersonControls2 = function ( object, domElement ) {
 	this.mouseX = 0;
 	this.mouseY = 0;
 
-	this.lat = 0;
-	this.lon = 0;
-	this.phi = 0;
-	this.theta = 0;
+	this.lat = 0; // pitch in deg (status variable!)
+	this.lon = 90; // yaw in deg (status variable)
+	this.phi = 0; //pitch-axis (nach oben/unten schauen) / wird von lat berechnet
+	this.theta = 0; // lon in rad
 
 	this.moveForward = false;
 	this.moveBackward = false;
@@ -125,7 +125,13 @@ THREE.FirstPersonControls2 = function ( object, domElement ) {
 		switch ( event.keyCode ) {
 
 			//case 38: /*up*/
-			case 87: /*W*/ this.moveForward = true; break;
+			case 87: /*W*/ this.moveForward = true; 
+				// console.log("lat", this.lat);
+				// console.log("lon", this.lon);
+				// console.log("phi", this.phi);
+				// console.log("theta", this.theta);
+				// console.log();
+			break;
 
 			//case 37: /*left*/
 			case 65: /*A*/ this.moveLeft = true; break;
@@ -165,6 +171,15 @@ THREE.FirstPersonControls2 = function ( object, domElement ) {
 		}
 
 	};
+
+	this.headingFromCameraMatrix = function( m ) {
+		const e = new THREE.Euler(0,0,0, "YXZ");
+		e.setFromRotationMatrix(m, "YXZ");
+		//console.log(e);
+		this.lon = THREE.Math.radToDeg(-e.y - 0.5*Math.PI);
+		this.lat = THREE.Math.radToDeg(e.x);
+		
+	}
 
 	this.update = function( delta ) {
 
