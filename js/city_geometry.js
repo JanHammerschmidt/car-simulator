@@ -39,7 +39,7 @@ function generateTexture() {
 
 }
 
-var create_city_geometry = function(streets, num_buildings)
+var create_city_geometry = function(streets, terrain, num_buildings)
 {
 	num_buildings = num_buildings || 2000;
 
@@ -92,10 +92,10 @@ var create_city_geometry = function(streets, num_buildings)
 
         building.rotation.y = Math.random();
         building.scale.x = building.scale.z = Math.random() * Math.random() * Math.random() * Math.random() * 50 + 20;
-        building.scale.y = (Math.random() * Math.random() * Math.random() * building.scale.x) * 8 + 18;
+        building.scale.y = (Math.random() * Math.random() * Math.random() * building.scale.x) * 8 + 21;
         if (Math.sqrt(2)*building.scale.x > dist) // why is this dist .. and not a fixed value, like (again) 400?
             continue;
-        building.position.y = 0;
+        building.position.y = terrain.p2height(building.position) - 3;
 
         geometry = building.geometry;
 

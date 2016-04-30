@@ -47,6 +47,8 @@ Terrain.prototype = {
         dy -= y;
         const z = this.zvalues;
         const w1 = this.widthSegments + 1;
+        if (x + (y + 1) * w1 >= z.length || x + y * w1 < 0)
+            return 0;
         return z[x + y * w1] * (1 - dx) * (1 - dy) + z[x + 1 + y * w1] * dx * (1 - dy) +
             z[x + (y + 1) * w1] * (1 - dx) * dy + z[x + 1 + (y + 1) * w1] * dx * dy;
     },

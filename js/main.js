@@ -116,10 +116,13 @@ class App {
 
         TrafficLight.load_model();
         this.terrain = new Terrain();
-        this.terrain.adjust_height(cfg.random_street, () => {
-            this.terrain.rotate();
-            scene.add(this.terrain.create_mesh());
-        });
+        this.terrain_loaded = new Promise(resolve => {
+            this.terrain.adjust_height(cfg.random_street, () => {
+                this.terrain.rotate();
+                scene.add(this.terrain.create_mesh());
+                resolve(this.terrain);
+            });            
+        })
         
         this.init_car2d();
         this.init_cameras("first_person_cam");
@@ -129,8 +132,8 @@ class App {
 
         this.signs_loaded = this.place_signs();
 
-        Promise.all([this.street_loaded, this.signs_loaded]).then(() => {
-            scene.add(create_city_geometry(this.streets));
+        Promise.all([this.street_loaded, this.signs_loaded, this.terrain_loaded]).then(() => {
+            scene.add(create_city_geometry(this.streets, this.terrain));
         });        
         
         // this.jump_to_street_position(0.5, true);
@@ -594,16 +597,20 @@ class App {
     }
 
     add_crossing(t) {
-        this.street_loaded.then( street => {
-            const crossing = new Street();
-            this.crossing = crossing;
-            crossing.starting_point.copy(street.poly_bezier.get(t))
-            crossing.starting_tangent.copy(street.poly_bezier.normal(t));
-            crossing.starting_point.addScaledVector(crossing.starting_tangent, -street.street_width/2);
-            crossing.initial_height = street.height_profile.get(t).y;
-            crossing.create_road(true, () => {
-                this.streets.push(crossing);
-                crossing.street_mesh.position.y = 0.54;
+        return new Promise(resolve => {
+            Promise.all([this.street_loaded, this.terrain_loaded]).then( () => {
+                const street = this.street;
+                const crossing = new Street();
+                this.crossing = crossing;
+                crossing.starting_point.copy(street.poly_bezier.get(t))
+                crossing.starting_tangent.copy(street.poly_bezier.normal(t));
+                crossing.starting_point.addScaledVector(crossing.starting_tangent, -0.5 * street.street_width);
+                crossing.initial_height = street.height_profile.get(t).y;
+                crossing.create_road(true, () => {
+                    this.streets.push(crossing);
+                    crossing.street_mesh.position.y = 0.54;
+                    resolve()
+                }, this.terrain);
             });
         });
     }
