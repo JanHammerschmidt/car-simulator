@@ -87,15 +87,13 @@ class TrafficLight extends THREE.Object3D {
 
     static load_model() {
         TrafficLight.loaded = new Promise(resolve => {
-            setTimeout(() => {
-                load_model_obj('models/traffic_lights.obj', obj => {
-                    obj.rotateY(Math.PI);
-                    obj.scale.multiplyScalar(1.2);
-                    obj.position.y = -0.1;
-                    TrafficLight._model = obj;
-                    resolve(obj);
-                });
-            }, 1000);
+            load_model_obj('models/traffic_lights.obj', obj => {
+                obj.rotateY(Math.PI);
+                obj.scale.multiplyScalar(1.2);
+                obj.position.y = -0.1;
+                TrafficLight._model = obj;
+                resolve(obj);
+            });
         });
     }
 }
@@ -268,30 +266,6 @@ class App {
         });
     }
 
-    // init_stop_signs() {
-    //     this.street_loaded.then(street => {
-    //             var segments = street.segments, i = 1;
-    //             for (var pos = 10; pos < 500; pos += 10) {
-    //                 i = 1;
-    //                 for (; i < segments.length; i++) {
-    //                     if (segments[i].accumulated_road_length >= pos)
-    //                         break;
-    //                 }
-    //                 var segment = segments[i-1];
-    //                 var t = (pos - segment.accumulated_road_length)/segment.curve.length();
-    //                 var p = segment.curve.offset(t, street.street_width/2 * (start_from_end_of_street ? -1 : 1));
-    //                 var d = segment.curve.derivative(t);
-    //                 var sign = stop_sign.clone();
-    //                 sign.position.copy(street.xytovec3(p));
-    //                 sign.position.y -= 2;
-    //                 //console.log(Math.atan2(d.x,d.y));
-    //                 sign.rotation.y = Math.atan2(d.x,d.y) + (start_from_end_of_street ? Math.PI : 0); //pos * Math.PI / 200;
-    //                 scene.add(sign);
-    //             }
-    //         });
-    //     });
-    // }
-
     init_chase_cam() {
         this.chase_camera = THREE.get_camera();
 
@@ -317,7 +291,6 @@ class App {
         let controls = new picking_controls(window, scene);
         this.cameras['picking_cam'] = [controls.camera, controls];        
         this.car_loaded.then(() => {
-            //controls.objects.push(this.car_model);
             controls.objects.push(this.car_model);
         });
         $(() => {
@@ -627,18 +600,6 @@ class App {
                 crossing.street_mesh.position.y = 0.54;
             });
         });
-
-        // this.street = new Street();
-        // this.street.create_road(cfg.random_street, () => {
-        //     //scene.add(street);
-        //     this.street.show_lut_points();
-        //     this.street_loaded.resolve(this.street);
-
-        //     this.street.street_mesh.position.y = 0.53;
-        //     var f = this.gui.addFolder('street position');
-        //     f.addnum(this.street.street_mesh.position, 'y');       
-        // });        
-
     }
 
     animate(time) {

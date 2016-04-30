@@ -248,12 +248,6 @@ class Street {
                         var y = tpb.get(t).y
                         vertices[j * 2].y = vertices[j * 2 + 1].y = y;
                     }
-                    // var lut_points = s.lut_points;
-                    // s.lut.forEach(function(l, i) {
-                    //     var t = i / lut_points;
-                    //     l.height = tpb.get(t0 + i / lut_points * pi).y; // TODO: do we really need that?
-                    //     l.normal = s.curve.normal(t);
-                    // });
                     s.geometry.verticesNeedUpdate = true;
                     t0 = pb.bounds[i];
                 });
@@ -286,9 +280,6 @@ class Street {
             return v.curve
         }));
         this.poly_bezier.cacheLengths();
-        this.segments[0].accumulated_road_length = 0;
-        for (var i = 1; i < this.segments.length; i++)
-            this.segments[i].accumulated_road_length = this.poly_bezier.acc_lengths[i - 1];
     }
 
     create_mesh() {
@@ -303,8 +294,8 @@ class Street {
             v.geometry.computeBoundingSphere();
             v.geometry.boundingSphere.radius *= 1.1;
             v.mesh = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(v.geometry), mat);
+            //v.mesh = new THREE.Mesh(v.geometry, mat);
             //v.material = v.mesh.material;
-            // v.mesh = new THREE.Mesh(v.geometry, mat);
             this.street_mesh.add(v.mesh);
         });
         scene.add(this.street_mesh);
@@ -341,14 +332,6 @@ class Street {
             mesh.position.set(l.x, l.height, l.y);
             this.street_mesh.add(mesh);            
         }
-
-        // this.segments.forEach(v => {
-        //     v.lut.forEach(l => {
-        //         var mesh = new THREE.Mesh(sphere, material);
-        //         mesh.position.set(l.x, l.height, l.y);
-        //         this.street_mesh.add(mesh);
-        //     })
-        // });
     }
 }
 
