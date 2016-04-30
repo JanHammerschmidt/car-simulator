@@ -131,22 +131,9 @@ class App {
         this.init_cameras("first_person_cam");
         this.stop_sign_loaded = this.load_stop_sign();
         this.init_gauge();
-        this.add_crossing(0.13);
         keyboard_input.init();
 
-        this.stop_sign_loaded.then(stop_sign => {
-            this.place_sign(stop_sign.clone(), 0.1);
-        });
-        TrafficLight.loaded.then(() => {
-            const light = new TrafficLight();
-            this.place_sign(light, 0.2);
-            setInterval(() => {
-                light.state += 1;
-                if (light.state > 2)
-                    light.state = 0;
-                light.set(light.state);
-            },500);
-        });
+        this.place_signs();
         
         //this.jump_to_street_position(0.15, false);
 
@@ -502,6 +489,28 @@ class App {
             });
         });
     }
+
+    place_signs() {
+        Promise.all([this.street_loaded, TrafficLight.loaded, this.stop_sign_loaded]).then(() => {
+            $.getJSON('track.study1.json', track => {
+                for (let sign of track.signs) {
+                    if (sign.type == 0) {
+                        this.place_sign(this.stop_sign.clone(), sign.percent);
+                    } else if (sign.type == 12) {
+                        const light = new TrafficLight();
+                        this.place_sign(light, sign.percent);
+                        setInterval(() => {
+                            light.state += 1;
+                            if (light.state > 2)
+                                light.state = 0;
+                            light.set(light.state);
+                        },500);
+                    }
+                    if (sign.type == 0 || sign.type == 12) {
+                        this.add_crossing(sign.percent + 0.02);
+                    }
+                }
+            });
         });
     }
 
