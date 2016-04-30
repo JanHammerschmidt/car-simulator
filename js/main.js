@@ -613,6 +613,7 @@ class App {
             crossing.starting_point.copy(street.poly_bezier.get(t))
             crossing.starting_tangent.copy(street.poly_bezier.normal(t));
             crossing.starting_point.addScaledVector(crossing.starting_tangent, -street.street_width/2);
+            crossing.initial_height = street.height_profile.get(t).y;
             crossing.create_road(true, () => {
                 crossing.street_mesh.position.y = 0.54;
             });
