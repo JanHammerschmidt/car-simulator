@@ -454,15 +454,15 @@ class App {
     init_street() {
         this.street = new Street();
         return new Promise(resolve => {
-            this.street.create_road(cfg.random_street, () => {
+            this.street.create_road(cfg.random_street, street => {
                 //scene.add(street);
-                this.street.show_lut_points();
-                this.streets.push(this.street);
-                resolve(this.street);
+                street.show_lut_points();
+                this.streets.push(street);
+                resolve(street);
 
-                this.street.street_mesh.position.y = 0.53;
+                street.street_mesh.position.y = 0.53;
                 var f = this.gui.addFolder('street position');
-                f.addnum(this.street.street_mesh.position, 'y');       
+                f.addnum(street.street_mesh.position, 'y');       
             });
         });
     }

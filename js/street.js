@@ -220,6 +220,18 @@ class Street {
         });
     }
 
+    adjust_height_from_terrain(terrain) {
+        // for (let i = 0; i < this.segments.length; i++) {
+        for (let s of this.segments) {
+            // const s = this.segments[i];
+            // const p = this.poly_bezier.parts[i];
+            for (let v of s.geometry.vertices) {
+                v.y = terrain.p2height({x:v.x, y:v.z});
+            }
+            s.geometry.verticesNeedUpdate = true;
+        }
+    }
+
     apply_height_from_json() {
         return new Promise(resolve => {
             let that = this;
@@ -302,12 +314,14 @@ class Street {
     }
 
 
-    create_road(random, callback) {
+    create_road(random, callback, terrain) {
         (random 
             ? new Promise(resolve => { this.create_random_segments(); resolve() }) 
             : this.create_segments_from_json()
         ).then(() => {
             this.create_geometry();
+            if (random && terrain)
+                this.adjust_height_from_terrain(terrain);
             return (random
                 ? Promise.resolve()
                 : this.apply_height_from_json()
@@ -318,7 +332,7 @@ class Street {
                 this.create_mesh();
             }
             this.loaded = true;            
-            callback();
+            callback(this);
         });
     }
 
