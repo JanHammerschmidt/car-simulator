@@ -30,6 +30,7 @@ class Street {
         this.height_profile.total_length = 3;
         this.starting_point = new THREE.Vector2(0, 0);
         this.starting_tangent = new THREE.Vector2(0, 1);
+        this.initial_height = 0.1;
 
         if (!no_load_texture && Street.road_tex === undefined) {
             var road_tex = new THREE.TextureLoader().load('textures/road.jpg');
@@ -81,8 +82,8 @@ class Street {
         var geo = new THREE.PlaneGeometry(3, segments, 1, segments); //width, height, widthSegments, heightSegments
         for (var i = 0; i <= segments; i++) {
             var p = pathfunc(i / segments);
-            geo.vertices[i * 2].set(p[0].x, 0.1, p[0].y);
-            geo.vertices[i * 2 + 1].set(p[1].x, 0.1, p[1].y);
+            geo.vertices[i * 2].set(p[0].x, this.initial_height, p[0].y);
+            geo.vertices[i * 2 + 1].set(p[1].x, this.initial_height, p[1].y);
             polygon[i] = [p[0].x, p[0].y];
             polygon[polygon.length - i - 1] = [p[1].x, p[1].y];
         }
