@@ -100,18 +100,6 @@ class TrafficLight extends THREE.Object3D {
     }
 }
 
-class Event extends Promise {
-    constructor() {
-        let r = null;
-        super(resolve => {
-            r = resolve;            
-        });
-        this.resolve = r;
-        console.assert(this.resolve != null);
-    }
-}
-
-
 class App {
     constructor() {
         this.cameras = {};
@@ -124,8 +112,8 @@ class App {
         light.position.set(0.75, 1, 0.25);
         scene.add(light);
 
-        this.car_loaded = new Event();
-        this.street_loaded = new Event();
+        this.car_loaded = this.init_car();
+        this.street_loaded = this.init_street();
 
         TrafficLight.load_model();
         this.terrain = new Terrain();
@@ -140,10 +128,8 @@ class App {
         });
         
         this.init_car2d();
-        this.init_street();
         this.init_cameras("first_person_cam");
-        this.init_car();
-        this.load_stop_sign();
+        this.stop_sign_loaded = this.load_stop_sign();
         this.init_gauge();
         this.add_crossing(0.13);
         keyboard_input.init();
@@ -269,14 +255,14 @@ class App {
     }
 
     load_stop_sign() {
-        this.stop_sign_loaded = new Promise(resolve => {
+        return new Promise(resolve => {
             load_model_obj('models/stop_sign_obj/stop_sign.obj', obj => {
                 obj.rotateY(Math.PI);
                 obj.rotateX(Math.PI / 2);
                 obj.position.y = -1.5;
-                let stop_sign = new THREE.Object3D();
-                stop_sign.add(obj);
-                resolve(stop_sign);
+                this.stop_sign = new THREE.Object3D();
+                this.stop_sign.add(obj);
+                resolve(this.stop_sign);
             });
         });
     }
@@ -504,14 +490,18 @@ class App {
 
     init_street() {
         this.street = new Street();
-        this.street.create_road(cfg.random_street, () => {
-            //scene.add(street);
-            this.street.show_lut_points();
-            this.street_loaded.resolve(this.street);
+        return new Promise(resolve => {
+            this.street.create_road(cfg.random_street, () => {
+                //scene.add(street);
+                this.street.show_lut_points();
+                resolve(this.street);
 
-            this.street.street_mesh.position.y = 0.53;
-            var f = this.gui.addFolder('street position');
-            f.addnum(this.street.street_mesh.position, 'y');       
+                this.street.street_mesh.position.y = 0.53;
+                var f = this.gui.addFolder('street position');
+                f.addnum(this.street.street_mesh.position, 'y');       
+            });
+        });
+    }
         });
     }
 
@@ -546,47 +536,49 @@ class App {
     }
 
     init_car() {
-        load_car.load_car((car_body/*, wheel*/) => {
+        return new Promise(resolve => {
+            load_car.load_car((car_body/*, wheel*/) => {
 
-            // var glass_mat = new THREE.MeshLambertMaterial({
-            //     color: 0xEEEEEE,
-            //     transparent: true,
-            //     opacity: 0.5
-            // });
+                // var glass_mat = new THREE.MeshLambertMaterial({
+                //     color: 0xEEEEEE,
+                //     transparent: true,
+                //     opacity: 0.5
+                // });
 
-            car_body.rotateX(-Math.PI / 2);
+                car_body.rotateX(-Math.PI / 2);
 
-            car_body.position.y = 0.29;
-            // gui.addFolder('car position').addnum(car_body.position, 'y');
-            // //vehicle_box.castShadow = vehicle_box.receiveShadow = true;
+                car_body.position.y = 0.29;
+                // gui.addFolder('car position').addnum(car_body.position, 'y');
+                // //vehicle_box.castShadow = vehicle_box.receiveShadow = true;
 
-            this.car_model = new THREE.Object3D();
-            this.car_model_slope = new THREE.Object3D();
-            this.car_model.add(this.car_model_slope);
-            this.car_model_slope.add(car_body);
+                this.car_model = new THREE.Object3D();
+                this.car_model_slope = new THREE.Object3D();
+                this.car_model.add(this.car_model_slope);
+                this.car_model_slope.add(car_body);
 
-            scene.add(this.car_model);
+                scene.add(this.car_model);
 
-            this.car_loaded.resolve();
+                resolve(this.car_model_slope);
 
-            $(() => {
-                document.addEventListener('keydown', ev => {
-                    if (ev.keyCode == 87)
-                        this.car2d.gearbox.gear_up();
-                    else if (ev.keyCode == 83)
-                        this.car2d.gearbox.gear_down();
-                });
-            });        
-            var light = new THREE.PointLight(0xffffff, 1, 0);
-            //light.position.set(0.37, 1.4, 1.55); // TODO?: light nicht mit auto mitdrehen?
-            light.position.set(0.37, 1.2, 0.01);
-            var lf = this.gui.addFolder('car: light position');
-            lf.add(light.position, 'x');
-            lf.add(light.position, 'y');
-            lf.add(light.position, 'z');
-            this.car_model_slope.add(light);
+                $(() => {
+                    document.addEventListener('keydown', ev => {
+                        if (ev.keyCode == 87)
+                            this.car2d.gearbox.gear_up();
+                        else if (ev.keyCode == 83)
+                            this.car2d.gearbox.gear_down();
+                    });
+                });        
+                var light = new THREE.PointLight(0xffffff, 1, 0);
+                //light.position.set(0.37, 1.4, 1.55); // TODO?: light nicht mit auto mitdrehen?
+                light.position.set(0.37, 1.2, 0.01);
+                var lf = this.gui.addFolder('car: light position');
+                lf.add(light.position, 'x');
+                lf.add(light.position, 'y');
+                lf.add(light.position, 'z');
+                this.car_model_slope.add(light);
 
-        });        
+            });
+        });    
     }
 
     init_gauge() {
