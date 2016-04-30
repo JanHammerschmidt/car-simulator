@@ -18,7 +18,7 @@ function distSq2d(p1, p2) {
 }
 
 var street = new Street(true);
-street.create_road(function() {
+street.create_road(false, function() {
     console.log('done loading');
     const points = street.lut;
     // var points = street.segments.reduce(function(p, s) {
