@@ -39,7 +39,7 @@ function generateTexture() {
 
 }
 
-var create_city_geometry = function(street, num_buildings)
+var create_city_geometry = function(streets, num_buildings)
 {
 	num_buildings = num_buildings || 2000;
 
@@ -64,17 +64,22 @@ var create_city_geometry = function(street, num_buildings)
     function nearestPoint(p) {
         var min_dist = 9999999,
             idx = 0,
-            point = 0;
-        for (var i = 0; i < street.lut.length; i++) {
-            const l = street.lut[i];
-            const ds = distSq2d(l,p);
-            if (ds < min_dist) {
-                min_dist = ds;
-                idx = i;
-                point = j;
-            }
+            point = 0,
+            street_idx = 0;
+        for (var s = 0; s < streets.length; s++) {
+            const street = streets[s];
+            for (var i = 0; i < street.lut.length; i++) {
+                const l = street.lut[i];
+                const ds = distSq2d(l,p);
+                if (ds < min_dist) {
+                    min_dist = ds;
+                    idx = i;
+                    point = j;
+                    street_idx = s
+                }
+            }            
         }
-        return [min_dist, idx, point];
+        return [min_dist, idx, point, street_idx];
     }
     for (var i = 0; i < num_buildings; i++) {
         building.position.x = Math.floor(Math.random() * 200 - 100) * 10;

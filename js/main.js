@@ -111,6 +111,7 @@ class App {
         scene.add(light);
 
         this.car_loaded = this.init_car();
+        this.streets = [];
         this.street_loaded = this.init_street();
 
         TrafficLight.load_model();
@@ -119,11 +120,6 @@ class App {
             this.terrain.rotate();
             scene.add(this.terrain.create_mesh());
         });
-
-        this.street_loaded.then(street => {
-            var city_mesh = create_city_geometry(street);
-            scene.add(city_mesh);
-        });
         
         this.init_car2d();
         this.init_cameras("first_person_cam");
@@ -131,9 +127,13 @@ class App {
         this.init_gauge();
         keyboard_input.init();
 
-        this.place_signs();
+        this.signs_loaded = this.place_signs();
+
+        Promise.all([this.street_loaded, this.signs_loaded]).then(() => {
+            scene.add(create_city_geometry(this.streets));
+        });        
         
-        //this.jump_to_street_position(0.15, false);
+        // this.jump_to_street_position(0.5, true);
 
         this.last_time = performance.now();
         console.log("1st animate");
@@ -454,6 +454,7 @@ class App {
             this.street.create_road(cfg.random_street, () => {
                 //scene.add(street);
                 this.street.show_lut_points();
+                this.streets.push(this.street);
                 resolve(this.street);
 
                 this.street.street_mesh.position.y = 0.53;
@@ -464,25 +465,29 @@ class App {
     }
 
     place_signs() {
-        Promise.all([this.street_loaded, TrafficLight.loaded, this.stop_sign_loaded]).then(() => {
-            $.getJSON('track.study1.json', track => {
-                for (let sign of track.signs) {
-                    if (sign.type == 0) {
-                        this.place_sign(this.stop_sign.clone(), sign.percent);
-                    } else if (sign.type == 12) {
-                        const light = new TrafficLight();
-                        this.place_sign(light, sign.percent);
-                        setInterval(() => {
-                            light.state += 1;
-                            if (light.state > 2)
-                                light.state = 0;
-                            light.set(light.state);
-                        },500);
+        return new Promise(resolve => {
+            Promise.all([this.street_loaded, TrafficLight.loaded, this.stop_sign_loaded]).then(() => {
+                $.getJSON('track.study1.json', track => {
+                    const crossings = [];
+                    for (let sign of track.signs) {
+                        if (sign.type == 0) {
+                            this.place_sign(this.stop_sign.clone(), sign.percent);
+                        } else if (sign.type == 12) {
+                            const light = new TrafficLight();
+                            this.place_sign(light, sign.percent);
+                            setInterval(() => {
+                                light.state += 1;
+                                if (light.state > 2)
+                                    light.state = 0;
+                                light.set(light.state);
+                            },500);
+                        }
+                        if (sign.type == 0 || sign.type == 12) {
+                            crossings.push(this.add_crossing(sign.percent + 14 / this.street.poly_bezier.total_length));
+                        }
                     }
-                    if (sign.type == 0 || sign.type == 12) {
-                        this.add_crossing(sign.percent + 0.02);
-                    }
-                }
+                    Promise.all(crossings).then(() => { resolve(); });
+                });
             });
         });
     }
@@ -597,6 +602,7 @@ class App {
             crossing.starting_point.addScaledVector(crossing.starting_tangent, -street.street_width/2);
             crossing.initial_height = street.height_profile.get(t).y;
             crossing.create_road(true, () => {
+                this.streets.push(crossing);
                 crossing.street_mesh.position.y = 0.54;
             });
         });
