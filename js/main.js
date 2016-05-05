@@ -18,6 +18,7 @@ require("../node_modules/three/examples/js/loaders/MTLLoader.js");
 require("../node_modules/three/examples/js/loaders/OBJMTLLoader.js");
 require("../node_modules/three/examples/js/controls/OrbitControls.js");
 require("./FirstPersonControls2.js");
+const Bezier = require('./lib/bezier.js');
 //require("../../three.js/examples/js/controls/FlyControls.js");
 
 let chase_cam = require("./cam_controls.js").chase_cam;
@@ -468,6 +469,7 @@ class App {
     }
 
     place_signs() {
+        const f = this.gui.addFolder('signs');
         return new Promise(resolve => {
             Promise.all([this.street_loaded, TrafficLight.loaded, this.stop_sign_loaded]).then(() => {
                 $.getJSON('track.study1.json', track => {
@@ -486,8 +488,13 @@ class App {
                             },500);
                         }
                         if (sign.type == 0 || sign.type == 12) {
-                            crossings.push(this.add_crossing(sign.percent + 14 / this.street.poly_bezier.total_length));
+                            crossings.push(this.add_crossing(sign.percent + 14 / this.street.poly_bezier.total_length, sign.crossing_type, sign.crossing_height));
                         }
+                    }
+                    for (let crossing of crossings) {
+                        crossing.then(c => {
+                            f.addnum(c.street_mesh.position, 'y');
+                        });
                     }
                     Promise.all(crossings).then(() => { resolve(); });
                 });
@@ -596,21 +603,45 @@ class App {
         this.gauge_needle = gauge_needle;
     }
 
-    add_crossing(t) {
+    add_crossing(_t, type, height_diff) {
+        height_diff = height_diff || 0.01;
+        type = type || "both";
         return new Promise(resolve => {
             Promise.all([this.street_loaded, this.terrain_loaded]).then( () => {
                 const street = this.street;
-                const crossing = new Street();
-                this.crossing = crossing;
-                crossing.starting_point.copy(street.poly_bezier.get(t))
-                crossing.starting_tangent.copy(street.poly_bezier.normal(t));
-                crossing.starting_point.addScaledVector(crossing.starting_tangent, -0.5 * street.street_width);
-                crossing.initial_height = street.height_profile.get(t).y;
-                crossing.create_road(true, () => {
-                    this.streets.push(crossing);
-                    crossing.street_mesh.position.y = 0.54;
-                    resolve()
-                }, this.terrain);
+                const c = new Street(); // new crossing
+                const p = new THREE.Vector2().copy(street.poly_bezier.get(_t));
+                const t = new THREE.Vector2().copy(street.poly_bezier.normal(_t));
+                const w = street.street_width;
+                const done = () => {
+                    this.streets.push(c);
+                    c.street_mesh.position.y = street.street_mesh.position.y + height_diff;
+                    resolve(c)
+                }
+                if (type == "both") {
+                    const p0 = p.clone().addScaledVector(t, w * 2);
+                    const p1 = p.clone().addScaledVector(t, w * -2);
+                    c.segments.push(new Bezier(p0, p, p, p1)); // main crossing
+                    c.starting_point = p0; // right side
+                    c.starting_tangent = t;
+                    c.create_random_segments(3);
+                    c.starting_point = p1; // left side
+                    c.starting_tangent = t.clone().multiplyScalar(-1);
+                    c.create_random_segments(3);
+
+                    c.create_geometry();
+                    c.adjust_height_from_terrain(this.terrain);
+                    c.calculate_lut_points();
+                    c.create_mesh();
+                    done();
+                } else {
+                    c.starting_tangent.copy(t);
+                    if (type == "left")
+                        c.starting_tangent.multiplyScalar(-1);
+                    c.starting_point = p.clone().addScaledVector(c.starting_tangent, -0.5 * w);
+                    //c.initial_height = street.height_profile.get(_t).y;
+                    c.create_road(3, done, this.terrain);
+                }
             });
         });
     }

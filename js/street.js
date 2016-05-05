@@ -20,7 +20,7 @@ function load_json(file, callback) {
 
 class Street {
     constructor(no_load_texture, lut_points_per_meter, street_width, segment_points_per_meter) {
-        this.loaded = false;
+        // this.loaded = false;
         this.street_width = street_width || 20;
         this.lut_points_per_meter = lut_points_per_meter || 0.1;
         this.segment_points_per_meter = segment_points_per_meter || 0.1;
@@ -118,12 +118,12 @@ class Street {
         return street;
     }
 
-    create_random_segments() {
+    create_random_segments(n) {
         var origin = new THREE.Vector2(0, 0);
         var p = this.starting_point; // current/starting point
         var t = this.starting_tangent; // current tangent
-        for (var i = 0; i < 5; i++) {
-            const dev = 0.25;
+        for (var i = 0; i < n; i++) {
+            const dev = 0; //0.25;
             var p_deviation = rand(-dev * Math.PI, dev * Math.PI); // deviation from current tangent (0.25)
             var distance = rand(80, 100); //distance from current point
             var a2_deviation = rand(-dev * Math.PI, dev * Math.PI); // deviation of second (remote) bezier point from straight line
@@ -316,7 +316,7 @@ class Street {
 
     create_road(random, callback, terrain) {
         (random 
-            ? new Promise(resolve => { this.create_random_segments(); resolve() }) 
+            ? new Promise(resolve => { this.create_random_segments(random); resolve() }) 
             : this.create_segments_from_json()
         ).then(() => {
             this.create_geometry();
@@ -331,7 +331,7 @@ class Street {
             if (!isNode) {
                 this.create_mesh();
             }
-            this.loaded = true;            
+            // this.loaded = true;            
             callback(this);
         });
     }
