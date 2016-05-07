@@ -120,8 +120,15 @@ class App {
         this.terrain_loaded = new Promise(resolve => {
             this.terrain.adjust_height(cfg.random_street, () => {
                 this.terrain.rotate();
+                this.terrain.smooth(10, d2 => Math.exp(-d2 * 0.002), 0.02, this.street.lut, 400);
                 scene.add(this.terrain.create_mesh());
                 resolve(this.terrain);
+
+                this.terrain.smoothed = false;
+                this.gui.add(this.terrain, 'smoothed').onChange(() => {
+                    this.terrain.smooth(10, d2 => Math.exp(-d2 * 0.002), 0.02, this.street.lut, 200);
+                });
+                
             });            
         })
         
