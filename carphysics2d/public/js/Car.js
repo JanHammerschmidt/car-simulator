@@ -3,8 +3,33 @@
 var Vec2 = require('./Vec2.js');
 require('script!./GMath.js');
 var InputState = require('./InputState.js');
+const sqr = require('../../../js/misc.js').sqr;
 
 "use strict";
+
+class ConsumptionMap {
+	constructor() {
+		this.ellipse = {x: 0.4, y: 0.16};
+		this.rot = 20 / 180 * Math.PI;
+		this.translate = {x: 0.45, y: 0.85};
+		this.cache_transform();
+	}
+	rotx(p) { return p.x*Math.cos(this.rot) + p.y*Math.sin(this.rot); }
+	roty(p) { return p.y*Math.cos(this.rot) - p.x*Math.sin(this.rot); }
+	rotxy(p) {return { x:this.rotx(p), y:this.roty(p)}; }
+	cache_transform() {
+		this.rot_t = this.rotxy(this.translate);
+	}
+	get_rel_consumption(rpm, torque) {
+		// rpm & torque are both *relative* (between 0..1)
+		let p = {x: rpm, y: torque};
+		p = this.rotxy(p);
+		p.x -= this.rot_t.x;
+		p.y -= this.rot_t.y;
+		const e = sqr(p.x / this.ellipse.x) + sqr(p.y / this.ellipse.y);
+		return Math.pow(e, 0.7) * 0.1 + 1;
+	}
+}
 
 /**
  *  Car class
@@ -170,6 +195,8 @@ Car.Engine = function() {
 	this.max_rpm = 10000; //7000;
 	this.engine_braking_coefficient = 0.9;
 	this.inertia = 0.13; // [kg m^2]
+	this.consumption_map = new ConsumptionMap();
+	this.base_consumption = 100;
 };
 
 Car.Engine.prototype = {
@@ -182,7 +209,23 @@ Car.Engine.prototype = {
 	rpm: function() { return this.angular_velocity * 60 / (2*Math.PI); },
 	rel_rpm: function() { return this.rpm() / this.max_rpm; },
 	power_output: function() { return this.angular_velocity * this.torque / 1000; }, // [kW]
-	get_consumption: function() { return 0; },
+	get_consumption: function() {  // returns [g/h]
+		const power = this.power_output();
+		const rel_consumption = this.consumption_map.get_rel_consumption(this.rel_rpm(), this.torque / this.max_torque);
+		return rel_consumption * this.base_consumption * power;
+	},
+	get_consumption_L_s: function() {
+		return this.get_consumption() / 1000 / 0.75 / (60*60); // [g/h] => [L/s]
+	},
+    get_l100km: function(speed) { // speed [m/s]
+        if (speed < 0.001)
+            return 0;
+        let consumption = this.get_consumption();
+        consumption /= 60*60; // [g/s]
+        consumption /= speed * 1000; // [kg/m]
+        consumption /= 0.75; // /dichte (0.75 kg/L) => [L/m]
+        return consumption * 100 * 1000; // [L/100km]
+    },
 	set_rpm: function(rpm) { this.angular_velocity = this.rpm2angular_velocity(rpm); },
 	rpm2angular_velocity: function(rpm) { return rpm * 2 * Math.PI / 60; },
 	angular_velocity2rpm: function(av) { return av * 30 / Math.PI; }
@@ -443,6 +486,7 @@ Car.prototype.doPhysics = function( dt )
 	this.stats.add('rpm', this.engine.rpm());
 	this.stats.add('gear', this.gearbox.gear+1);
 	this.stats.add('resistances', resistances);
+	this.stats.add('consumption', this.engine.get_l100km(this.speed));
 
 };
 

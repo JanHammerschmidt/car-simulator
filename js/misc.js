@@ -45,7 +45,9 @@ let misc = {
         var dx = p2.x - p1.x,
             dy = p2.y - p1.y;
         return dx * dx + dy * dy;
-    }   
+    },
+
+    sqr: function(x) { return x*x; }
 
 }
 
