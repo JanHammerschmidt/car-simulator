@@ -265,6 +265,7 @@ THREE.FirstPersonControls2 = function ( object, domElement ) {
 
 		window.removeEventListener( 'keydown', _onKeyDown, false );
 		window.removeEventListener( 'keyup', _onKeyUp, false );
+		window.removeEventListener( 'resize', _handleResize, false );
 
 	}
 
@@ -273,6 +274,7 @@ THREE.FirstPersonControls2 = function ( object, domElement ) {
 	var _onMouseUp = bind( this, this.onMouseUp );
 	var _onKeyDown = bind( this, this.onKeyDown );
 	var _onKeyUp = bind( this, this.onKeyUp );
+	var _handleResize = bind( this, this.handleResize ); 
 
 	// this.domElement.addEventListener( 'contextmenu', contextmenu, false );
 	this.domElement.addEventListener( 'mousemove', _onMouseMove, false );
@@ -281,6 +283,7 @@ THREE.FirstPersonControls2 = function ( object, domElement ) {
 
 	window.addEventListener( 'keydown', _onKeyDown, false );
 	window.addEventListener( 'keyup', _onKeyUp, false );
+	window.addEventListener( 'resize', _handleResize, false );
 
 	function bind( scope, fn ) {
 
