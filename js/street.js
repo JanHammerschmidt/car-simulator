@@ -147,13 +147,13 @@ class Street {
             load_json('track.study1.json', function(track) {
                 var cfg = {
                     ver2: true,
-                    deviation_mult: 0.0, //3.0, // max. ~5.4
-                    distance_mult: 0.07, // 0.1
-                    scale: 1000.0
+                    deviation_mult: 3.0, //3.0, // max. ~5.4
+                    distance_mult: 0.1, //0.07, // 0.1
+                    scale: 1500.0
                 };
                 var scale = cfg.scale;
                 var origin = new THREE.Vector2(0, 0);
-                var p = new THREE.Vector2(0, 0); // current/starting point
+                var p = new THREE.Vector2(-700, -800); // current/starting point
                 var t = new THREE.Vector2(0, 1); // tangent
                 var first = true,
                     prev = null;
@@ -288,9 +288,7 @@ class Street {
         this.segments = this.segments.map(v => {
             return this.add_street_segment(v);
         });
-        this.poly_bezier = new Bezier.PolyBezier(this.segments.map(v => {
-            return v.curve
-        }));
+        this.poly_bezier = new Bezier.PolyBezier(this.segments.map(v => v.curve));
         this.poly_bezier.cacheLengths();
     }
 
