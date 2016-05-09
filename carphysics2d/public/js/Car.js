@@ -31,6 +31,37 @@ class ConsumptionMap {
 	}
 }
 
+class ConsumptionMonitor {
+	constructor(update_callback) {
+		// update_callback receives updates on L/100km, every 1s
+		this.reset();
+		this.tick(0,0,0);
+		this.update_callback = update_callback;
+	}
+	tick(liter_s, dt, speed) {
+		this.liters_used += dt * liter_s;
+		this.liter_counter += dt * liter_s;
+		this.t_counter += dt;
+		if (this.t_counter >= 1) {
+			if (speed > 0.001) {
+				const L_s = this.liter_counter / this.t_counter;
+				const l_100km = L_s / speed * 1000 * 100; // [L/s] => [L/100km]
+				this.update_callback(l_100km);
+			} else
+				this.update_callback(0);
+			this.liter_counter = this.t_counter = 0;
+		}
+		this.liters_per_second_cont = liter_s;
+		this.liters_per_100km_cont = liter_s / speed * 1000 * 100;
+
+	}
+	reset() {
+		this.liters_used = 0; // total usage
+		this.liter_counter = 0; // counter for calculation of avg l/100km
+		this.t_counter = 0; // how much since the last update?
+	}
+}
+
 /**
  *  Car class
 
@@ -91,6 +122,7 @@ var Car = function( opts )
 	this.engine = new Car.Engine();
 	this.gearbox = new Car.Gearbox();
 	this.speed = 0;
+	this.consumption_monitor = new ConsumptionMonitor(opts.consumption_update);
 };
 
 Car.prototype.setFromPosition3d = function(v) { this.position.x = v.z; this.position.y = -v.x; }
@@ -563,6 +595,7 @@ Car.prototype.update = function( dtms )
 	this.tick(dt);
 	this.doPhysics(dt);
 	this.gearbox.update_engine_speed(this.engine, this.speed, dt);
+	this.consumption_monitor.tick(this.engine.get_consumption_L_s(), dt, this.speed);
 };
 
 /**

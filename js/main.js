@@ -535,7 +535,12 @@ class App {
 
     init_car2d() {
         this.car_stats = new Stats.Stats();
-        this.car2d = new Car.Car({stats:this.car_stats});
+        this.car2d = new Car.Car(
+            {stats:this.car_stats
+            , consumption_update:L_100km => {
+                console.log("consumption", L_100km);
+            }
+        });
         this.car2d.config_panel = new ConfigPanel(this.car2d);
     }
 
