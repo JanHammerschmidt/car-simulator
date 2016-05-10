@@ -41,12 +41,12 @@ class Street {
         }
     }
 
-    vec3toxy(vec3) { return { x: vec3.x, y: vec3.z }; }
+    vec3toxy(vec3) { return new THREE.Vector2(vec3.x, vec3.z) }
 
     xytovec3(v,y) { return new THREE.Vector3(v.x, y || 0.1, v.y); }
 
-    get_road_position(vec3, stats) {
-        var xy = new THREE.Vector2().copy(this.vec3toxy(vec3)); // 2d point
+    get_road_position(xy) {
+        // var xy = new THREE.Vector2().copy(this.vec3toxy(vec3)); // 2d point
         var dists = this.lut.map(function(l) {
             return misc.distSq2d(xy, l)
         }); // distances of xy to each lut-point
@@ -72,7 +72,6 @@ class Street {
         Math.sign(dp) == -Math.sign(dp2) || console.log("!! Math.sign(dp) != -Math.sign(dp2)");
         var v = dp > 0 ? dp / (dp - dp2) : (-dp / (dp2 - dp)); // get interpolation factor
         var t = (p.t * (1 - v) + p2.t * v); // linear interpolation between the two t-values
-        stats.add('t', t);
         return t;
         // dp = Math.abs(dp); dp2 = Math.abs(dp2);
     }

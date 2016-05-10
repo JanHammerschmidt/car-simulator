@@ -41,7 +41,7 @@ function generateTexture() {
 
 var create_city_geometry = function(streets, terrain, num_buildings)
 {
-	num_buildings = num_buildings || 2000;
+	num_buildings = num_buildings || 5000;
 
     var geometry = new THREE.CubeGeometry(1, 1, 1);
     geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0.5, 0));
@@ -61,42 +61,78 @@ var create_city_geometry = function(streets, terrain, num_buildings)
     var light = new THREE.Color(0xffffff);
     var shadow = new THREE.Color(0x303050);
 
-    function nearestPoint(p) {
-        var min_dist = 9999999,
-            idx = 0,
-            point = 0,
-            street_idx = 0;
-        for (var s = 0; s < streets.length; s++) {
-            const street = streets[s];
-            for (var i = 0; i < street.lut.length; i++) {
-                const l = street.lut[i];
-                const ds = distSq2d(l,p);
-                if (ds < min_dist) {
-                    min_dist = ds;
-                    idx = i;
-                    point = j;
-                    street_idx = s
-                }
-            }            
-        }
-        return [min_dist, idx, point, street_idx];
+    // function nearestPoint(p) {
+    //     var min_dist = 9999999,
+    //         idx = 0,
+    //         point = 0,
+    //         street_idx = 0;
+    //     for (var s = 0; s < streets.length; s++) {
+    //         const street = streets[s];
+    //         for (var i = 0; i < street.lut.length; i++) {
+    //             const l = street.lut[i];
+    //             const ds = distSq2d(l,p);
+    //             if (ds < min_dist) {
+    //                 min_dist = ds;
+    //                 idx = i;
+    //                 point = l;
+    //                 street_idx = s
+    //             }
+    //         }            
+    //     }
+    //     return [min_dist, idx, point, street_idx]; //min_dist is size^2
+    // }
+    function dist_from_rect(p, rect_pos, rect_size, rect_rot) {
+        p = new THREE.Vector2().copy(p).sub(rect_pos);
+        p = misc.rotxy(p, rect_rot);
+        const x = 0.5 * rect_size.x;
+        const y = 0.5 * rect_size.y;
+        const rect = {max:{x:x,y:y}, min:{x:-x,y:-y}};
+        var dx = Math.max(rect.min.x - p.x, 0, p.x - rect.max.x);
+        var dy = Math.max(rect.min.y - p.y, 0, p.y - rect.max.y);
+        return dx*dx + dy*dy; // returns size^2
     }
     for (var i = 0; i < num_buildings; i++) {
-        building.position.x = Math.floor(Math.random() * 200 - 100) * 10;
-        building.position.z = Math.floor(Math.random() * 200 - 100) * 10;
-        building.position.y = building.position.z; // this is just for nearestPoint (uses .x / .y)
-        var pp = nearestPoint(building.position);
-        if (pp[0] < 400)
-            continue;
-        var dist = Math.sqrt(pp[0]);
-
-        building.rotation.y = Math.random();
+        const pos = new THREE.Vector2(misc.rand(-1000,1000), misc.rand(-1000,1000));
+        const nearest_points = [];
+         for (let s = 0; s < streets.length; s++) {
+            const street = streets[s];
+            const t = street.get_road_position(pos);
+            const p = street.poly_bezier.get(t);
+            nearest_points.push(p);
+            if (s > 0)
+                continue;
+            const n = street.poly_bezier.normal(t);
+            building.rotation.y = Math.atan2(n.x,n.y);
+        }
         building.scale.x = building.scale.z = Math.random() * Math.random() * Math.random() * Math.random() * 50 + 20;
-        building.scale.y = (Math.random() * Math.random() * Math.random() * building.scale.x) * 8 + 21;
-        if (Math.sqrt(2)*building.scale.x > dist) // why is this dist .. and not a fixed value, like (again) 400?
+        const pp = misc.nearest_point(pos, nearest_points);
+        // var pp = nearestPoint(pos);
+        // if (pp[0] < 400)
+        //     debugger;
+        const d2 = dist_from_rect(pp[2], pos, {x:building.scale.x,y:building.scale.z}, building.rotation.y);
+        // if (d2 > misc.sqr(0.6*streets[0].street_width))
+        //     continue;
+        if (d2 < misc.sqr(0.7*streets[0].street_width))
             continue;
-        building.position.y = terrain.p2height(building.position) - 3;
+        // console.log(Math.sqrt(d2), Math.sqrt(pp[1]));
 
+        // if (pp[0] < 400)
+        //     continue;
+
+        building.position.x = pos.x; //Math.floor(Math.random() * 200 - 100) * 10;
+        building.position.z = pos.y; //Math.floor(Math.random() * 200 - 100) * 10;
+        building.position.y = terrain.p2height(pos) - 3;
+
+        building.scale.y = (Math.random() * Math.random() * Math.random() * building.scale.x) * 8 + 21;
+
+        // building.position.y = building.position.z; // this is just for nearestPoint (uses .x / .y)
+        // var dist = Math.sqrt(pp[0]);
+
+        // building.rotation.y = Math.random();
+        
+        // if (Math.sqrt(2)*building.scale.x > dist) // why is this dist .. and not a fixed value, like (again) 400?
+            // continue;
+        
         geometry = building.geometry;
 
         var value = 1 - Math.random() * Math.random();

@@ -746,7 +746,8 @@ class App {
 
             var on_track = false;
 
-            var t = street.get_road_position(car_model.position, car_stats);
+            var t = street.get_road_position(street.vec3toxy(car_model.position));
+            car_stats.add('t', t);
             if (!on_track) {
                 const p = street.poly_bezier.get(t);
                 const xy = new THREE.Vector2().copy(street.vec3toxy(car_model.position));

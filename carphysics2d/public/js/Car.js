@@ -3,7 +3,7 @@
 var Vec2 = require('./Vec2.js');
 require('script!./GMath.js');
 var InputState = require('./InputState.js');
-const sqr = require('../../../js/misc.js').sqr;
+const misc = require('../../../js/misc.js');
 
 "use strict";
 
@@ -14,19 +14,16 @@ class ConsumptionMap {
 		this.translate = {x: 0.45, y: 0.85};
 		this.cache_transform();
 	}
-	rotx(p) { return p.x*Math.cos(this.rot) + p.y*Math.sin(this.rot); }
-	roty(p) { return p.y*Math.cos(this.rot) - p.x*Math.sin(this.rot); }
-	rotxy(p) {return { x:this.rotx(p), y:this.roty(p)}; }
 	cache_transform() {
-		this.rot_t = this.rotxy(this.translate);
+		this.rot_t = misc.rotxy(this.translate, this.rot);
 	}
 	get_rel_consumption(rpm, torque) {
 		// rpm & torque are both *relative* (between 0..1)
 		let p = {x: rpm, y: torque};
-		p = this.rotxy(p);
+		p = misc.rotxy(p, this.rot);
 		p.x -= this.rot_t.x;
 		p.y -= this.rot_t.y;
-		const e = sqr(p.x / this.ellipse.x) + sqr(p.y / this.ellipse.y);
+		const e = misc.sqr(p.x / this.ellipse.x) + misc.sqr(p.y / this.ellipse.y);
 		return Math.pow(e, 0.7) * 0.1 + 1;
 	}
 }

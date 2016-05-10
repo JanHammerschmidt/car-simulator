@@ -29,8 +29,8 @@ let misc = {
 
     nearest_point: function (p, a) {
         // p: point, a: array of points
-        let min_d = Number.MAX_VALUE;
-        let idx = 0;
+        let min_d = Number.MAX_VALUE,
+            idx = 0;
         for (let i = 0; i < a.length; i++) {
             const d = misc.distSq2d(p, a[i]);
             if (d < min_d) {
@@ -38,7 +38,7 @@ let misc = {
                 idx = i;
             }
         }
-        return [idx,min_d];
+        return [idx, min_d, a[idx]];
     },
 
     distSq2d: function(p1, p2) {
@@ -47,7 +47,11 @@ let misc = {
         return dx * dx + dy * dy;
     },
 
-    sqr: function(x) { return x*x; }
+    sqr: function(x) { return x*x; },
+
+    rotx: function(p, r) { return p.x*Math.cos(r) + p.y*Math.sin(r); },
+    roty: function(p, r) { return p.y*Math.cos(r) - p.x*Math.sin(r); },
+    rotxy: function(p, r) {return { x:misc.rotx(p, r), y:misc.roty(p, r)}; }
 
 }
 
