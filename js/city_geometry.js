@@ -91,6 +91,7 @@ var create_city_geometry = function(streets, terrain, num_buildings)
         var dy = Math.max(rect.min.y - p.y, 0, p.y - rect.max.y);
         return dx*dx + dy*dy; // returns size^2
     }
+    let buildings = [];
     for (var i = 0; i < num_buildings; i++) {
         const pos = new THREE.Vector2(misc.rand(-1000,1000), misc.rand(-1000,1000));
         const nearest_points = [];
@@ -114,6 +115,17 @@ var create_city_geometry = function(streets, terrain, num_buildings)
         //     continue;
         if (d2 < misc.sqr(0.7*streets[0].street_width))
             continue;
+        const radius = building.scale.x / Math.sqrt(2);
+        let too_near = false;
+        for (let b of buildings) {
+            if (misc.distSq2d(pos, b[0]) < misc.sqr(Math.max(b[1],radius)/*b[1]+radius*/)) {
+                too_near = true;
+                break;
+            }
+        }
+        if (too_near)
+            continue;
+        buildings.push([pos, radius]);
         // console.log(Math.sqrt(d2), Math.sqrt(pp[1]));
 
         // if (pp[0] < 400)
