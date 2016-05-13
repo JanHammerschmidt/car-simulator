@@ -3,7 +3,7 @@
 let cfg = {
     do_vr: false,
     do_sound: false,
-    random_street: true
+    random_street: false
 }
 
 if (cfg.do_vr) {
@@ -146,7 +146,7 @@ class App {
             scene.add(create_city_geometry(this.streets, this.terrain));
         });        
         
-        // this.jump_to_street_position(0.5, true);
+        this.jump_to_street_position(0.1, false);
 
         this.last_time = performance.now();
         console.log("1st animate");
@@ -162,7 +162,7 @@ class App {
     init_cameras(default_cam) {
         this.init_first_person_view();
         this.init_first_person_cam();
-        this.init_chase_cam();
+        // this.init_chase_cam();
         this.init_fly_cam();
         // this.init_picking_controls();
         //this.init_orbit_cam();
@@ -540,7 +540,7 @@ class App {
         this.car2d = new Car.Car(
             {stats:this.car_stats
             , consumption_update:L_100km => {
-                console.log("consumption", L_100km);
+                // console.log("consumption", L_100km);
             }
         });
         this.car2d.config_panel = new ConfigPanel(this.car2d);
