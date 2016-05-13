@@ -196,7 +196,10 @@ Car.Config = function( opts )
 	this.cornerStiffnessFront = opts.cornerStiffnessFront || 5.0 * 2.5;
 	this.cornerStiffnessRear = opts.cornerStiffnessRear || 5.2 * 2.5;
 	this.airResist = (typeof opts.airResist === 'number') ? opts.airResist : 0.7;	// air resistance (* vel) [TODO: probably lower!]
-	this.rollResist = (typeof opts.rollResist === 'number') ? opts.rollResist : 8.0;	// rolling resistance force (* vel) [TODO: check!]
+	this.rollResist = (typeof opts.rollResist === 'number') ? opts.rollResist : 0.015;
+		// 8.0 => this was for when it was dependent from velocity (only)
+		// now it is dependent from the normal force [which is dependent on the slope] (only)
+		// [https://en.wikipedia.org/wiki/Rolling_resistance] [https://de.wikipedia.org/wiki/Rollwiderstand]  
 };
 
 Car.Config.prototype.copy = function( c )
@@ -442,10 +445,13 @@ Car.prototype.doPhysics = function( dt )
 	var tractionForce_cx = throttle - brake * GMath.sign(this.velocity_c.x);
 	var tractionForce_cy = 0;
 
-	// var 
-	var dragForce_cx = -cfg.rollResist * this.velocity_c.x - cfg.airResist * this.velocity_c.x * Math.abs(this.velocity_c.x);
-	var dragForce_cy = -cfg.rollResist * this.velocity_c.y - cfg.airResist * this.velocity_c.y * Math.abs(this.velocity_c.y);
-	var resistances = -dragForce_cx;
+	// var
+	const rollResist_cx = cfg.rollResist *  Math.cos(this.alpha) * cfg.mass * cfg.gravity; // -cfg.rollResist * this.velocity_c.x
+	const rollResist_cy = rollResist_cx; // this must be much higher, of course!
+	const airResist_cx = cfg.airResist * this.velocity_c.x * Math.abs(this.velocity_c.x);
+	const airResist_cy = cfg.airResist * this.velocity_c.y * Math.abs(this.velocity_c.y);
+	var dragForce_cx =  -rollResist_cx - airResist_cx;
+	var dragForce_cy = -rollResist_cy - airResist_cy;
 
 	// total force in car coordinates
 	var totalForce_cx = dragForce_cx + tractionForce_cx;
@@ -514,7 +520,8 @@ Car.prototype.doPhysics = function( dt )
 	this.stats.add('heading', this.heading * 180 / Math.PI);
 	this.stats.add('rpm', this.engine.rpm());
 	this.stats.add('gear', this.gearbox.gear+1);
-	this.stats.add('resistances', resistances);
+	this.stats.add('rolling resistance', rollResist_cx);
+	this.stats.add('air resistance', airResist_cx);
 	this.stats.add('consumption', this.engine.get_l100km(this.speed));
 
 };
