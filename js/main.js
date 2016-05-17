@@ -3,7 +3,7 @@
 let cfg = {
     do_vr: false,
     do_sound: false,
-    random_street: false
+    random_street: 0
 }
 
 if (cfg.do_vr) {
@@ -140,7 +140,8 @@ class App {
         this.init_gauge();
         keyboard_input.init();
 
-        this.signs_loaded = this.place_signs();
+        if (!cfg.random_street)
+            this.signs_loaded = this.place_signs();
 
         Promise.all([this.street_loaded, this.signs_loaded, this.terrain_loaded]).then(() => {
             scene.add(create_city_geometry(this.streets, this.terrain));
@@ -624,6 +625,7 @@ class App {
             Promise.all([this.street_loaded, this.terrain_loaded]).then( () => {
                 const street = this.street;
                 const c = new Street(); // new crossing
+                c.max_deviation_random_street = 0;
                 const p = new THREE.Vector2().copy(street.poly_bezier.get(_t));
                 const t = new THREE.Vector2().copy(street.poly_bezier.normal(_t));
                 const w = street.street_width;

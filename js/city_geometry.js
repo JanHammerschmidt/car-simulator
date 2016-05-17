@@ -1,7 +1,10 @@
 'use strict';
 
 const misc = require("./misc.js");
-const distSq2d = misc.distSq2d;
+// const distSq2d = misc.distSq2d;
+const no_overlapping_buildings = true;
+const def_num_buildings = 4000;
+const align_buildings_to_street = true;
 
 function generateTexture() {
 
@@ -41,7 +44,7 @@ function generateTexture() {
 
 var create_city_geometry = function(streets, terrain, num_buildings)
 {
-	num_buildings = num_buildings || 5000;
+	num_buildings = num_buildings || def_num_buildings;
 
     var geometry = new THREE.CubeGeometry(1, 1, 1);
     geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0.5, 0));
@@ -105,6 +108,8 @@ var create_city_geometry = function(streets, terrain, num_buildings)
             const n = street.poly_bezier.normal(t);
             building.rotation.y = Math.atan2(n.x,n.y);
         }
+        if (!align_buildings_to_street)
+            building.rotation.y = Math.random()
         building.scale.x = building.scale.z = Math.random() * Math.random() * Math.random() * Math.random() * 50 + 20;
         const pp = misc.nearest_point(pos, nearest_points);
         // var pp = nearestPoint(pos);
@@ -116,15 +121,17 @@ var create_city_geometry = function(streets, terrain, num_buildings)
         if (d2 < misc.sqr(0.7*streets[0].street_width))
             continue;
         const radius = building.scale.x / Math.sqrt(2);
-        let too_near = false;
-        for (let b of buildings) {
-            if (misc.distSq2d(pos, b[0]) < misc.sqr(Math.max(b[1],radius)/*b[1]+radius*/)) {
-                too_near = true;
-                break;
+        if (no_overlapping_buildings) {
+            let too_near = false;
+            for (let b of buildings) {
+                if (misc.distSq2d(pos, b[0]) < misc.sqr(b[1]+radius)) {
+                    too_near = true;
+                    break;
+                }
             }
+            if (too_near)
+                continue;
         }
-        if (too_near)
-            continue;
         buildings.push([pos, radius]);
         // console.log(Math.sqrt(d2), Math.sqrt(pp[1]));
 
@@ -139,8 +146,6 @@ var create_city_geometry = function(streets, terrain, num_buildings)
 
         // building.position.y = building.position.z; // this is just for nearestPoint (uses .x / .y)
         // var dist = Math.sqrt(pp[0]);
-
-        // building.rotation.y = Math.random();
         
         // if (Math.sqrt(2)*building.scale.x > dist) // why is this dist .. and not a fixed value, like (again) 400?
             // continue;

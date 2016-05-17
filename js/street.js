@@ -28,9 +28,10 @@ class Street {
         this._dists = [];
         this.height_profile = new Bezier({x:0,y:0},{x:1,y:0},{x:2,y:0},{x:3,y:0});
         this.height_profile.total_length = 3;
-        this.starting_point = new THREE.Vector2(0, 0);
+        this.starting_point = new THREE.Vector2(0, -900);
         this.starting_tangent = new THREE.Vector2(0, 1);
         this.initial_height = 0.1;
+        this.max_deviation_random_street = 0.25;
 
         if (!no_load_texture && Street.road_tex === undefined) {
             var road_tex = new THREE.TextureLoader().load('textures/road.jpg');
@@ -122,7 +123,7 @@ class Street {
         var p = this.starting_point; // current/starting point
         var t = this.starting_tangent; // current tangent
         for (var i = 0; i < n; i++) {
-            const dev = 0; //0.25;
+            const dev = this.max_deviation_random_street;
             var p_deviation = rand(-dev * Math.PI, dev * Math.PI); // deviation from current tangent (0.25)
             var distance = rand(80, 100); //distance from current point
             var a2_deviation = rand(-dev * Math.PI, dev * Math.PI); // deviation of second (remote) bezier point from straight line
