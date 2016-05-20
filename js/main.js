@@ -49,14 +49,22 @@ $('body').append(require('html!../carphysics2d/public/js/car_config.html'));
 dat.GUI.prototype.addnum = function(object, prop, prec) {
     var prev = object[prop];
     object[prop] = prec || 0.1;
-    this.add(object,prop);
+    const r = this.add(object,prop);
     object[prop] = prev;
     this.__controllers[this.__controllers.length-1].updateDisplay();
+    return r;
 }
 dat.GUI.prototype.addxyz = function(object, prec) {
     this.addnum(object, 'x', prec);
     this.addnum(object, 'y', prec);
     this.addnum(object, 'z', prec);
+}
+dat.GUI.prototype.addcolor = function(obj, prop) {
+    obj.gui = obj.gui || {};
+    obj.gui[prop] = obj[prop].getHex();
+    return this.addColor(obj.gui, prop).onChange(() => {
+        obj[prop].setHex(obj.gui[prop]);
+    });
 }
 
 
@@ -107,8 +115,13 @@ class App {
         renderer.setClearColor(0xd8e7ff);
         scene.fog = new THREE.FogExp2(0xd0e0f0, 0.0025);
 
-        let light = new THREE.HemisphereLight(0xfffff0, 0x101020, 1.25);
+        const light = new THREE.HemisphereLight(0xfffff0, 0x101020, 1.25);
+        const f = this.gui.addFolder('hemisphere light');
+        f.addcolor(light, 'color');
+        f.addColor(light, 'groundColor');
+        f.addnum(light, 'intensity');
         light.position.set(0.75, 1, 0.25);
+        f.addxyz(light.position);
         scene.add(light);
 
         this.car_loaded = this.init_car();
@@ -583,12 +596,12 @@ class App {
                 var light = new THREE.PointLight(0xffffff, 1, 0);
                 //light.position.set(0.37, 1.4, 1.55); // TODO?: light nicht mit auto mitdrehen?
                 light.position.set(0.37, 1.2, 0.01);
-                var lf = this.gui.addFolder('car: light position');
-                lf.add(light.position, 'x');
-                lf.add(light.position, 'y');
-                lf.add(light.position, 'z');
+                var lf = this.gui.addFolder('car light');
+                lf.addxyz(light.position)
+                lf.addnum(light, 'intensity');
+                lf.addnum(light, 'distance', 1);
+                lf.addnum(light, 'decay');
                 this.car_model_slope.add(light);
-
             });
         });    
     }
