@@ -26,6 +26,7 @@ let input = require('./wingman_input.js');
 let wingman_input = input.wingman_input;
 let keyboard_input = input.keyboard_input;
 let picking_controls = require("./PickingControls.js");
+const signs = require('./signs.js');
 
 var load_car = require("./load_car.js");
 var Street = require('./street.js');
@@ -59,6 +60,14 @@ dat.GUI.prototype.addxyz = function(object, prec) {
     this.addnum(object, 'y', prec);
     this.addnum(object, 'z', prec);
 }
+dat.GUI.prototype.addscale = function(v, prec) {
+    const tmp = {scale: v.x};
+    this.addnum(tmp, 'scale', prec).onChange(() => {
+        v.x = tmp.scale;
+        v.y = tmp.scale;
+        v.z = tmp.scale;
+    });
+}
 dat.GUI.prototype.addcolor = function(obj, prop) {
     obj.gui = obj.gui || {};
     obj.gui[prop] = obj[prop].getHex();
@@ -71,40 +80,6 @@ dat.GUI.prototype.addcolor = function(obj, prop) {
 function load_model_obj(fname, f) {
     var loader = new THREE.OBJMTLLoader();
     loader.load(fname, fname.slice(0,-3) + "mtl", f, undefined, err => { console.log("error loading", fname, err); });
-}
-
-class TrafficLight extends THREE.Object3D {
-    constructor() {
-        super();
-        const model = TrafficLight._model.clone();
-        const lights = model.children[1];
-        this.colors = lights.children.slice(1).map(function(v) {return v.material.color;}); // green, yellow, red
-        this.lights_on = [0x49e411, 0xd2c100, 0x960101];
-        this.lights_off = [0x142d0b, 0x262300, 0x1f0000];
-        this.state = 0;
-        this.add(model);            
-    }
-
-    set(state) {
-        var lights_off = this.lights_off;
-        this.colors.forEach(function(c,i) {
-            c.setHex(lights_off[i]);
-        });
-        this.colors[state].setHex(this.lights_on[state]);
-        this.state = state;
-    }
-
-    static load_model() {
-        TrafficLight.loaded = new Promise(resolve => {
-            load_model_obj('models/traffic_lights.obj', obj => {
-                obj.rotateY(Math.PI);
-                obj.scale.multiplyScalar(1.2);
-                obj.position.y = -0.1;
-                TrafficLight._model = obj;
-                resolve(obj);
-            });
-        });
-    }
 }
 
 class App {
@@ -128,7 +103,7 @@ class App {
         this.streets = [];
         this.street_loaded = this.init_street();
 
-        TrafficLight.load_model();
+        signs.TrafficLight.load_model();
         this.terrain = new Terrain();
         this.terrain_loaded = new Promise(resolve => {
             this.terrain.adjust_height(cfg.random_street, () => {
@@ -160,7 +135,7 @@ class App {
             scene.add(create_city_geometry(this.streets, this.terrain));
         });        
         
-        this.jump_to_street_position(0.1, false);
+        this.jump_to_street_position(0.2, false);
 
         this.last_time = performance.now();
         console.log("1st animate");
@@ -268,10 +243,13 @@ class App {
 
     load_stop_sign() {
         return new Promise(resolve => {
-            load_model_obj('models/stop_sign_obj/stop_sign.obj', obj => {
+            load_model_obj('models/stop_sign/stop_sign.obj', obj => {
                 obj.rotateY(Math.PI);
                 obj.rotateX(Math.PI / 2);
-                obj.position.y = -1.5;
+                obj.position.y = -2.27;
+                obj.scale.multiplyScalar(1.5);
+                const s = obj.children[0].children[2];
+                s.material = new THREE.MeshBasicMaterial({map:s.material.map, color: '#e8e8e8'});
                 this.stop_sign = new THREE.Object3D();
                 this.stop_sign.add(obj);
                 resolve(this.stop_sign);
@@ -279,7 +257,7 @@ class App {
         });
     }
 
-    place_sign(sign, t) {
+    place_sign(sign, t, gui_folder) {
         this.street_loaded.then(street => {
             const street_bezier = street.poly_bezier;
             const p = new THREE.Vector2().copy(street_bezier.get(t));
@@ -288,6 +266,13 @@ class App {
             const y = street.height_profile.get(t).y;
             p.addScaledVector(n, 0.5 * street.street_width);
             sign.position.copy(street.xytovec3(p,y));
+            gui_folder.addnum(sign.position, 'y');
+            gui_folder.addscale(sign.scale);
+            const g = sign.children[0].children[0].children;
+            if (g.length == 3) {
+                gui_folder.addcolor(g[2].material, 'color');
+                // gui_folder.addcolor(g[2].material, 'emissive');
+            }
             sign.rotation.y = Math.atan2(d.x,d.y);
             scene.add(sign);
         });
@@ -480,7 +465,7 @@ class App {
         return new Promise(resolve => {
             this.street.create_road(cfg.random_street, street => {
                 //scene.add(street);
-                street.show_lut_points();
+                // street.show_lut_points();
                 this.streets.push(street);
                 resolve(street);
 
@@ -492,22 +477,23 @@ class App {
     }
 
     place_signs() {
-        const f = this.gui.addFolder('signs');
+        const fc = this.gui.addFolder('crossings');
+        const fs = this.gui.addFolder('signs');
         return new Promise(resolve => {
-            Promise.all([this.street_loaded, TrafficLight.loaded, this.stop_sign_loaded]).then(() => {
+            Promise.all([this.street_loaded, signs.TrafficLight.loaded, this.stop_sign_loaded]).then(() => {
                 $.getJSON('track.study1.json', track => {
                     const crossings = [];
                     for (let sign of track.signs) {
                         if (sign.type == 0) {
-                            this.place_sign(this.stop_sign.clone(), sign.percent);
+                            this.place_sign(this.stop_sign.clone(), sign.percent, fs);
                         } else if (sign.type == 12) {
-                            const light = new TrafficLight();
-                            this.place_sign(light, sign.percent);
+                            const light = new signs.TrafficLight();
+                            this.place_sign(light, sign.percent, fs);
                             setInterval(() => {
                                 light.state += 1;
                                 if (light.state > 2)
                                     light.state = 0;
-                                light.set(light.state);
+                                light.set_state(light.state);
                             },500);
                         }
                         if (sign.type == 0 || sign.type == 12) {
@@ -516,7 +502,7 @@ class App {
                     }
                     for (let crossing of crossings) {
                         crossing.then(c => {
-                            f.addnum(c.street_mesh.position, 'y');
+                            fc.addnum(c.street_mesh.position, 'y');
                         });
                     }
                     Promise.all(crossings).then(() => { resolve(); });
@@ -763,7 +749,7 @@ class App {
 
             var t = street.get_road_position(street.vec3toxy(car_model.position));
             car_stats.add('t', t);
-            if (!on_track) {
+            if (false && !on_track) {
                 const p = street.poly_bezier.get(t);
                 const xy = new THREE.Vector2().copy(street.vec3toxy(car_model.position));
                 const normal = new THREE.Vector2().copy(street.poly_bezier.normal(t));
