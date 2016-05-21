@@ -6,9 +6,6 @@ class TrafficLight extends THREE.Object3D {
         super();
         this.model = TrafficLight._model.clone();
         this.colors = ['green','yellow','red'].map(c => this.model.children.find(o => o.name == c).children[1].material);
-        console.log(this.model.children.find(o => o.name == 'case').children[0].material.side);
-        console.log(this.model.children.find(o => o.name == 'case').children[1].material.side);
-        this.model.children.find(o => o.name == 'case').children[1].material.side = THREE.DoubleSide;
         this.model.children.find(o => o.name == 'case').children[1].material.side = THREE.DoubleSide;
         this.lights_on = [0x49e411, 0xd2c100, 0x960101];
         this.lights_off = [0x142d0b, 0x262300, 0x1f0000];

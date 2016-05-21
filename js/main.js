@@ -3,7 +3,8 @@
 let cfg = {
     do_vr: false,
     do_sound: false,
-    random_street: 0
+    random_street: 0,
+    force_on_street: true
 }
 
 if (cfg.do_vr) {
@@ -745,29 +746,26 @@ class App {
             // car_model_slope.rotation.x = 0;
             // car_model_slope.rotation.y = 0;
 
-            var on_track = false;
+            let on_track = true;
 
             var t = street.get_road_position(street.vec3toxy(car_model.position));
             car_stats.add('t', t);
-            if (false && !on_track) {
-                const p = street.poly_bezier.get(t);
-                const xy = new THREE.Vector2().copy(street.vec3toxy(car_model.position));
-                const normal = new THREE.Vector2().copy(street.poly_bezier.normal(t));
-                const dp = normal.dot(xy.clone().sub(p));
-                if (true && Math.abs(dp) > 10) {
-                    // if (dp > 0)
-                    //     xy.addScaledVector(normal, -(dp-10));
-                    // else
-                    //     xy.addScaledVector(normal, -dp-10)
+
+            const p = street.poly_bezier.get(t);
+            const xy = new THREE.Vector2().copy(street.vec3toxy(car_model.position));
+            const normal = new THREE.Vector2().copy(street.poly_bezier.normal(t));
+            const dp = normal.dot(xy.clone().sub(p));
+            if (Math.abs(dp) > 10) {
+                if (cfg.force_on_street) {
                     xy.addScaledVector(normal, -dp - (dp > 0 ? -10 : 10));
                     car_model.position.x = xy.x;
                     car_model.position.z = xy.y;
                     car2d.setFromPosition3d(car_model.position);
-                }
-                on_track = true;
-            }                
+                } else
+                    on_track = false;
+            }
+
             if (on_track) {
-                // car_stats.add('road t', t);
                 car_model.position.y = street.height_profile.get(t).y + street.street_mesh.position.y;
                 
                 var d = street.poly_bezier.derivative(t);
