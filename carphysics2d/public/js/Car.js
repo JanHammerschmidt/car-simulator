@@ -370,6 +370,8 @@ Car.prototype.tick = function(dt) {
 	this.engine.update_torque(this.gearbox.gear_change() ? 0 : this.inputs.throttle);
 	var F = this.gearbox.torque2force_engine2wheels(this.engine, this, this.speed, dt);
 	const uphill_resistance = this.config.mass * this.config.gravity * Math.sin(this.alpha);
+	// this.stats.add('alpha', this.alpha);
+	this.stats.add('uphill resistance', uphill_resistance);
 	F -= uphill_resistance;
 	const mass_factor = this.gearbox.gears_mass_factors[this.gearbox.gear];
 	if (F > 0) {
@@ -505,7 +507,6 @@ Car.prototype.doPhysics = function( dt )
 	this.speed = this.velocity_c.x; // !! TODO: nicht so gut in der kurve ..	
 
 	//  Display some data
-	this.stats.clear();  // clear this every tick otherwise it'll fill up fast
 	this.stats.add('speed', this.kmh() );  // km/h
 	this.stats.add('speed sideways (raw)', this.velocity_c.y)
 	this.stats.add('accleration', this.accel_c.x);
@@ -600,6 +601,7 @@ Car.prototype.update = function( dtms )
 	//  Now that the inputs have been filtered and we have our throttle,
 	//  brake and steering values, perform the car physics update...
 	//
+	this.stats.clear();  // clear this every tick otherwise it'll fill up fast
 	this.tick(dt);
 	this.doPhysics(dt);
 	this.gearbox.update_engine_speed(this.engine, this.speed, dt);
