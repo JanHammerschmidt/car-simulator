@@ -176,7 +176,7 @@ Car.Config = function( opts )
 	opts = opts || {};
 	//  Defaults approximate a lightweight sports-sedan.
 	this.gravity = opts.gravity || 9.81;  // m/s^2
-	this.mass = opts.mass || 1200.0;  // kg [1500]
+	this.mass = opts.mass || 1500.0;  // kg
 	this.inertiaScale = opts.inertiaScale || 1.0;  // Multiply by mass for inertia
 	this.halfWidth = opts.halfWidth || 0.8; // Centre to side of chassis (metres)
 	this.cgToFront = opts.cgToFront || 2.0; // Centre of gravity to front of chassis (metres)
