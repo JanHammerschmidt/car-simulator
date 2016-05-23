@@ -1,0 +1,31 @@
+todo
+
+- ecosonic
+    OK: position of street ..
+    OK: buildings placement
+    OK: old todo!
+    OK: rolling resistance: implementiert als abhängig (nur) von vel, in qt abhängig (nur) von der steigung!
+    OK: air resistance: qt: 0.3*2*1.225=0.735 .. js: 0.7 (aber: lower! (?))
+    OK: größe traffic lights / stop signs ..
+    OK: resize => fly-around-controls ..
+    OK: check rolling resistance in qt
+    OK: track: trigger traffic lights
+    OK: traffic lights & stop-sign notifications
+    1) speed signs
+    2) speeding notifications
+    2) schöne speeding/stop-sign/traffic lights notifications
+    2) logging (auch: logging.h)
+    2) trackeditor?
+    2) oculus "eye" tracking
+    2) ende der strecke..
+    3) check visual studio code
+    3) change based on vp_id / durchs experiment führen ..
+    3) kreuzungen textur?
+    3) fpstimer
+    3) speedobserver / andere autos
+    3) intro-run
+    3) terrain rbf-pkt auf rand der straße legen?
+    3) initiales runterrollen?
+    OK: check out zsh+prezto(oder oh-my-zsh) / fish
+    OK: check out iterm2
+    4) osm2world nochmal abchecken
