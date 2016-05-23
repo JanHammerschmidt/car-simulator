@@ -1,6 +1,6 @@
 'use strict';
 
-let misc = {
+const misc = {
     
     rand: function(min, max) {
         return Math.random() * (max - min) + min;
@@ -51,8 +51,18 @@ let misc = {
 
     rotx: function(p, r) { return p.x*Math.cos(r) + p.y*Math.sin(r); },
     roty: function(p, r) { return p.y*Math.cos(r) - p.x*Math.sin(r); },
-    rotxy: function(p, r) {return { x:misc.rotx(p, r), y:misc.roty(p, r)}; }
+    rotxy: function(p, r) {return { x:misc.rotx(p, r), y:misc.roty(p, r)}; },
 
+    delay: function(ms) { return new Promise(r => setTimeout(r, ms)); },
+
+    load_model_obj: function(fname) {        
+        const loader = new THREE.OBJMTLLoader();
+        return new Promise(r => {
+            loader.load(fname, fname.slice(0,-3) + "mtl", r, undefined, err => { 
+                console.log("error loading", fname, err);
+            });
+        });
+    }
 }
 
 module.exports = misc;

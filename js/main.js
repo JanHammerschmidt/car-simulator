@@ -78,11 +78,6 @@ dat.GUI.prototype.addcolor = function(obj, prop) {
 }
 
 
-function load_model_obj(fname, f) {
-    var loader = new THREE.OBJMTLLoader();
-    loader.load(fname, fname.slice(0,-3) + "mtl", f, undefined, err => { console.log("error loading", fname, err); });
-}
-
 class App {
     constructor() {
         this.cameras = {};
@@ -105,6 +100,7 @@ class App {
         this.street_loaded = this.init_street();
 
         signs.TrafficLight.load_model();
+        signs.StopSign.load_model();
         this.terrain = new Terrain();
         this.terrain_loaded = new Promise(resolve => {
             this.terrain.adjust_height(cfg.random_street, () => {
@@ -125,7 +121,6 @@ class App {
         
         this.init_car2d();
         this.init_cameras("first_person_cam");
-        this.stop_sign_loaded = this.load_stop_sign();
         this.init_gauge();
         keyboard_input.init();
 
@@ -240,22 +235,6 @@ class App {
                 osc_port.close(1000);
             });
         });       
-    }
-
-    load_stop_sign() {
-        return new Promise(resolve => {
-            load_model_obj('models/stop_sign/stop_sign.obj', obj => {
-                obj.rotateY(Math.PI);
-                obj.rotateX(Math.PI / 2);
-                obj.position.y = -2.27;
-                obj.scale.multiplyScalar(1.5);
-                const s = obj.children[0].children[2];
-                s.material = new THREE.MeshBasicMaterial({map:s.material.map, color: '#e8e8e8'});
-                this.stop_sign = new THREE.Object3D();
-                this.stop_sign.add(obj);
-                resolve(this.stop_sign);
-            });
-        });
     }
 
     place_sign(sign, t, gui_folder) {
@@ -465,6 +444,7 @@ class App {
         this.street = new Street();
         return new Promise(resolve => {
             this.street.create_road(cfg.random_street, street => {
+                this.street_length = this.street.poly_bezier.total_length;
                 //scene.add(street);
                 // street.show_lut_points();
                 this.streets.push(street);
@@ -478,27 +458,25 @@ class App {
     }
 
     place_signs() {
+        this.signs = [];
         const fc = this.gui.addFolder('crossings');
         const fs = this.gui.addFolder('signs');
         return new Promise(resolve => {
-            Promise.all([this.street_loaded, signs.TrafficLight.loaded, this.stop_sign_loaded]).then(() => {
+            Promise.all([this.street_loaded, signs.TrafficLight.loaded, signs.StopSign.loaded]).then(() => {
                 $.getJSON('track.study1.json', track => {
                     const crossings = [];
                     for (let sign of track.signs) {
                         if (sign.type == 0) {
-                            this.place_sign(this.stop_sign.clone(), sign.percent, fs);
+                            const s = new signs.StopSign(sign.percent * this.street_length);
+                            this.signs.push(s);
+                            this.place_sign(s, sign.percent, fs);
                         } else if (sign.type == 12) {
-                            const light = new signs.TrafficLight();
+                            const light = new signs.TrafficLight(sign.percent * this.street_length, sign.trigger_distance, sign.time_range_from);
+                            this.signs.push(light);
                             this.place_sign(light, sign.percent, fs);
-                            setInterval(() => {
-                                light.state += 1;
-                                if (light.state > 2)
-                                    light.state = 0;
-                                light.set_state(light.state);
-                            },500);
                         }
                         if (sign.type == 0 || sign.type == 12) {
-                            crossings.push(this.add_crossing(sign.percent + 14 / this.street.poly_bezier.total_length, sign.crossing_type, sign.crossing_height));
+                            crossings.push(this.add_crossing(sign.percent + 14 / this.street_length, sign.crossing_type, sign.crossing_height));
                         }
                     }
                     for (let crossing of crossings) {
@@ -792,7 +770,12 @@ class App {
                 car2d.alpha = 0;
             }
 
-            car_stats.add('road position', t * street.poly_bezier.total_length ); // should be [m]
+            const street_position = t * this.street_length; // should be [m]
+            const kmh = car2d.kmh();
+            for (let s of this.signs)
+                s.tick(street_position, kmh);
+
+            car_stats.add('street position', street_position );
             car_stats.add('car.x', car_model.position.x);
             car_stats.add('car.z', car_model.position.z);
             car_stats.add('car.y', car_model.position.y);
