@@ -195,8 +195,8 @@ Car.Config = function( opts )
 	this.maxSteer = opts.maxSteer || 0.2;  // Maximum steering angle in radians
 	this.cornerStiffnessFront = opts.cornerStiffnessFront || 5.0 * 2.5;
 	this.cornerStiffnessRear = opts.cornerStiffnessRear || 5.2 * 2.5;
-	this.airResist = (typeof opts.airResist === 'number') ? opts.airResist : 0.5; // air resistance (previously: 0.7) [and originally 2.5 (!!)]
-	// 1/2 * 1.225 (rho, density of air at 15°) [* v^2] * 0.36 (C_D drag coefficient of honda civic) * 2.2 m^2 (avg drag area) =~ 0.5
+	this.airResist = (typeof opts.airResist === 'number') ? opts.airResist : 0.7; // air resistance (previously: 0.7) [and originally 2.5 (!!)]
+	// 1/2 * 1.225 (rho, density of air at 15°) [* v^2] * 0.36 (C_D drag coefficient) * 2.2 m^2 (avg drag area) =~ 0.5 (but keep it at 0.7 for comparability)
 	// [https://en.wikipedia.org/wiki/Drag_(physics)]
 	// [https://en.wikipedia.org/wiki/Automobile_drag_coefficient] => [http://www.mayfco.com/tbls.htm]
 	// [http://www.autobild.de/bilder/die-tops-und-flops-im-windkanal-668619.html#bild2]
