@@ -3,6 +3,7 @@
 var isNode = (typeof window == 'undefined'); // || this != window;
 let THREE = isNode ? module.require('three') : window.THREE;
 const nearest_point = require("./misc.js").nearest_point;
+const terrain_height = isNode ? null : require('./webpack/static.js').terrain_height;
 
 var Terrain = function() {
     this.width = 2000;
@@ -16,6 +17,7 @@ var Terrain = function() {
 
 Terrain.prototype = {
     create_mesh: function() {
+        console.time('terrain.create_mesh');
         var tex_loader = new THREE.TextureLoader();
         var grass_tex = tex_loader.load('textures/grass.png');
         grass_tex.anisotropy = renderer.getMaxAnisotropy();
@@ -32,6 +34,7 @@ Terrain.prototype = {
             }));
 
         //this.mesh.rotation.x = -90 * Math.PI / 180;
+        console.timeEnd('terrain.create_mesh');
         return this.mesh;
     },
     vertices: function() {
@@ -55,31 +58,30 @@ Terrain.prototype = {
         return v[x + y * w1].y * (1 - dx) * (1 - dy) + v[x + 1 + y * w1].y * dx * (1 - dy) +
             v[x + (y + 1) * w1].y * (1 - dx) * dy + v[x + 1 + (y + 1) * w1].y * dx * dy;
     },
-    adjust_height: function(no_adjustment, callback) {
-        if (no_adjustment) {
-            callback && callback();
-            return;
-        }
-        var that = this;
-        $.getJSON('terrain.json', function(obj) {
-            console.assert(obj.length == that.vertices().length);
-            var zvalues = obj;
-            that.zvalues = zvalues;
+    adjust_height: function() {
+        console.time('terrain.adjust_height');
+        var zvalues = terrain_height; //obj;
+        console.assert(zvalues.length == this.vertices().length);
+        this.zvalues = zvalues;
 
-            that.vertices().forEach(function(p, i) {
-                p.z = zvalues[i];
-                // if (i%333 == 0) {
-                // 	console.log(i,p2i(p),(1000-p.y)*that.heightSegments/that.height);
-                // }
-            });
-            that.geometry.verticesNeedUpdate = true;
-            callback && callback();
-        });
+        const vertices = this.vertices();
+        const vlen = vertices.length;
+        for (let i = 0; i < vlen; i++) {
+            vertices[i].z = zvalues[i];
+            // if (i%333 == 0) {
+            // 	console.log(i,p2i(p),(1000-p.y)*this.heightSegments/this.height);
+            // }
+        }
+        console.timeEnd('terrain.adjust_height');
+
+        this.geometry.verticesNeedUpdate = true;
     },
     rotate: function() {
-        this.vertices().forEach(function(v) {
+        console.time('terrain.rotate');        
+        for (let v of this.vertices()) {
             v.set(v.x, v.z, v.y);
-        });
+        }
+        console.timeEnd('terrain.rotate');
         this.geometry.verticesNeedUpdate = true;
     },
     smooth: function(size, wf, min_weight, lut_points, min_dist2) {
@@ -87,7 +89,7 @@ Terrain.prototype = {
         // size: maximum distance to center point, 
         // wf: weight function (gets squared distance as input)
         // min_weight: minimum weight for point to be considered in mask
-
+        console.time('terrain.smooth');
         const w1 = this.widthSegments + 1;
         const sx = Math.pow(this.width / this.widthSegments, 2);
         const sy = Math.pow(this.height / this.heightSegments, 2);
@@ -127,6 +129,7 @@ Terrain.prototype = {
         for (let i = 0; i < v.length; i++)
             v[i].y = h[i];
         this.geometry.verticesNeedUpdate = true;
+        console.timeEnd('terrain.smooth');
     }
 };
 

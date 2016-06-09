@@ -125,7 +125,7 @@ function load_car(callback) {
             y = 0.17,
             z1 = 1.42,
             z2 = 1.47;        
-        if (false) {
+        if (false) { //eslint-disable-line
             wheels[0].position.set(-x, y, z1);
             wheels[1].position.set(x, y, z1);
             wheels[1].rotation.y = Math.PI;

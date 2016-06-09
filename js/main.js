@@ -1,11 +1,25 @@
 'use strict';
 
+// const perf = window.performance;
+// const t0 = perf.now();
+// function plog(s) {console.log(((perf.now()-t0)/1000).toPrecision(4), s);}
+
 let cfg = {
     do_vr: false,
     do_sound: false,
     random_street: 0,
-    force_on_street: true
+    force_on_street: true,
+    show_terrain: false,
+    show_buildings: false,
+    show_car: false,
+    smooth_terrain: false,
+    hq_street: false
 }
+window.cfg = cfg;
+
+const misc = require("./misc.js");
+misc.init_perf();
+const plog = misc.plog;
 
 if (cfg.do_vr) {
     // window.CARDBOARD_DEBUG = true;
@@ -16,7 +30,8 @@ if (cfg.do_vr) {
 }
 
 require("../node_modules/three/examples/js/loaders/MTLLoader.js");
-require("../node_modules/three/examples/js/loaders/OBJMTLLoader.js");
+require("../node_modules/three/examples/js/loaders/OBJLoader.js");
+//require("./lib/THREE.OBJMTLLoader.js");
 require("../node_modules/three/examples/js/controls/OrbitControls.js");
 require("./FirstPersonControls2.js");
 const Bezier = require('./lib/bezier.js');
@@ -39,6 +54,8 @@ var Stats = require('../carphysics2d/public/js/Stats.js');
 var ConfigPanel = require('../carphysics2d/public/js/ConfigPanel.js');
 require('!style!css!../carphysics2d/public/js/car_config.css');
 
+const track_study_1 = require('./webpack/static.js').track_study_1;
+
 //var pointInPolygon = require('point-in-polygon-extended').pointInPolyRaycast; //pointInPolyWindingNumber
 
 $('body').append(require('html!../carphysics2d/public/js/car_config.html'));
@@ -51,9 +68,9 @@ $('body').append(require('html!../carphysics2d/public/js/car_config.html'));
 dat.GUI.prototype.addnum = function(object, prop, prec) {
     var prev = object[prop];
     object[prop] = prec || 0.1;
-    const r = this.add(object,prop);
+    const r = this.add(object, prop);
     object[prop] = prev;
-    this.__controllers[this.__controllers.length-1].updateDisplay();
+    this.__controllers[this.__controllers.length - 1].updateDisplay();
     return r;
 }
 dat.GUI.prototype.addxyz = function(object, prec) {
@@ -62,7 +79,7 @@ dat.GUI.prototype.addxyz = function(object, prec) {
     this.addnum(object, 'z', prec);
 }
 dat.GUI.prototype.addscale = function(v, prec) {
-    const tmp = {scale: v.x};
+    const tmp = { scale: v.x };
     this.addnum(tmp, 'scale', prec).onChange(() => {
         v.x = tmp.scale;
         v.y = tmp.scale;
@@ -80,6 +97,7 @@ dat.GUI.prototype.addcolor = function(obj, prop) {
 
 class App {
     constructor() {
+        plog("App entry point");
         this.cameras = {};
         this.gui = new dat.GUI();
 
@@ -97,51 +115,50 @@ class App {
 
         this.car_loaded = this.init_car();
         this.streets = [];
-        this.street_loaded = this.init_street();
+        this.init_street();
 
         signs.TrafficLight.load_model();
         signs.StopSign.load_model();
+        console.time('new Terrain');
         this.terrain = new Terrain();
-        this.terrain_loaded = new Promise(resolve => {
-            this.terrain.adjust_height(cfg.random_street, () => {
-                this.terrain.rotate();
-                this.street_loaded.then( street => {
-                    this.terrain.smooth(10, d2 => Math.exp(-d2 * 0.002), 0.02, street.lut, 400);
-                    scene.add(this.terrain.create_mesh());
-                    resolve(this.terrain);
-                });
+        if (!cfg.random_street)
+            this.terrain.adjust_height();
+        this.terrain.rotate();
+        console.timeEnd('new Terrain');
 
-                this.terrain.smoothed = false;
-                this.gui.add(this.terrain, 'smoothed').onChange(() => {
-                    this.terrain.smooth(10, d2 => Math.exp(-d2 * 0.002), 0.02, this.street.lut, 200);
-                });
-                
-            });            
-        })
-        
         this.init_car2d();
         this.init_cameras("first_person_cam");
         this.init_gauge();
+        this.jump_to_street_position(0, false);
         keyboard_input.init();
 
-        if (!cfg.random_street)
-            this.signs_loaded = this.place_signs();
-
-        Promise.all([this.street_loaded, this.signs_loaded, this.terrain_loaded]).then(() => {
-            scene.add(create_city_geometry(this.streets, this.terrain));
-        });        
-        
-        this.jump_to_street_position(0.2, false);
-
         this.last_time = performance.now();
-        console.log("1st animate");
+        plog("1st animate");
         requestAnimationFrame(this.animate.bind(this));
-
-        this.gui.close();
 
         this.active = true;
         $(window).focus(() => { this.active = true; });
-        $(window).blur(() => { this.active = false; });        
+        $(window).blur(() => { this.active = false; });
+
+        if (cfg.smooth_terrain)
+            this.terrain.smooth(10, d2 => Math.exp(-d2 * 0.002), 0.02, this.street.lut, 400);
+        if (cfg.show_terrain)
+            scene.add(this.terrain.create_mesh());
+        plog('terrain loaded');
+
+        this.terrain.smoothed = false;
+        this.gui.add(this.terrain, 'smoothed').onChange(() => {
+            this.terrain.smooth(10, d2 => Math.exp(-d2 * 0.002), 0.02, this.street.lut, 200);
+        });
+
+        if (!cfg.random_street)
+            this.signs_loaded = this.place_signs();
+        if (cfg.show_buildings) {
+            scene.add(create_city_geometry(this.streets, this.terrain));
+            plog('city geometry loaded');
+        }
+
+        this.gui.close();
     }
 
     init_cameras(default_cam) {
@@ -155,16 +172,17 @@ class App {
             this.init_vr();
         this.camera = default_cam;
         this.camera_change = this.camera;
-        this.gui.add(this, "camera_change", Object.keys(this.cameras)).onChange(() => this.update_camera() );
+        this.gui.add(this, "camera_change", Object.keys(this.cameras)).onChange(() => this.update_camera());
         this.update_camera();
 
         $(() => {
             document.addEventListener('keydown', ev => {
                 if (ev.keyCode == 67)
                     this.toggle_camera();
-            });        
+            });
         });
-    }    
+        plog("cameras ready");
+    }
 
     update_camera() {
         // if (this.camera == "fly_cam")
@@ -188,10 +206,8 @@ class App {
             this.fly_cam.copy(this.cameras[this.camera][0]);
             this.fly_controls.headingFromCameraMatrix(this.cameras[this.camera][0].matrixWorld);
             if (this.camera == "first_person_cam") {
-                this.car_loaded.then(() => {
-                    this.fly_cam.position.copy(
-                        this.car_model.position.clone().add(this.camera_first_person_object.position));
-                });
+                this.fly_cam.position.copy(
+                    this.car_model.position.clone().add(this.camera_first_person_object.position));
             }
         }
 
@@ -200,7 +216,7 @@ class App {
         //            this.cameras[this.camera][0].matrixWorldInverse);
         // }
         this.camera = this.camera_change;
-        //console.log("this.camera", this.camera);
+        console.log("this.camera", this.camera);
     }
 
     toggle_camera() {
@@ -214,54 +230,53 @@ class App {
 
     init_sound() {
         require('script!../bower_components/osc.js/dist/osc-browser');
-        osc.WebSocketPort.prototype.send_float = function(addr, val) {
-            this.send({address: addr, args: [val]});
+        osc.WebSocketPort.prototype.send_float = function (addr, val) {
+            this.send({ address: addr, args: [val] });
         };
         const osc_port = new osc.WebSocketPort({
             url: "ws://localhost:8081"
         });
-        osc_port.on('open', function() {
+        osc_port.on('open', function () {
             osc_port.send_float('/startEngine', 0);
         });
         osc_port.open();
         this.osc_por = osc_port;
-        $(function() {
-            document.addEventListener('keydown', function(ev) {
+        $(function () {
+            document.addEventListener('keydown', function (ev) {
                 if (ev.keyCode == 72)
                     osc_port.send_float('/honk', 0);
             });
-            window.addEventListener('unload', function() {
+            window.addEventListener('unload', function () {
                 osc_port.send_float('/stopEngine', 0);
                 osc_port.close(1000);
             });
-        });       
+        });
     }
 
     place_sign(sign, t, gui_folder) {
-        this.street_loaded.then(street => {
-            const street_bezier = street.poly_bezier;
-            const p = new THREE.Vector2().copy(street_bezier.get(t));
-            const n = new THREE.Vector2().copy(street_bezier.normal(t));
-            const d = street_bezier.derivative(t);
-            const y = street.height_profile.get(t).y;
-            p.addScaledVector(n, 0.5 * street.street_width);
-            sign.position.copy(street.xytovec3(p,y));
-            gui_folder.addnum(sign.position, 'y');
-            gui_folder.addscale(sign.scale);
-            const g = sign.children[0].children[0].children;
-            if (g.length == 3) {
-                gui_folder.addcolor(g[2].material, 'color');
-                // gui_folder.addcolor(g[2].material, 'emissive');
-            }
-            sign.rotation.y = Math.atan2(d.x,d.y);
-            scene.add(sign);
-        });
+        const street = this.street;
+        const street_bezier = street.poly_bezier;
+        const p = new THREE.Vector2().copy(street_bezier.get(t));
+        const n = new THREE.Vector2().copy(street_bezier.normal(t));
+        const d = street_bezier.derivative(t);
+        const y = street.height_profile.get(t).y;
+        p.addScaledVector(n, 0.5 * street.street_width);
+        sign.position.copy(street.xytovec3(p, y));
+        gui_folder.addnum(sign.position, 'y');
+        gui_folder.addscale(sign.scale);
+        const g = sign.children[0].children[0].children;
+        if (g.length == 3) {
+            gui_folder.addcolor(g[2].material, 'color');
+            // gui_folder.addcolor(g[2].material, 'emissive');
+        }
+        sign.rotation.y = Math.atan2(d.x, d.y);
+        scene.add(sign);
     }
 
     init_chase_cam() {
         this.chase_camera = THREE.get_camera();
 
-        let controls = new chase_cam(this.chase_camera, new THREE.Vector3(0,5,0), new THREE.Vector3(0,20,-40)); //new THREE.Vector3(0,20,-40));
+        let controls = new chase_cam(this.chase_camera, new THREE.Vector3(0, 5, 0), new THREE.Vector3(0, 20, -40)); //new THREE.Vector3(0,20,-40));
         var f = this.gui.addFolder('chase_cam');
         f.add(controls.dist_vector, 'x');
         f.add(controls.dist_vector, 'y');
@@ -273,18 +288,14 @@ class App {
 
     init_first_person_view() {
         this.camera_first_person_object = new THREE.Object3D();
-        this.camera_first_person_object.position.set(0.37,1.36,0.09);
-        this.car_loaded.then( () => {
-            this.car_model_slope.add(this.camera_first_person_object);
-        });        
+        this.camera_first_person_object.position.set(0.37, 1.36, 0.09);
+        this.car_model_slope.add(this.camera_first_person_object);
     }
 
     init_picking_controls() {
         let controls = new picking_controls(window, scene);
-        this.cameras['picking_cam'] = [controls.camera, controls];        
-        this.car_loaded.then(() => {
-            controls.objects.push(this.car_model);
-        });
+        this.cameras['picking_cam'] = [controls.camera, controls];
+        controls.objects.push(this.car_model);
         $(() => {
             document.addEventListener('keydown', ev => {
                 if (this.camera == 'picking_cam') {
@@ -306,33 +317,33 @@ class App {
     init_vr() {
 
         window.WebVRConfig = {
-          /**
-           * webvr-polyfill configuration
-           */
+            /**
+             * webvr-polyfill configuration
+             */
 
-          // Forces availability of VR mode.
-          //FORCE_ENABLE_VR: true, // Default: false.
-          // Complementary filter coefficient. 0 for accelerometer, 1 for gyro.
-          //K_FILTER: 0.98, // Default: 0.98.
-          // How far into the future to predict during fast motion.
-          //PREDICTION_TIME_S: 0.040, // Default: 0.040 (in seconds).
-          // Flag to disable touch panner. In case you have your own touch controls
-          //TOUCH_PANNER_DISABLED: true, // Default: false.
-          // Enable yaw panning only, disabling roll and pitch. This can be useful for
-          // panoramas with nothing interesting above or below.
-          //YAW_ONLY: true, // Default: false.
+            // Forces availability of VR mode.
+            //FORCE_ENABLE_VR: true, // Default: false.
+            // Complementary filter coefficient. 0 for accelerometer, 1 for gyro.
+            //K_FILTER: 0.98, // Default: 0.98.
+            // How far into the future to predict during fast motion.
+            //PREDICTION_TIME_S: 0.040, // Default: 0.040 (in seconds).
+            // Flag to disable touch panner. In case you have your own touch controls
+            //TOUCH_PANNER_DISABLED: true, // Default: false.
+            // Enable yaw panning only, disabling roll and pitch. This can be useful for
+            // panoramas with nothing interesting above or below.
+            //YAW_ONLY: true, // Default: false.
 
-          /**
-           * webvr-boilerplate configuration
-           */
-          // Forces distortion in VR mode.
-          //FORCE_DISTORTION: true, // Default: false.
-          // Override the distortion background color.
-          //DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
-          // Prevent distortion from happening.
-          //PREVENT_DISTORTION: true, // Default: false.
-          // Show eye centers for debugging.
-          //SHOW_EYE_CENTERS: true, // Default: false.
+            /**
+             * webvr-boilerplate configuration
+             */
+            // Forces distortion in VR mode.
+            //FORCE_DISTORTION: true, // Default: false.
+            // Override the distortion background color.
+            //DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
+            // Prevent distortion from happening.
+            //PREVENT_DISTORTION: true, // Default: false.
+            // Show eye centers for debugging.
+            //SHOW_EYE_CENTERS: true, // Default: false.
         };
         //var WebVRManager = require("../../webvr-boilerplate/src/webvr-manager.js");
         //var WebVRManager = require("script!../../webvr-boilerplate/build/webvr-manager.js");
@@ -340,8 +351,8 @@ class App {
         effect.setSize(window.innerWidth, window.innerHeight); // TODO: do you really need this?
         this.vr_manager = new WebVRManager(renderer, effect);
         //vr_manager.
-        $(document).ready(function() {
-            $("img[title='Fullscreen mode']").css('bottom', '').css('right', '').css('left','0px').css('top','0px');
+        $(document).ready(function () {
+            $("img[title='Fullscreen mode']").css('bottom', '').css('right', '').css('left', '0px').css('top', '0px');
         });
 
         const camera = THREE.get_camera();
@@ -351,8 +362,8 @@ class App {
         vr_cam.add(camera);
         this.camera_first_person_object.add(vr_cam);
         const controls = new THREE.VRControls(camera);
-        $(document).ready(function() {
-            document.addEventListener('keydown', function(ev) {
+        $(document).ready(function () {
+            document.addEventListener('keydown', function (ev) {
                 if (ev.keyCode == 13)
                     controls.resetSensor();
             });
@@ -370,7 +381,7 @@ class App {
         f.add(camera, 'fov').onChange(() => camera.updateProjectionMatrix());
         f.add(camera, 'near').onChange(() => camera.updateProjectionMatrix());
         f.add(camera, 'far').onChange(() => camera.updateProjectionMatrix());
-        
+
         this.cameras["first_person_cam"] = [camera, null];
     }
 
@@ -380,11 +391,9 @@ class App {
         camera.position.z = -0.01;
 
         const cam = new THREE.Object3D();
-        cam.position.set(0.37,1.36,0.09);
+        cam.position.set(0.37, 1.36, 0.09);
         cam.add(camera);
-        this.car_loaded.then( () => {
-            this.car_model_slope.add(cam);
-        });
+        this.car_model_slope.add(cam);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enablePan = false;
@@ -393,7 +402,7 @@ class App {
         this.cameras['orbit_cam'] = [camera, controls];
         this.orbit_cam = camera;
         this.orbit_controls = controls;
-    }    
+    }
 
     init_fly_cam() {
         let camera = THREE.get_camera();
@@ -409,9 +418,9 @@ class App {
         controls.movementSpeed = speeds["normal"];
         controls.lookSpeed = 0.2;
         controls.lookVertical = true;
-        $(document).ready(function() {
+        $(document).ready(function () {
             let mod = false;
-            document.addEventListener('keydown', function(ev) {
+            document.addEventListener('keydown', function (ev) {
                 if (ev.keyCode == 16) // shift
                     controls.movementSpeed = speeds[mod ? "very fast" : "fast"];
                 else if (ev.keyCode == 17) // ctlr
@@ -423,7 +432,7 @@ class App {
                     else if (speed == speeds["fast"]) controls.movementSpeed = speeds["very fast"];
                 }
             });
-            document.addEventListener('keyup', function(ev) {
+            document.addEventListener('keyup', function (ev) {
                 if (ev.keyCode == 16 || ev.keyCode == 17)
                     controls.movementSpeed = speeds["normal"];
                 else if (ev.keyCode == 18) {
@@ -442,52 +451,40 @@ class App {
 
     init_street() {
         this.street = new Street();
-        return new Promise(resolve => {
-            this.street.create_road(cfg.random_street, street => {
-                this.street_length = this.street.poly_bezier.total_length;
-                //scene.add(street);
-                // street.show_lut_points();
-                this.streets.push(street);
-                resolve(street);
-
-                street.street_mesh.position.y = 0.53;
-                var f = this.gui.addFolder('street position');
-                f.addnum(street.street_mesh.position, 'y');       
-            });
-        });
+        this.street.position.y = 0.53;
+        var f = this.gui.addFolder('street position');
+        f.addnum(this.street.position, 'y');
+        this.street.create_road(cfg.random_street);
+        this.street_length = this.street.poly_bezier.total_length;
+        scene.add(this.street);
+        // street.show_lut_points();
+        this.streets.push(this.street);
     }
 
     place_signs() {
         this.signs = [];
         const fc = this.gui.addFolder('crossings');
         const fs = this.gui.addFolder('signs');
-        return new Promise(resolve => {
-            Promise.all([this.street_loaded, signs.TrafficLight.loaded, signs.StopSign.loaded]).then(() => {
-                $.getJSON('track.study1.json', track => {
-                    const crossings = [];
-                    for (let sign of track.signs) {
-                        if (sign.type == 0) {
-                            const s = new signs.StopSign(sign.percent * this.street_length);
-                            this.signs.push(s);
-                            this.place_sign(s, sign.percent, fs);
-                        } else if (sign.type == 12) {
-                            const light = new signs.TrafficLight(sign.percent * this.street_length, sign.trigger_distance, sign.time_range_from);
-                            this.signs.push(light);
-                            this.place_sign(light, sign.percent, fs);
-                        }
-                        if (sign.type == 0 || sign.type == 12) {
-                            crossings.push(this.add_crossing(sign.percent + 14 / this.street_length, sign.crossing_type, sign.crossing_height));
-                        }
-                    }
-                    for (let crossing of crossings) {
-                        crossing.then(c => {
-                            fc.addnum(c.street_mesh.position, 'y');
-                        });
-                    }
-                    Promise.all(crossings).then(() => { resolve(); });
-                });
-            });
-        });
+        const track = track_study_1;
+        for (let sign of track.signs) {
+            if (sign.type == 0) {
+                const s = new signs.StopSign(sign.percent * this.street_length);
+                this.signs.push(s);
+                this.place_sign(s, sign.percent, fs);
+            } else if (sign.type == 12) {
+                const light = new signs.TrafficLight(sign.percent * this.street_length, sign.trigger_distance, sign.time_range_from);
+                this.signs.push(light);
+                this.place_sign(light, sign.percent, fs);
+            }
+            if (sign.type == 0 || sign.type == 12) {
+                const c = this.add_crossing(sign.percent + 14 / this.street_length, sign.crossing_type, sign.crossing_height);
+                scene.add(c);
+                fc.addnum(c.position, 'y');
+            }
+        }
+        this.signs_loaded = true;
+        plog('signs loaded');
+
     }
 
     jump_to_street_position(t, reverse) {
@@ -503,29 +500,54 @@ class App {
         //     console.log(angle * 180 / Math.PI);
         //     car2d.heading = angle;
         // }
-        this.street_loaded.then(street => {
-            const p = street.xytovec3(street.poly_bezier.get(t));
-            this.car2d.setFromPosition3d(p);
-            const d = street.poly_bezier.derivative(t);
-            const angle = -Math.atan2(d.x,d.y) + (reverse ? Math.PI : 0);
-            this.car2d.heading = angle;
-            // if (!do_first_person_cam)
-            //     camera.position.set(-20,30,car2d.position.x);            
-        })
+        const street = this.street;
+        const p = street.xytovec3(street.poly_bezier.get(t));
+        this.car2d.setFromPosition3d(p);
+        const d = street.poly_bezier.derivative(t);
+        const angle = -Math.atan2(d.x, d.y) + (reverse ? Math.PI : 0);
+        this.car2d.heading = angle;
+        // if (!do_first_person_cam)
+        //     camera.position.set(-20,30,car2d.position.x);            
     }
 
     init_car2d() {
         this.car_stats = new Stats.Stats();
         this.car2d = new Car.Car(
-            {stats:this.car_stats
-            , consumption_update:L_100km => {
-                // console.log("consumption", L_100km);
-            }
-        });
+            {
+                stats: this.car_stats
+                , consumption_update: L_100km => {
+                    // console.log("consumption", L_100km);
+                }
+            });
         this.car2d.config_panel = new ConfigPanel(this.car2d);
+        $(() => {
+            document.addEventListener('keydown', ev => {
+                if (ev.keyCode == 87)
+                    this.car2d.gearbox.gear_up();
+                else if (ev.keyCode == 83)
+                    this.car2d.gearbox.gear_down();
+            });
+        });
     }
 
     init_car() {
+        this.car_model = new THREE.Object3D();
+        this.car_model_slope = new THREE.Object3D();
+        this.car_model.add(this.car_model_slope);
+        
+        var light = new THREE.PointLight(0xffffff, 1, 5, 0.5);
+        //light.position.set(0.37, 1.4, 1.55); // TODO?: light nicht mit auto mitdrehen?
+        light.position.set(0.37, 1.2, 0.01);
+        var lf = this.gui.addFolder('car light');
+        lf.addxyz(light.position)
+        lf.addnum(light, 'intensity');
+        lf.addnum(light, 'distance', 1);
+        lf.addnum(light, 'decay');
+        this.car_model_slope.add(light);
+
+        scene.add(this.car_model);
+        if (!cfg.show_car)
+            return;
         return new Promise(resolve => {
             load_car.load_car((car_body/*, wheel*/) => {
 
@@ -541,53 +563,29 @@ class App {
                 // gui.addFolder('car position').addnum(car_body.position, 'y');
                 // //vehicle_box.castShadow = vehicle_box.receiveShadow = true;
 
-                this.car_model = new THREE.Object3D();
-                this.car_model_slope = new THREE.Object3D();
-                this.car_model.add(this.car_model_slope);
                 this.car_model_slope.add(car_body);
-
-                scene.add(this.car_model);
 
                 resolve(this.car_model_slope);
 
-                $(() => {
-                    document.addEventListener('keydown', ev => {
-                        if (ev.keyCode == 87)
-                            this.car2d.gearbox.gear_up();
-                        else if (ev.keyCode == 83)
-                            this.car2d.gearbox.gear_down();
-                    });
-                });        
-                var light = new THREE.PointLight(0xffffff, 1, 0);
-                //light.position.set(0.37, 1.4, 1.55); // TODO?: light nicht mit auto mitdrehen?
-                light.position.set(0.37, 1.2, 0.01);
-                var lf = this.gui.addFolder('car light');
-                lf.addxyz(light.position)
-                lf.addnum(light, 'intensity');
-                lf.addnum(light, 'distance', 1);
-                lf.addnum(light, 'decay');
-                this.car_model_slope.add(light);
             });
-        });    
+        });
     }
 
     init_gauge() {
         const gauge_needle = new THREE.Mesh(
             new THREE.BoxGeometry(0.04, 0.004, 0.002),
-            new THREE.MeshBasicMaterial({color: 0xb31804})
+            new THREE.MeshBasicMaterial({ color: 0xb31804 })
         );
         gauge_needle.geometry.translate(0.5 * gauge_needle.geometry.parameters.width, 0, 0);
         gauge_needle.rotation.x = 0.606;
         //gauge_needle.rotation.z = [-0.806,3.933] (10-210)
-        this.gauge_kmh_slope = (3.933-(-0.806)) / (210-10);
+        this.gauge_kmh_slope = (3.933 - (-0.806)) / (210 - 10);
         const gauge = new THREE.Object3D(); gauge.add(gauge_needle);
         gauge.position.set(0.365, 1.111, 0.806);
-    // camera_first_person_object.position.copy(gauge.position);
-    // camera.position.z = -0.3;
-        this.car_loaded.then(() => {
-            this.car_model_slope.add(gauge);
-        });
-        
+        // camera_first_person_object.position.copy(gauge.position);
+        // camera.position.z = -0.3;
+        this.car_model_slope.add(gauge);
+
         var gf = this.gui.addFolder('gauge');
         gf.addxyz(gauge.position, 0.01);
         gf.addxyz(gauge_needle.rotation);
@@ -599,48 +597,46 @@ class App {
     add_crossing(_t, type, height_diff) {
         height_diff = height_diff || 0.01;
         type = type || "both";
-        return new Promise(resolve => {
-            Promise.all([this.street_loaded, this.terrain_loaded]).then( () => {
-                const street = this.street;
-                const c = new Street(); // new crossing
-                c.max_deviation_random_street = 0;
-                const p = new THREE.Vector2().copy(street.poly_bezier.get(_t));
-                const t = new THREE.Vector2().copy(street.poly_bezier.normal(_t));
-                const w = street.street_width;
-                const done = () => {
-                    this.streets.push(c);
-                    c.street_mesh.position.y = street.street_mesh.position.y + height_diff;
-                    resolve(c)
-                }
-                if (type == "both") {
-                    const p0 = p.clone().addScaledVector(t, w * 2);
-                    const p1 = p.clone().addScaledVector(t, w * -2);
-                    c.segments.push(new Bezier(p0, p, p, p1)); // main crossing
-                    c.starting_point = p0; // right side
-                    c.starting_tangent = t;
-                    c.create_random_segments(3);
-                    c.starting_point = p1; // left side
-                    c.starting_tangent = t.clone().multiplyScalar(-1);
-                    c.create_random_segments(3);
+        const street = this.street;
+        const c = new Street(); // new crossing
+        c.max_deviation_random_street = 0;
+        const p = new THREE.Vector2().copy(street.poly_bezier.get(_t));
+        const t = new THREE.Vector2().copy(street.poly_bezier.normal(_t));
+        const w = street.street_width;
+        if (type == "both") {
+            const p0 = p.clone().addScaledVector(t, w * 2);
+            const p1 = p.clone().addScaledVector(t, w * -2);
+            c.segments.push(new Bezier(p0, p, p, p1)); // main crossing
+            c.starting_point = p0; // right side
+            c.starting_tangent = t;
+            c.create_random_segments(3);
+            c.starting_point = p1; // left side
+            c.starting_tangent = t.clone().multiplyScalar(-1);
+            c.create_random_segments(3);
 
-                    c.create_geometry();
-                    c.adjust_height_from_terrain(this.terrain);
-                    c.calculate_lut_points();
-                    c.create_mesh();
-                    done();
-                } else {
-                    c.starting_tangent.copy(t);
-                    if (type == "left")
-                        c.starting_tangent.multiplyScalar(-1);
-                    c.starting_point = p.clone().addScaledVector(c.starting_tangent, -0.5 * w);
-                    //c.initial_height = street.height_profile.get(_t).y;
-                    c.create_road(3, done, this.terrain);
-                }
-            });
-        });
+            c.create_geometry();
+            c.adjust_height_from_terrain(this.terrain);
+            c.calculate_lut_points();
+            c.create_mesh();
+        } else {
+            c.starting_tangent.copy(t);
+            if (type == "left")
+                c.starting_tangent.multiplyScalar(-1);
+            c.starting_point = p.clone().addScaledVector(c.starting_tangent, -0.5 * w);
+            //c.initial_height = street.height_profile.get(_t).y;
+            c.create_road(3, this.terrain);
+        }
+        this.streets.push(c);
+        c.position.y = street.position.y + height_diff;
+        return c;
     }
 
     animate(time) {
+        this.animates = this.animates || 0;
+        if (this.animates < 3) {
+            console.log(' !! animate');
+            this.animates++;
+        }
 
         if (time === undefined)
             time = performance.now()
@@ -659,7 +655,7 @@ class App {
         const street = this.street;
         const car_stats = this.car_stats;
 
-        this.gauge_needle.rotation.z = -0.806 + this.gauge_kmh_slope * (Math.max(car2d.kmh(),0) - 10);
+        this.gauge_needle.rotation.z = -0.806 + this.gauge_kmh_slope * (Math.max(car2d.kmh(), 0) - 10);
         if (cfg.do_sound) {
             this.osc_port.send_float('/rpm', 0.1 + car2d.engine.rel_rpm() * 0.8);
         }
@@ -693,7 +689,7 @@ class App {
                     inputs.brake = 0;
                 } else {
                     inputs.throttle = 0;
-                    inputs.brake = -accel;                    
+                    inputs.brake = -accel;
                 }
             }
             if (steering > 0) {
@@ -712,15 +708,15 @@ class App {
             // }
             // vehicle.setSteering(steering * 0.6, 0);
             // vehicle.setSteering(steering * 0.6, 1);
-                    //debugger;
+            //debugger;
         }
-        car2d.update(dt * 1000);        
-        if (car_model) {            
+        car2d.update(dt * 1000);
+        if (car_model) {
             car_model.rotation.y = -car2d.heading;
             car_model.position.x = -car2d.position.y;
             car_model.position.z = car2d.position.x;
 
-            car_model.position.y = this.terrain.p2height({x:car_model.position.x,y:car_model.position.z}) + street.street_mesh.position.y;
+            car_model.position.y = this.terrain.p2height({ x: car_model.position.x, y: car_model.position.z }) + street.position.y;
             // car_model_slope.rotation.x = 0;
             // car_model_slope.rotation.y = 0;
 
@@ -744,10 +740,10 @@ class App {
             }
 
             if (on_track) {
-                car_model.position.y = street.height_profile.get(t).y + street.street_mesh.position.y;
-                
+                car_model.position.y = street.height_profile.get(t).y + street.position.y;
+
                 var d = street.poly_bezier.derivative(t);
-                const street_rot = Math.atan2(d.x,d.y);
+                const street_rot = Math.atan2(d.x, d.y);
                 const car_rot = -car2d.heading;
                 // car_model.rotation.y = 
                 // car_stats.add('d.x', d.x);
@@ -759,23 +755,24 @@ class App {
                 // car_stats.add('d.x', d.x);
                 // car_stats.add('d.y', d.y);
                 // car_model_slope.rotation.x = -Math.atan2(d.y,d.x);
-                const axis = new THREE.Vector3(1,0,0).applyEuler(new THREE.Euler(0, street_rot-car_rot,0));
-                const slope = Math.atan2(d.y,d.x);
+                const axis = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, street_rot - car_rot, 0));
+                const slope = Math.atan2(d.y, d.x);
                 car_model_slope.quaternion.setFromAxisAngle(axis, -slope);
                 //car_stats.add('slope', -car_model_slope.rotation.x * 180 / Math.PI);
-                car2d.alpha = Math.cos(street_rot-car_rot) * slope;
+                car2d.alpha = Math.cos(street_rot - car_rot) * slope;
                 car_stats.add('slope', car2d.alpha * 180 / Math.PI);
             } else {
-                car_model_slope.quaternion.set(0,0,0,1);
+                car_model_slope.quaternion.set(0, 0, 0, 1);
                 car2d.alpha = 0;
             }
 
             const street_position = t * this.street_length; // should be [m]
             const kmh = car2d.kmh();
-            for (let s of this.signs)
-                s.tick(street_position, kmh);
-
-            car_stats.add('street position', street_position );
+            if (this.signs_loaded) {
+                for (let s of this.signs)
+                    s.tick(street_position, kmh);
+            }
+            car_stats.add('street position', street_position);
             car_stats.add('car.x', car_model.position.x);
             car_stats.add('car.z', car_model.position.z);
             car_stats.add('car.y', car_model.position.y);
@@ -794,7 +791,7 @@ class App {
         if (this.active)
             requestAnimationFrame(this.animate.bind(this));
         else
-            setTimeout(() => {this.animate();}, 500);
+            setTimeout(() => { this.animate(); }, 500);
 
         if (this.camera == "vr_cam") {
             this.cameras["vr_cam"][1].update();
@@ -803,10 +800,10 @@ class App {
             this.vr_manager.render(scene, this.cameras["vr_cam"][0]);
         } else {
             renderer.render(scene, this.cameras[this.camera][0]);
-        }            
+        }
 
         this.last_time = time;
-    }    
+    }
 }
 
 let app = new App(); // eslint-disable-line no-unused-vars

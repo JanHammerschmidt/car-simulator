@@ -1,8 +1,14 @@
+// var path = require("path");
+var CommonsChunkPlugin = require("webpack/lib/optimize/CommonsChunkPlugin");
 module.exports = {
-    entry: "./webpack/entry.js",
+    entry: {
+        "static": ["./js/webpack/static.js"],
+        "bundle": "./js/webpack/entry.js"
+    },
     output: {
-        path: __dirname,
-        filename: "./webpack/bundle.js"
+        //path: path.resolve(__dirname, 'webpack'),
+        filename: "webpack/[name].js"
+        //publicPath: 'http://localhost:8080/webpack'
     },
     module: {
         loaders: [
@@ -11,5 +17,18 @@ module.exports = {
             /*{ test: /\.css$/, loader: "style!css" }*/
         ]
     },
-    devtool: 'source-map'
+    devtool: 'source-map',
+    deubg: true,
+    plugins: [
+        new CommonsChunkPlugin({
+          names: ["static"],
+
+          // filename: "vendor.js"
+          // (Give the chunk a different name)
+
+          minChunks: Infinity
+          // (with more entries, this ensures that no other module
+          //  goes into the vendor chunk)
+        })        
+    ]
 };

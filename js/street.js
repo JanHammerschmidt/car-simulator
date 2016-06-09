@@ -8,25 +8,24 @@ var Bezier = require('./lib/bezier.js');
 let misc = require("./misc.js");
 let rand = misc.rand;
 
-function load_json(file, callback) {
+function load_track() {
     if (isNode) {
-        //jsonfile
-        var json = module.require('../' + file);
-        callback(json);
+        return module.require('../track.study1.json');
     } else {
-        $.getJSON(file, callback);
+        return require('./webpack/static.js').track_study_1;
     }
 }
 
-class Street {
+class Street extends THREE.Object3D {
     constructor(no_load_texture, lut_points_per_meter, street_width, segment_points_per_meter) {
+        super();
         // this.loaded = false;
         this.street_width = street_width || 20;
         this.lut_points_per_meter = lut_points_per_meter || 0.1;
         this.segment_points_per_meter = segment_points_per_meter || 0.1;
         this.segments = [];
         this._dists = [];
-        this.height_profile = new Bezier({x:0,y:0},{x:1,y:0},{x:2,y:0},{x:3,y:0});
+        this.height_profile = new Bezier({ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 });
         this.height_profile.total_length = 3;
         this.starting_point = new THREE.Vector2(0, -900);
         this.starting_tangent = new THREE.Vector2(0, 1);
@@ -35,7 +34,8 @@ class Street {
 
         if (!no_load_texture && Street.road_tex === undefined) {
             var road_tex = new THREE.TextureLoader().load('textures/road.jpg');
-            road_tex.anisotropy = renderer.getMaxAnisotropy();
+            if (window.cfg.hq_street)
+                road_tex.anisotropy = renderer.getMaxAnisotropy();
             road_tex.wrapT = THREE.RepeatWrapping;
             road_tex.repeat.set(1, 5);
             Street.road_tex = road_tex;
@@ -44,7 +44,7 @@ class Street {
 
     vec3toxy(vec3) { return new THREE.Vector2(vec3.x, vec3.z) }
 
-    xytovec3(v,y) { return new THREE.Vector3(v.x, y || 0.1, v.y); }
+    xytovec3(v, y) { return new THREE.Vector3(v.x, y || 0.1, v.y); }
 
     get_road_position(xy) {
         // var xy = new THREE.Vector2().copy(this.vec3toxy(vec3)); // 2d point
@@ -142,82 +142,77 @@ class Street {
     }
 
     create_segments_from_json() {
-        return new Promise(resolve => {
-            let that = this;
-            load_json('track.study1.json', function(track) {
-                var cfg = {
-                    ver2: true,
-                    deviation_mult: 3.0, //3.0, // max. ~5.4
-                    distance_mult: 0.1, //0.07, // 0.1
-                    scale: 1500.0
-                };
-                var scale = cfg.scale;
-                var origin = new THREE.Vector2(0, 0);
-                var p = new THREE.Vector2(-700, -800); // current/starting point
-                var t = new THREE.Vector2(0, 1); // tangent
-                var first = true,
-                    prev = null;
-                var cur_percent = 0;
-                var signs = track.signs;
+        const track = load_track();
+        var cfg = {
+            ver2: true,
+            deviation_mult: 3.0, //3.0, // max. ~5.4
+            distance_mult: 0.1, //0.07, // 0.1
+            scale: 1500.0
+        };
+        var scale = cfg.scale;
+        var origin = new THREE.Vector2(0, 0);
+        var p = new THREE.Vector2(-700, -800); // current/starting point
+        var t = new THREE.Vector2(0, 1); // tangent
+        var first = true,
+            prev = null;
+        var cur_percent = 0;
+        var signs = track.signs;
 
-                function do_bezier(p_deviation, distance) {
-                    var a2_deviation = p_deviation;
-                    var a1_length = 0.4 * distance,
-                        a2_length = 0.4 * distance;
-                    var p2 = p.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation), distance);
-                    var segment = new Bezier(
-                        p,
-                        p.clone().addScaledVector(t, a1_length),
-                        p2.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation + Math.PI + a2_deviation), a2_length),
-                        p2);
-                    that.segments.push(segment);
-                    //that.add_street_segment(segment);
-                    t.copy(segment.derivative(1)).normalize();
-                    p.copy(p2);
-                    return segment.length();
-                }
+        const do_bezier = (p_deviation, distance) => {
+            var a2_deviation = p_deviation;
+            var a1_length = 0.4 * distance,
+                a2_length = 0.4 * distance;
+            var p2 = p.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation), distance);
+            var segment = new Bezier(
+                p,
+                p.clone().addScaledVector(t, a1_length),
+                p2.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation + Math.PI + a2_deviation), a2_length),
+                p2);
+            this.segments.push(segment);
+            //this.add_street_segment(segment);
+            t.copy(segment.derivative(1)).normalize();
+            p.copy(p2);
+            return segment.length();
+        }
 
-                function proc_sign(sign) {
-                    var p_deviation = (sign.type == 13 ? -0.2 : 0.2) * sign.intensity * sign.duration * cfg.deviation_mult;
-                    var distance = (sign.duration) * scale * cfg.distance_mult;
-                    return do_bezier(p_deviation, distance) / scale;
-                }
+        function proc_sign(sign) {
+            var p_deviation = (sign.type == 13 ? -0.2 : 0.2) * sign.intensity * sign.duration * cfg.deviation_mult;
+            var distance = (sign.duration) * scale * cfg.distance_mult;
+            return do_bezier(p_deviation, distance) / scale;
+        }
 
-                function proc_prev_sign(prev, cur_percent) {
-                    var p_deviation = (prev.type == 13 ? -0.2 : 0.2) * Math.PI;
-                    var distance = (cur_percent - prev.percent) * scale;
-                    do_bezier(p_deviation, distance);
-                }
-                for (var i = 0; i < signs.length; i++) {
-                    var sign = signs[i];
-                    if (sign.type >= 13) {
-                        if (cfg.ver2) {
-                            // var p0 = p.clone();
-                            var percent1 = (sign.percent - cur_percent);
-                            if (percent1 > 0) {
-                                do_bezier(0, percent1 * scale);
-                            }
-                            cur_percent += Math.max(percent1, 0) + proc_sign(sign);
-                        } else {
-                            if (first) {
-                                do_bezier(0, sign.percent * scale);
-                                first = false;
-                            } else {
-                                proc_prev_sign(prev, sign.percent);
-                            }
-                            prev = sign;
-                        }
-                    }
-                }
+        function proc_prev_sign(prev, cur_percent) {
+            var p_deviation = (prev.type == 13 ? -0.2 : 0.2) * Math.PI;
+            var distance = (cur_percent - prev.percent) * scale;
+            do_bezier(p_deviation, distance);
+        }
+        for (var i = 0; i < signs.length; i++) {
+            var sign = signs[i];
+            if (sign.type >= 13) {
                 if (cfg.ver2) {
-                    if (cur_percent < 1) {
-                        do_bezier(0, (1 - cur_percent) * scale);
+                    // var p0 = p.clone();
+                    var percent1 = (sign.percent - cur_percent);
+                    if (percent1 > 0) {
+                        do_bezier(0, percent1 * scale);
                     }
-                } else
-                    proc_prev_sign(prev, 1);
-                resolve();
-            }); // getJSON
-        });
+                    cur_percent += Math.max(percent1, 0) + proc_sign(sign);
+                } else {
+                    if (first) {
+                        do_bezier(0, sign.percent * scale);
+                        first = false;
+                    } else {
+                        proc_prev_sign(prev, sign.percent);
+                    }
+                    prev = sign;
+                }
+            }
+        }
+        if (cfg.ver2) {
+            if (cur_percent < 1) {
+                do_bezier(0, (1 - cur_percent) * scale);
+            }
+        } else
+            proc_prev_sign(prev, 1);
     }
 
     adjust_height_from_terrain(terrain) {
@@ -226,47 +221,42 @@ class Street {
             // const s = this.segments[i];
             // const p = this.poly_bezier.parts[i];
             for (let v of s.geometry.vertices) {
-                v.y = terrain.p2height({x:v.x, y:v.z});
+                v.y = terrain.p2height({ x: v.x, y: v.z });
             }
             s.geometry.verticesNeedUpdate = true;
         }
     }
 
     apply_height_from_json() {
-        return new Promise(resolve => {
-            let that = this;
-            load_json('track.study1.json', function(track) {
-                var segments = that.segments;
-                var ps = track.points; //$.extend(true, [], track.points);
-                var scale_x = that.poly_bezier.total_length / track.points[track.points.length - 1].x;
-                for (let i = 0; i < ps.length; i++) {
-                    ps[i].x *= scale_x;
-                    ps[i].y = (ps[i].y - 82) * 0.3; // <-- y scale <-- 0.3 (testweise vllt auch 1.3)
-                }
-                var tpb = new Bezier.PolyBezier(); // track height profile's poly bezier
-                for (let i = 0; i < ps.length - 2; i += 3) {
-                    tpb.addCurve(new Bezier(ps[i], ps[i + 1], ps[i + 2], ps[i + 3]));
-                }
-                tpb.cacheLengths();
+        const track = load_track();
+        var segments = this.segments;
+        var ps = track.points; //$.extend(true, [], track.points);
+        var scale_x = this.poly_bezier.total_length / track.points[track.points.length - 1].x;
+        for (let i = 0; i < ps.length; i++) {
+            ps[i].x *= scale_x;
+            ps[i].y = (ps[i].y - 82) * 0.3; // <-- y scale <-- 0.3 (testweise vllt auch 1.3)
+        }
+        var tpb = new Bezier.PolyBezier(); // track height profile's poly bezier
+        for (let i = 0; i < ps.length - 2; i += 3) {
+            tpb.addCurve(new Bezier(ps[i], ps[i + 1], ps[i + 2], ps[i + 3]));
+        }
+        tpb.cacheLengths();
 
-                var pb = that.poly_bezier;
-                var t0 = 0;
-                segments.forEach(function(s, i) {
-                    var pi = pb.parts[i];
-                    var vertices = s.geometry.vertices;
-                    var segment_points = s.segment_points;
-                    for (var j = 0; j <= segment_points; j++) {
-                        var t = t0 + j / segment_points * pi;
-                        var y = tpb.get(t).y
-                        vertices[j * 2].y = vertices[j * 2 + 1].y = y;
-                    }
-                    s.geometry.verticesNeedUpdate = true;
-                    t0 = pb.bounds[i];
-                });
-                that.height_profile = tpb;
-                resolve();
-            });
+        var pb = this.poly_bezier;
+        var t0 = 0;
+        segments.forEach(function (s, i) {
+            var pi = pb.parts[i];
+            var vertices = s.geometry.vertices;
+            var segment_points = s.segment_points;
+            for (var j = 0; j <= segment_points; j++) {
+                var t = t0 + j / segment_points * pi;
+                var y = tpb.get(t).y
+                vertices[j * 2].y = vertices[j * 2 + 1].y = y;
+            }
+            s.geometry.verticesNeedUpdate = true;
+            t0 = pb.bounds[i];
         });
+        this.height_profile = tpb;
     }
 
     calculate_lut_points() {
@@ -298,40 +288,34 @@ class Street {
             color: 0x5d5d88,
             side: THREE.DoubleSide,
             wireframe: false
-        });                    
-        this.street_mesh = new THREE.Object3D();
+        });
         this.segments.forEach(v => {
             v.geometry.computeBoundingSphere();
             v.geometry.boundingSphere.radius *= 1.1;
             v.mesh = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(v.geometry), mat);
             //v.mesh = new THREE.Mesh(v.geometry, mat);
             //v.material = v.mesh.material;
-            this.street_mesh.add(v.mesh);
+            this.add(v.mesh);
         });
-        scene.add(this.street_mesh);
     }
 
-
-    create_road(random, callback, terrain) {
-        (random 
-            ? new Promise(resolve => { this.create_random_segments(random); resolve() }) 
-            : this.create_segments_from_json()
-        ).then(() => {
-            this.create_geometry();
-            if (random && terrain)
-                this.adjust_height_from_terrain(terrain);
-            return (random
-                ? Promise.resolve()
-                : this.apply_height_from_json()
-            );
-        }).then( () => {
-            this.calculate_lut_points();
-            if (!isNode) {
-                this.create_mesh();
-            }
-            // this.loaded = true;            
-            callback(this);
-        });
+    create_road(random, terrain) {
+        if (random)
+            this.create_random_segments(random);
+        else
+            this.create_segments_from_json();
+        this.create_geometry();
+        if (random && terrain)
+            this.adjust_height_from_terrain(terrain);
+        if (!random)
+            this.apply_height_from_json();
+        this.calculate_lut_points();
+        if (!isNode) {
+            this.create_mesh();
+        }
+        // this.loaded = true;
+        if (!isNode)
+            misc.plog("street loaded");
     }
 
     show_lut_points() {
@@ -342,7 +326,7 @@ class Street {
         for (let l of this.lut) {
             let mesh = new THREE.Mesh(sphere, material);
             mesh.position.set(l.x, l.height, l.y);
-            this.street_mesh.add(mesh);            
+            this.add(mesh);
         }
     }
 }

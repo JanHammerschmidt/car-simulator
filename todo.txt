@@ -12,13 +12,14 @@ todo
     OK: track: trigger traffic lights
     OK: traffic lights & stop-sign notifications
     1) speed signs
+    1) traffic lights: licht
     2) speeding notifications
     2) schöne speeding/stop-sign/traffic lights notifications
     2) logging (auch: logging.h)
     2) trackeditor?
     2) oculus "eye" tracking
     2) ende der strecke..
-    3) check visual studio code
+    OK: check visual studio code
     3) change based on vp_id / durchs experiment führen ..
     3) kreuzungen textur?
     3) fpstimer
@@ -26,6 +27,7 @@ todo
     3) intro-run
     3) terrain rbf-pkt auf rand der straße legen?
     3) initiales runterrollen?
+    3) http://stackoverflow.com/questions/4978323/how-to-calculate-distance-between-two-rectangles-context-a-game-in-lua
     OK: check out zsh+prezto(oder oh-my-zsh) / fish
     OK: check out iterm2
     4) osm2world nochmal abchecken

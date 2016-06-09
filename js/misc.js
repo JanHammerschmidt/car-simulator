@@ -55,14 +55,52 @@ const misc = {
 
     delay: function(ms) { return new Promise(r => setTimeout(r, ms)); },
 
-    load_model_obj: function(fname) {        
-        const loader = new THREE.OBJMTLLoader();
-        return new Promise(r => {
-            loader.load(fname, fname.slice(0,-3) + "mtl", r, undefined, err => { 
-                console.log("error loading", fname, err);
-            });
-        });
+    // load_model_obj: function(fname) {
+        
+    //     const loader = new THREE.OBJMTLLoader();
+    //     return new Promise(r => {
+    //         loader.load(fname, fname.slice(0,-3) + "mtl", r, undefined, err => { 
+    //             console.log("error loading", fname, err);
+    //         });
+    //     });
+    // },
+    
+    // load_obj_mtl2: function(path, obj, mtl) {
+    //     return new Promise(resolve => {
+    //         misc.plog("1 "+path);
+    //         const mtlLoader = new THREE.MTLLoader();
+    //         mtlLoader.setPath(path);
+    //         mtlLoader.load(mtl, materials => {
+    //             misc.plog("2 "+path);
+    //             materials.preload();
+    //             misc.plog("3 "+path);
+    //             const objLoader = new THREE.OBJLoader();
+    //             objLoader.setMaterials(materials);
+    //             objLoader.setPath(path);
+    //             objLoader.load(obj, object => {
+    //                 misc.plog("4 "+path);
+    //                 resolve(object);
+    //             });
+    //         });
+    //     });
+    // },
+    
+    load_obj_mtl: function(model) {
+        const mtlLoader = new THREE.MTLLoader();
+        mtlLoader.setTexturePath(model.path);
+        const materials = mtlLoader.parse(model.mtl);
+        materials.preload();
+        const objLoader = new THREE.OBJLoader();
+        objLoader.setMaterials(materials);
+        const obj = objLoader.parse(model.obj);
+        return obj;
+    },    
+    
+    init_perf: function() { misc.perf_t0 = window.performance.now(); },
+    plog: function(s) {
+        console.log(((window.performance.now()-misc.perf_t0)/1000).toPrecision(4), s);
     }
+    
 }
 
 module.exports = misc;

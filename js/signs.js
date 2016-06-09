@@ -2,7 +2,8 @@
 
 const misc = require("./misc.js");
 const delay = misc.delay;
-const load_model_obj = misc.load_model_obj;
+const models = require('./webpack/static.js').models;
+
 
 class StopSign extends THREE.Object3D {
     constructor(pos) {
@@ -13,18 +14,15 @@ class StopSign extends THREE.Object3D {
         this.state = 0; // {0: too far away, 1: approaching (must stop), 2: past sign / has stopped / has issued warning}
     }
     static load_model() {
-        return this.loaded = new Promise(resolve => {
-            load_model_obj('models/stop_sign/stop_sign.obj').then(obj => {
-                obj.rotateY(Math.PI);
-                obj.rotateX(Math.PI / 2);
-                obj.position.y = -2.27;
-                obj.scale.multiplyScalar(1.5);
-                const s = obj.children[0].children[2];
-                s.material = new THREE.MeshBasicMaterial({map:s.material.map, color: '#e8e8e8'});
-                StopSign._model = obj;
-                resolve(obj);
-            });
-        });
+        const obj = misc.load_obj_mtl(models.stop_sign);
+        obj.rotateY(Math.PI);
+        obj.rotateX(Math.PI / 2);
+        obj.position.y = -2.27;
+        obj.scale.multiplyScalar(1.5);
+        const mats = obj.children[0].material.materials;
+        mats[1] = new THREE.MeshBasicMaterial({map:mats[1].map, color: '#e8e8e8'});
+        StopSign._model = obj;
+        misc.plog("stop sign model loaded");
     }
     tick(cur_pos, kmh) {
         if (this.state == 2)
@@ -58,25 +56,23 @@ class TrafficLight extends THREE.Object3D {
         this.trigger_dist = trigger_dist;
         this.delay = delay;
         this.model = TrafficLight._model.clone();
-        this.colors = ['green','yellow','red'].map(c => this.model.children.find(o => o.name == c).children[1].material);
-        this.model.children.find(o => o.name == 'case').children[1].material.side = THREE.DoubleSide;
+        //debugger;
+        this.colors = ['green','yellow','red'].map(c => this.model.children.find(o => o.name == c).material);
+        this.model.children.find(o => o.name == 'case').material.side = THREE.DoubleSide;
         this.lights_on = [0x49e411, 0xd2c100, 0x960101];
         this.lights_off = [0x142d0b, 0x262300, 0x1f0000];
         this.set_state(2);
+        //this.demo()
         this.add(this.model);
         this.no_tick = false;
     }
     static load_model() {
-        return this.loaded = new Promise(resolve => {
-            const loader = new THREE.OBJMTLLoader();
-            loader.load("models/traffic_lights/traffic_lights.obj", "models/traffic_lights/traffic_lights.mtl", obj => {
-                obj.scale.multiplyScalar(24);
-                obj.position.y = -1.9;
-                obj.rotateY(Math.PI/2);
-                TrafficLight._model = obj;
-                resolve(obj);
-            });
-        });
+        const obj = misc.load_obj_mtl(models.traffic_light);
+        obj.scale.multiplyScalar(24);
+        obj.position.y = -1.9;
+        obj.rotateY(Math.PI/2);
+        TrafficLight._model = obj;
+        misc.plog("traffic light model loaded");
     }
     set_state(state) {
         //console.log("traffic light state", state);

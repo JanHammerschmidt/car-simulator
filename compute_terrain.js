@@ -18,51 +18,50 @@ function distSq2d(p1, p2) {
 }
 
 var street = new Street(true);
-street.create_road(false, function() {
-    console.log('done loading');
-    const points = street.lut;
-    // var points = street.segments.reduce(function(p, s) {
-    //     return p.concat(s.lut);
-    // }, []);
+street.create_road(false);
+console.log('done loading');
+const points = street.lut;
+// var points = street.segments.reduce(function(p, s) {
+//     return p.concat(s.lut);
+// }, []);
 
-    var tpoints = new Terrain().vertices();
-    var zvalues = tpoints.map(function(p) {
-        var n = 0; //nominator
-        var d = 0; // denominator
-        var n2 = 0,
-            d2 = 0;
+var tpoints = new Terrain().vertices();
+var zvalues = tpoints.map(function (p) {
+    var n = 0; //nominator
+    var d = 0; // denominator
+    var n2 = 0,
+        d2 = 0;
+    // if (p.x == 0 && p.y == 0)
+    //  debugger;
+    var nearest_distance = Number.MAX_VALUE;
+    var nearest_height = 0;
+    points.forEach(function (v) {
+        var distsq = distSq2d(p, v);
+        if (distsq < nearest_distance) {
+            nearest_distance = distsq;
+            nearest_height = v.height;
+        }
+        var w2 = 1 / (1 + distsq); // pretty good: already smooth, but quite a difference between street & terrain
+        var w = Math.exp(-distsq * 0.01); // good, but needs a smoothing postprocessing step..
         // if (p.x == 0 && p.y == 0)
-        //  debugger;
-        var nearest_distance = Number.MAX_VALUE;
-        var nearest_height = 0;
-        points.forEach(function(v) {
-            var distsq = distSq2d(p, v);
-            if (distsq < nearest_distance) {
-                nearest_distance = distsq;
-                nearest_height = v.height;
-            }
-            var w2 = 1 / (1 + distsq); // pretty good: already smooth, but quite a difference between street & terrain
-            var w = Math.exp(-distsq * 0.01); // good, but needs a smoothing postprocessing step..
-            // if (p.x == 0 && p.y == 0)
-            //  console.log(w);
-            n += v.height * w;
-            d += w;
-            n2 += v.height * w2;
-            d2 += w2;
-        });
-        // return nearest_height;
-        //p.z = n/d;
-        //return nearest_height;
-        if (isNaN(n2 / d2))
-            console.log("isNaN(n2/d2)");
-        return isNaN(n / d) ? n2 / d2 : (n / d);
+        //  console.log(w);
+        n += v.height * w;
+        d += w;
+        n2 += v.height * w2;
+        d2 += w2;
     });
-    jsonfile.writeFileSync('terrain.json', zvalues);
+    // return nearest_height;
+    //p.z = n/d;
+    //return nearest_height;
+    if (isNaN(n2 / d2))
+        console.log("isNaN(n2/d2)");
+    return isNaN(n / d) ? n2 / d2 : (n / d);
+});
+jsonfile.writeFileSync('terrain.json', zvalues);
 
     // segments.slice(1).forEach()
     // street.segments
     // debugger;
     // console.log(street.segments);
-});
-
+    
 //var wstream = fs.createWriteStream()
