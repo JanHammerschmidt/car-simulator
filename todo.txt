@@ -11,6 +11,7 @@ todo
     OK: check rolling resistance in qt
     OK: track: trigger traffic lights
     OK: traffic lights & stop-sign notifications
+    OK: fix crossings: distance between street parts..
     1) speed signs
     1) traffic lights: licht
     2) speeding notifications

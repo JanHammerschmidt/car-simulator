@@ -129,7 +129,7 @@ class App {
         this.init_car2d();
         this.init_cameras("first_person_cam");
         this.init_gauge();
-        this.jump_to_street_position(0, false);
+        this.jump_to_street_position(0.5, false);
         keyboard_input.init();
 
         this.last_time = performance.now();
@@ -617,17 +617,18 @@ class App {
             c.create_geometry();
             c.adjust_height_from_terrain(this.terrain);
             c.calculate_lut_points();
-            c.create_mesh();
         } else {
             c.starting_tangent.copy(t);
             if (type == "left")
                 c.starting_tangent.multiplyScalar(-1);
             c.starting_point = p.clone().addScaledVector(c.starting_tangent, -0.5 * w);
             //c.initial_height = street.height_profile.get(_t).y;
-            c.create_road(3, this.terrain);
+            c.create_road(3, this.terrain, true);
         }
-        this.streets.push(c);
         c.position.y = street.position.y + height_diff;
+        c.adjust_height_from_street(this.street, height_diff);
+        c.create_mesh();
+        this.streets.push(c);
         return c;
     }
 

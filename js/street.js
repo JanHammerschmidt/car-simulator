@@ -227,6 +227,22 @@ class Street extends THREE.Object3D {
         }
     }
 
+    // applies height from another street to this street (for overlapping parts)
+    adjust_height_from_street(street, height_diff, distance) {
+        distance = distance || 0.1; // minimum distance between this street and the other one
+        const street_width_2 = street.street_width*street.street_width;
+        for (let s of this.segments) {
+            for (let v of s.geometry.vertices) {
+                const xy = new THREE.Vector2(v.x, v.z);
+                const t = street.get_road_position(xy);
+                if (misc.distSq2d(xy, street.poly_bezier.get(t)) > street_width_2)
+                    continue;
+                v.y = street.height_profile.get(t).y - height_diff + distance;
+            }
+            s.geometry.verticesNeedUpdate = true;
+        }
+    }
+
     apply_height_from_json() {
         const track = load_track();
         var segments = this.segments;
@@ -299,7 +315,7 @@ class Street extends THREE.Object3D {
         });
     }
 
-    create_road(random, terrain) {
+    create_road(random, terrain, no_create_mesh) {
         if (random)
             this.create_random_segments(random);
         else
@@ -310,7 +326,7 @@ class Street extends THREE.Object3D {
         if (!random)
             this.apply_height_from_json();
         this.calculate_lut_points();
-        if (!isNode) {
+        if (!isNode && !no_create_mesh) {
             this.create_mesh();
         }
         // this.loaded = true;
