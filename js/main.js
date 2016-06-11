@@ -130,7 +130,7 @@ class App {
         this.init_car2d();
         this.init_cameras("first_person_cam");
         this.init_gauge();
-        this.jump_to_street_position(0.5, false);
+        this.jump_to_street_position(0, false);
         keyboard_input.init();
 
         this.last_time = performance.now();
@@ -469,14 +469,21 @@ class App {
         this.signs = [];
         const fc = this.gui.addFolder('crossings');
         const fs = this.gui.addFolder('signs');
+        //const ft = this.gui.addFolder('traffic lights');
         const track = track_study_1;
         for (let sign of track.signs) {
-            if (sign.type == 0) {
+            if (sign.type == 0) { // stop sign
                 const s = new signs.StopSign(sign.percent * this.street_length);
                 this.signs.push(s);
                 this.place_sign(s, sign.percent, fs);
-            } else if (sign.type == 12) {
+            } else if (sign.type == 12) { // traffic light
                 const light = new signs.TrafficLight(sign.percent * this.street_length, sign.trigger_distance, sign.time_range_from);
+                //const l = light.children[0].children.last();
+                //ft.addxyz(l.position)
+                //ft.addnum(l, 'intensity');
+                //ft.addnum(l, 'distance', 1);
+                //ft.addnum(l, 'decay');
+
                 this.signs.push(light);
                 this.place_sign(light, sign.percent, fs);
             } else if (sign.type < 12) { // speed sign 

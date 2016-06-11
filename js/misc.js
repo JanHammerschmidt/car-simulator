@@ -95,8 +95,13 @@ const misc = {
     init_perf: function() { misc.perf_t0 = window.performance.now(); },
     plog: function(s) {
         //console.log(((window.performance.now()-misc.perf_t0)/1000).toPrecision(4), s);
-    }
-    
+    }   
+}
+
+if (!Array.prototype.last){
+    Array.prototype.last = function(){
+        return this[this.length - 1];
+    };
 }
 
 module.exports = misc;

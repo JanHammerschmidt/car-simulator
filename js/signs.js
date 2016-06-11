@@ -80,11 +80,19 @@ class TrafficLight extends THREE.Object3D {
         this.trigger_dist = trigger_dist;
         this.delay = delay;
         this.model = TrafficLight._model.clone();
-        //debugger;
-        this.colors = ['green','yellow','red'].map(c => this.model.children.find(o => o.name == c).material);
-        this.model.children.find(o => o.name == 'case').material.side = THREE.DoubleSide;
+        this.colors = ['green','yellow','red'].map(c => this.model.children.find(o => o.name == c));
+        for (let c of this.colors) {
+            c.geometry.computeBoundingSphere();
+            c.material = c.material.clone();
+        }
+        const frame = this.model.children.find(o => o.name == 'frame');
+        frame.material = new THREE.MeshBasicMaterial({color: '#e8e8e8'})
         this.lights_on = [0x49e411, 0xd2c100, 0x960101];
         this.lights_off = [0x142d0b, 0x262300, 0x1f0000];
+        this.light = new THREE.PointLight(0xffffff, 1.25, 10, 0.5);
+        this.model.add(this.light);
+        //const plh = new THREE.PointLightHelper(this.light, 0.05);
+        //scene.add(plh);
         this.set_state(2);
         //this.demo()
         this.add(this.model);
@@ -95,6 +103,7 @@ class TrafficLight extends THREE.Object3D {
         obj.scale.multiplyScalar(24);
         obj.position.y = -1.9;
         obj.rotateY(Math.PI/2);
+        obj.children.find(o => o.name == 'case').material.side = THREE.DoubleSide;
         TrafficLight._model = obj;
         misc.plog("traffic light model loaded");
     }
@@ -102,11 +111,13 @@ class TrafficLight extends THREE.Object3D {
         //console.log("traffic light state", state);
         const lights_off = this.lights_off;
         this.colors.forEach(function(c,i) {
-            c.color.setHex(lights_off[i]);
+            c.material.color.setHex(lights_off[i]);
             // c.emissive.setHex(lights_off[i]);
         });
-        this.colors[state].color.setHex(this.lights_on[state]);
+        this.colors[state].material.color.setHex(this.lights_on[state]);
         // this.colors[state].emissive.setHex(this.lights_on[state]);
+        this.light.position.copy(this.colors[state].geometry.boundingSphere.center);
+        this.light.position.x += 0.02;
         this.state = state;
     }
     trigger() {
@@ -142,7 +153,7 @@ class TrafficLight extends THREE.Object3D {
             if (this.state > 2)
                 this.state = 0;
             this.set_state(this.state);
-        },500);        
+        }, misc.rand(500,1000));   
     }
 
 }
