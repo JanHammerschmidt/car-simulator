@@ -59,7 +59,6 @@ Terrain.prototype = {
             v[x + (y + 1) * w1].y * (1 - dx) * dy + v[x + 1 + (y + 1) * w1].y * dx * dy;
     },
     adjust_height: function() {
-        console.time('terrain.adjust_height');
         var zvalues = terrain_height; //obj;
         console.assert(zvalues.length == this.vertices().length);
         this.zvalues = zvalues;
@@ -72,16 +71,12 @@ Terrain.prototype = {
             // 	console.log(i,p2i(p),(1000-p.y)*this.heightSegments/this.height);
             // }
         }
-        console.timeEnd('terrain.adjust_height');
-
         this.geometry.verticesNeedUpdate = true;
     },
     rotate: function() {
-        console.time('terrain.rotate');        
         for (let v of this.vertices()) {
             v.set(v.x, v.z, v.y);
         }
-        console.timeEnd('terrain.rotate');
         this.geometry.verticesNeedUpdate = true;
     },
     smooth: function(size, wf, min_weight, lut_points, min_dist2) {

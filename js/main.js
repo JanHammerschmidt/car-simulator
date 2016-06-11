@@ -133,7 +133,7 @@ class App {
         keyboard_input.init();
 
         this.last_time = performance.now();
-        plog("1st animate");
+        console.log("issued animation");
         requestAnimationFrame(this.animate.bind(this));
 
         this.active = true;
@@ -216,7 +216,7 @@ class App {
         //            this.cameras[this.camera][0].matrixWorldInverse);
         // }
         this.camera = this.camera_change;
-        console.log("this.camera", this.camera);
+        // console.log("this.camera", this.camera);
     }
 
     toggle_camera() {
@@ -633,8 +633,8 @@ class App {
 
     animate(time) {
         this.animates = this.animates || 0;
-        if (this.animates < 3) {
-            console.log(' !! animate');
+        if (this.animates < 1) {
+            console.log('animation frame', this.animates+1);
             this.animates++;
         }
 
