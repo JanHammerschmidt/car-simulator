@@ -4,6 +4,30 @@ const misc = require("./misc.js");
 const delay = misc.delay;
 const models = require('./webpack/static.js').models;
 
+class SpeedSign extends THREE.Object3D {
+    constructor(pos, speed_limit) {
+        super();
+        this.pos = pos;
+        this.model = SpeedSign._model.clone();
+        this.add(this.model);
+        if (speed_limit != 70) {
+            const tloader = new THREE.TextureLoader();
+            tloader.load('models/speed_sign/' + speed_limit + 'sign.jpg', tex => {
+                this.model.children[1].material = this.model.children[1].material.clone();
+                this.model.children[1].material.map = tex;
+            });
+        }
+    }
+    static load_model() {
+        const obj = misc.load_obj_mtl(models.speed_sign);
+        obj.rotateY(Math.PI);
+        obj.position.y = -2.5;
+        obj.scale.multiplyScalar(3.5);
+        const sign = obj.children[1];
+        sign.material = new THREE.MeshBasicMaterial({map:sign.material.map, color: '#e8e8e8'});
+        SpeedSign._model = obj;
+    }
+}
 
 class StopSign extends THREE.Object3D {
     constructor(pos) {
@@ -123,4 +147,4 @@ class TrafficLight extends THREE.Object3D {
 
 }
 
-module.exports = {'TrafficLight': TrafficLight, 'StopSign': StopSign};
+module.exports = {'TrafficLight': TrafficLight, 'StopSign': StopSign, 'SpeedSign': SpeedSign};

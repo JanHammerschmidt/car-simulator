@@ -119,6 +119,7 @@ class App {
 
         signs.TrafficLight.load_model();
         signs.StopSign.load_model();
+        signs.SpeedSign.load_model();
         console.time('new Terrain');
         this.terrain = new Terrain();
         if (!cfg.random_street)
@@ -264,9 +265,12 @@ class App {
         sign.position.copy(street.xytovec3(p, y));
         gui_folder.addnum(sign.position, 'y');
         gui_folder.addscale(sign.scale);
-        const g = sign.children[0].children[0].children;
-        if (g.length == 3) {
-            gui_folder.addcolor(g[2].material, 'color');
+        const obj = sign.children[0];
+        const name = obj.children[0].name;
+        if (name.search('circle') != -1) {
+            gui_folder.addcolor(obj.children[1].material, 'color');
+        } else if (name.search('stop') != -1) {
+            gui_folder.addcolor(obj.children[0].material.materials[1], 'color');
             // gui_folder.addcolor(g[2].material, 'emissive');
         }
         sign.rotation.y = Math.atan2(d.x, d.y);
@@ -475,6 +479,11 @@ class App {
                 const light = new signs.TrafficLight(sign.percent * this.street_length, sign.trigger_distance, sign.time_range_from);
                 this.signs.push(light);
                 this.place_sign(light, sign.percent, fs);
+            } else if (sign.type < 12) { // speed sign 
+                const speed_limit = 30 + 10 * (sign.type-1);
+                const s = new signs.SpeedSign(sign.percent * this.street_length, speed_limit);
+                // this.signs.push(s)
+                this.place_sign(s, sign.percent, fs);
             }
             if (sign.type == 0 || sign.type == 12) {
                 const c = this.add_crossing(sign.percent + 14 / this.street_length, sign.crossing_type, sign.crossing_height);

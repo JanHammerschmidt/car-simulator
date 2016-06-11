@@ -6,7 +6,10 @@ models.stop_sign = {'mtl': require('raw!../../models/stop_sign/stop_sign.mtl'),
                     'path': 'models/stop_sign/'};
 models.traffic_light = {'mtl': require('raw!../../models/traffic_lights/traffic_lights.mtl'),
                         'obj': require('raw!../../models/traffic_lights/traffic_lights.obj'),
-                        'path': 'models/traffic_lights/'};                    
+                        'path': 'models/traffic_lights/'};
+models.speed_sign = {'mtl': require('raw!../../models/speed_sign/speed_sign.mtl'),
+                    'obj': require('raw!../../models/speed_sign/speed_sign.obj'),
+                    'path': 'models/speed_sign/'};                                            
 
 module.exports = {
     'models': models,
