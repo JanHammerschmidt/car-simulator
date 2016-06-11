@@ -65,25 +65,21 @@ const misc = {
     //     });
     // },
     
-    // load_obj_mtl2: function(path, obj, mtl) {
-    //     return new Promise(resolve => {
-    //         misc.plog("1 "+path);
-    //         const mtlLoader = new THREE.MTLLoader();
-    //         mtlLoader.setPath(path);
-    //         mtlLoader.load(mtl, materials => {
-    //             misc.plog("2 "+path);
-    //             materials.preload();
-    //             misc.plog("3 "+path);
-    //             const objLoader = new THREE.OBJLoader();
-    //             objLoader.setMaterials(materials);
-    //             objLoader.setPath(path);
-    //             objLoader.load(obj, object => {
-    //                 misc.plog("4 "+path);
-    //                 resolve(object);
-    //             });
-    //         });
-    //     });
-    // },
+    load_obj_mtl_url: function(path, obj, mtl) {
+        return new Promise(resolve => {
+            const mtlLoader = new THREE.MTLLoader();
+            mtlLoader.setPath(path);
+            mtlLoader.load(mtl, materials => {
+                materials.preload();
+                const objLoader = new THREE.OBJLoader();
+                objLoader.setMaterials(materials);
+                objLoader.setPath(path);
+                objLoader.load(obj, object => {
+                    resolve(object);
+                });
+            });
+        });
+    },
     
     load_obj_mtl: function(model) {
         const mtlLoader = new THREE.MTLLoader();
