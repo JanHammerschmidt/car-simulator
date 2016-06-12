@@ -11,7 +11,7 @@ let cfg = {
     force_on_street: true,
     show_terrain: false,
     show_buildings: false,
-    show_car: false,
+    show_car: true,
     smooth_terrain: false,
     hq_street: false
 }
@@ -153,7 +153,7 @@ class App {
         });
 
         if (!cfg.random_street)
-            this.signs_loaded = this.place_signs();
+            this.place_signs();
         if (cfg.show_buildings) {
             scene.add(create_city_geometry(this.streets, this.terrain));
             plog('city geometry loaded');
@@ -498,6 +498,7 @@ class App {
                 fc.addnum(c.position, 'y');
             }
         }
+        signs.SpeedSign.set_next_sign();
         this.signs_loaded = true;
         plog('signs loaded');
 
@@ -560,6 +561,9 @@ class App {
         lf.addnum(light, 'distance', 1);
         lf.addnum(light, 'decay');
         this.car_model_slope.add(light);
+        
+        const plh = new THREE.PointLightHelper(light, 0.05);
+        scene.add(plh);
 
         scene.add(this.car_model);
         if (!cfg.show_car)
@@ -728,72 +732,72 @@ class App {
             //debugger;
         }
         car2d.update(dt * 1000);
-        if (car_model) {
-            car_model.rotation.y = -car2d.heading;
-            car_model.position.x = -car2d.position.y;
-            car_model.position.z = car2d.position.x;
 
-            car_model.position.y = this.terrain.p2height({ x: car_model.position.x, y: car_model.position.z }) + street.position.y;
-            // car_model_slope.rotation.x = 0;
-            // car_model_slope.rotation.y = 0;
+        car_model.rotation.y = -car2d.heading;
+        car_model.position.x = -car2d.position.y;
+        car_model.position.z = car2d.position.x;
 
-            let on_track = true;
+        car_model.position.y = this.terrain.p2height({ x: car_model.position.x, y: car_model.position.z }) + street.position.y;
+        // car_model_slope.rotation.x = 0;
+        // car_model_slope.rotation.y = 0;
 
-            var t = street.get_road_position(street.vec3toxy(car_model.position));
-            car_stats.add('t', t);
+        let on_track = true;
 
-            const p = street.poly_bezier.get(t);
-            const xy = new THREE.Vector2().copy(street.vec3toxy(car_model.position));
-            const normal = new THREE.Vector2().copy(street.poly_bezier.normal(t));
-            const dp = normal.dot(xy.clone().sub(p));
-            if (Math.abs(dp) > 10) {
-                if (cfg.force_on_street) {
-                    xy.addScaledVector(normal, -dp - (dp > 0 ? -10 : 10));
-                    car_model.position.x = xy.x;
-                    car_model.position.z = xy.y;
-                    car2d.setFromPosition3d(car_model.position);
-                } else
-                    on_track = false;
-            }
+        var t = street.get_road_position(street.vec3toxy(car_model.position));
+        car_stats.add('t', t);
 
-            if (on_track) {
-                car_model.position.y = street.height_profile.get(t).y + street.position.y;
-
-                var d = street.poly_bezier.derivative(t);
-                const street_rot = Math.atan2(d.x, d.y);
-                const car_rot = -car2d.heading;
-                // car_model.rotation.y = 
-                // car_stats.add('d.x', d.x);
-                // car_stats.add('d.y', d.y);
-
-
-                d = street.height_profile.derivative(t);
-                d.x *= street.poly_bezier.total_length / street.height_profile.total_length;
-                // car_stats.add('d.x', d.x);
-                // car_stats.add('d.y', d.y);
-                // car_model_slope.rotation.x = -Math.atan2(d.y,d.x);
-                const axis = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, street_rot - car_rot, 0));
-                const slope = Math.atan2(d.y, d.x);
-                car_model_slope.quaternion.setFromAxisAngle(axis, -slope);
-                //car_stats.add('slope', -car_model_slope.rotation.x * 180 / Math.PI);
-                car2d.alpha = Math.cos(street_rot - car_rot) * slope;
-                car_stats.add('slope', car2d.alpha * 180 / Math.PI);
-            } else {
-                car_model_slope.quaternion.set(0, 0, 0, 1);
-                car2d.alpha = 0;
-            }
-
-            const street_position = t * this.street_length; // should be [m]
-            const kmh = car2d.kmh();
-            if (this.signs_loaded) {
-                for (let s of this.signs)
-                    s.tick(street_position, kmh);
-            }
-            car_stats.add('street position', street_position);
-            car_stats.add('car.x', car_model.position.x);
-            car_stats.add('car.z', car_model.position.z);
-            car_stats.add('car.y', car_model.position.y);
+        const p = street.poly_bezier.get(t);
+        const xy = new THREE.Vector2().copy(street.vec3toxy(car_model.position));
+        const normal = new THREE.Vector2().copy(street.poly_bezier.normal(t));
+        const dp = normal.dot(xy.clone().sub(p));
+        if (Math.abs(dp) > 10) {
+            if (cfg.force_on_street) {
+                xy.addScaledVector(normal, -dp - (dp > 0 ? -10 : 10));
+                car_model.position.x = xy.x;
+                car_model.position.z = xy.y;
+                car2d.setFromPosition3d(car_model.position);
+            } else
+                on_track = false;
         }
+
+        if (on_track) {
+            car_model.position.y = street.height_profile.get(t).y + street.position.y;
+
+            var d = street.poly_bezier.derivative(t);
+            const street_rot = Math.atan2(d.x, d.y);
+            const car_rot = -car2d.heading;
+            // car_model.rotation.y = 
+            // car_stats.add('d.x', d.x);
+            // car_stats.add('d.y', d.y);
+
+
+            d = street.height_profile.derivative(t);
+            d.x *= street.poly_bezier.total_length / street.height_profile.total_length;
+            // car_stats.add('d.x', d.x);
+            // car_stats.add('d.y', d.y);
+            // car_model_slope.rotation.x = -Math.atan2(d.y,d.x);
+            const axis = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, street_rot - car_rot, 0));
+            const slope = Math.atan2(d.y, d.x);
+            car_model_slope.quaternion.setFromAxisAngle(axis, -slope);
+            //car_stats.add('slope', -car_model_slope.rotation.x * 180 / Math.PI);
+            car2d.alpha = Math.cos(street_rot - car_rot) * slope;
+            car_stats.add('slope', car2d.alpha * 180 / Math.PI);
+        } else {
+            car_model_slope.quaternion.set(0, 0, 0, 1);
+            car2d.alpha = 0;
+        }
+
+        const street_position = t * this.street_length; // should be [m]
+        const kmh = car2d.kmh();
+        if (this.signs_loaded) {
+            for (let s of this.signs)
+                s.tick(street_position, kmh);
+            signs.SpeedSign.tick(street_position, kmh);
+        }
+        car_stats.add('street position', street_position);
+        car_stats.add('car.x', car_model.position.x);
+        car_stats.add('car.z', car_model.position.z);
+        car_stats.add('car.y', car_model.position.y);
         car_stats.render();
 
         if (car_model && this.camera == "chase_cam") //"chase_cam" in this.cameras)
