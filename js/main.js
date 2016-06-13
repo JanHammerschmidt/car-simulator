@@ -670,11 +670,13 @@ class App {
             //console.log("warning: dt too high!", dt, "ms");
             dt = 0.1;
         }
+
         const car2d = this.car2d;
         const car_model = this.car_model;
         const car_model_slope = this.car_model_slope;
         const street = this.street;
         const car_stats = this.car_stats;
+        const inputs = car2d.inputs;
 
         this.gauge_needle.rotation.z = -0.806 + this.gauge_kmh_slope * (Math.max(car2d.kmh(), 0) - 10);
         if (cfg.do_sound) {
@@ -694,7 +696,6 @@ class App {
             steering = wingman_input.steering;
         }
         if (accel != null) {
-            var inputs = car2d.inputs;
             //console.log('accel', accel, 'steering', steering);
             if (accel > 0) {
                 if (got_keyboard_input && car2d.velocity_c.x < 0) {
@@ -731,6 +732,15 @@ class App {
             // vehicle.setSteering(steering * 0.6, 1);
             //debugger;
         }
+        const log_item = {'dt': dt, 'throttle': inputs.throttle, 
+                          'brake': inputs.brake, 'gear': car2d.gearbox.gear};
+        if (!this.started && inputs.throttle > 0) {
+            console.log("starting logging")
+            this.started = true;
+            this.log = [];
+        }
+        if (this.started)
+            this.log.push(log_item);
         car2d.update(dt * 1000);
 
         car_model.rotation.y = -car2d.heading;
