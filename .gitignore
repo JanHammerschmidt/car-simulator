@@ -3,36 +3,20 @@ node_modules/*
 bower_components/*
 textures/*
 OculusCar/*
-Oimo.js/*
-webvr-boilerplate/*
-three.js/*
-threejs.#WEG/*
-webpack-test/*
-Physijs.#WEG/*
-webvr-boilerplate.orig/*
 models/*
 \#examples\ &\ tutorials/*
-webvr-minimal/*
 js/lib*
 \#old/*
 *.json
 carphysics2d/*
 \#threejs.docs/*
 *old*/*
+typings/*
+logs/*
 
 webpack/bundle*
 
-
-Win32/*
-debug/*
-*.pdb
-*.sdf
-*.suo
 .DS_Store
-old/*
 media/*
-*.pro.user*
-build/**
-**/build/**
 *.idea*
 *__pycache__*
