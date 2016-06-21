@@ -25,6 +25,6 @@
     "osc.js": "~2.0.2",
     "webvr-boilerplate": "git://github.com/the-cable-center/webvr-boilerplate",
     "async": "^1.5.2",
-    "msgpack-lite": "^0.1.21"
+    "sockjs-client": "^1.1.1"
   }
 }

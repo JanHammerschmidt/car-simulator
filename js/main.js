@@ -29,6 +29,7 @@ if (cfg.do_vr) {
     require("script!../bower_components/webvr-boilerplate/js/deps/VRControls.js");
 }
 
+require('script!../bower_components/sockjs-client/dist/sockjs.js');
 require("../node_modules/three/examples/js/loaders/MTLLoader.js");
 require("../node_modules/three/examples/js/loaders/OBJLoader.js");
 //require("./lib/THREE.OBJMTLLoader.js");
@@ -59,6 +60,16 @@ const track_study_1 = require('./webpack/static.js').track_study_1;
 //var pointInPolygon = require('point-in-polygon-extended').pointInPolyRaycast; //pointInPolyWindingNumber
 
 $('body').append(require('html!../carphysics2d/public/js/car_config.html'));
+
+class LogItem extends Array {
+    constructor(dt, throttle, brake, gear) {
+        super(dt, throttle, brake, gear);
+    }
+    dt(v) {this[0] = v}
+    throttle(v) {this[1] = v}
+    brake(v) {this[2] = v}
+    gear(v) {this[3] = v}
+}
 
 // renderer.shadowMap.enabled = true;
 // //renderer.shadowMapSoft = true;
@@ -98,6 +109,16 @@ dat.GUI.prototype.addcolor = function(obj, prop) {
 class App {
     constructor() {
         plog("App entry point");
+
+        this.log_websocket = new SockJS('http://localhost:9999/log-server'); // eslint-disable-line
+        this.log_websocket.onopen = () => console.log('connected to log-server');
+        this.log_websocket.onclose = () => {
+            // console.log('disconnected from log-server!');
+            this.error = 'disconnected from log-server!'; 
+            this.gui.add(this, 'error');
+            this.gui.open();
+        }
+
         this.cameras = {};
         this.gui = new dat.GUI();
 
@@ -147,10 +168,10 @@ class App {
             scene.add(this.terrain.create_mesh());
         plog('terrain loaded');
 
-        this.terrain.smoothed = false;
-        this.gui.add(this.terrain, 'smoothed').onChange(() => {
+        this.terrain.smooth_terrain = () => {
             this.terrain.smooth(10, d2 => Math.exp(-d2 * 0.002), 0.02, this.street.lut, 200);
-        });
+        };
+        this.gui.add(this.terrain, 'smooth_terrain');
 
         if (!cfg.random_street)
             this.place_signs();
@@ -532,7 +553,7 @@ class App {
         this.car2d = new Car.Car(
             {
                 stats: this.car_stats
-                , consumption_update: L_100km => {
+                , consumption_update: L_100km => { // eslint-disable-line
                     // console.log("consumption", L_100km);
                 }
             });
@@ -732,15 +753,24 @@ class App {
             // vehicle.setSteering(steering * 0.6, 1);
             //debugger;
         }
-        const log_item = {'dt': dt, 'throttle': inputs.throttle, 
-                          'brake': inputs.brake, 'gear': car2d.gearbox.gear};
+        // const log_item = {'dt': dt, 'throttle': inputs.throttle, 
+        //                   'brake': inputs.brake, 'gear': car2d.gearbox.gear};
         if (!this.started && inputs.throttle > 0) {
             console.log("starting logging")
             this.started = true;
             this.log = [];
+            this.save_log = () => {
+                console.log("sending " + this.log.length + " items");
+                const s = this.log_websocket;
+                s.send('__setFilename logs/test');
+                s.send(JSON.stringify(this.log));
+            };
+            this.gui.add(this, 'save_log');            
         }
-        if (this.started)
+        if (this.started) {
+            const log_item = new LogItem(dt, inputs.throttle, inputs.brake, car2d.gearbox.gear);
             this.log.push(log_item);
+        }
         car2d.update(dt * 1000);
 
         car_model.rotation.y = -car2d.heading;
