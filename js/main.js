@@ -13,7 +13,8 @@ let cfg = {
     show_buildings: false,
     show_car: true,
     smooth_terrain: false,
-    hq_street: false
+    hq_street: false,
+    do_logging: false
 }
 window.cfg = cfg;
 
@@ -29,7 +30,9 @@ if (cfg.do_vr) {
     require("script!../bower_components/webvr-boilerplate/js/deps/VRControls.js");
 }
 
-require('script!../bower_components/sockjs-client/dist/sockjs.js');
+if (cfg.do_logging)
+    require('script!../bower_components/sockjs-client/dist/sockjs.js');
+// require('script!../bower_components/msgpack-lite/dist/msgpack.min.js');
 require("../node_modules/three/examples/js/loaders/MTLLoader.js");
 require("../node_modules/three/examples/js/loaders/OBJLoader.js");
 //require("./lib/THREE.OBJMTLLoader.js");
@@ -110,15 +113,16 @@ class App {
     constructor() {
         plog("App entry point");
 
-        this.log_websocket = new SockJS('http://localhost:9999/log-server'); // eslint-disable-line
-        this.log_websocket.onopen = () => console.log('connected to log-server');
-        this.log_websocket.onclose = () => {
-            // console.log('disconnected from log-server!');
-            this.error = 'disconnected from log-server!'; 
-            this.gui.add(this, 'error');
-            this.gui.open();
+        if (cfg.do_logging) {
+            this.log_websocket = new SockJS('http://localhost:9999/log-server'); // eslint-disable-line
+            this.log_websocket.onopen = () => console.log('connected to log-server');
+            this.log_websocket.onclose = () => {
+                // console.log('disconnected from log-server!');
+                this.error = 'disconnected from log-server!'; 
+                this.gui.add(this, 'error');
+                this.gui.open();
+            }
         }
-
         this.cameras = {};
         this.gui = new dat.GUI();
 
@@ -755,7 +759,7 @@ class App {
         }
         // const log_item = {'dt': dt, 'throttle': inputs.throttle, 
         //                   'brake': inputs.brake, 'gear': car2d.gearbox.gear};
-        if (!this.started && inputs.throttle > 0) {
+        if (cfg.do_logging && !this.started && inputs.throttle > 0) {
             console.log("starting logging")
             this.started = true;
             this.log = [];
