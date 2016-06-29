@@ -15,14 +15,18 @@ todo
     OK: speed signs
     OK: traffic lights: licht
     OK: speeding notifications
-    1) 2D ansicht läuft?
+    OK: 2D ansicht läuft?
+    OK: logging (auch: logging.h) (sockJS)
+    0) get slurp running
+    0) get oculus running
+    0) impl. panning
+    0) dist-mult kleiner / dauer der strecke messen
+    1) ende der strecke
     2) schöne speeding/stop-sign/traffic lights notifications
-    2) logging (auch: logging.h)
-    2) trackeditor?
     2) too slow notifications?
     2) oculus "eye" tracking
-    2) ende der strecke..
     OK: check visual studio code
+    3) trackeditor?
     3) change based on vp_id / durchs experiment führen ..
     3) kreuzungen textur?
     3) fpstimer
