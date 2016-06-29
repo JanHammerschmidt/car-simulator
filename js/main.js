@@ -4,9 +4,9 @@
 // const t0 = perf.now();
 // function plog(s) {console.log(((perf.now()-t0)/1000).toPrecision(4), s);}
 
-let cfg = {
+const cfg = {
     do_vr: false,
-    do_sound: false,
+    do_sound: true,
     random_street: 0,
     force_on_street: true,
     show_terrain: false,
@@ -29,9 +29,11 @@ if (cfg.do_vr) {
     require("script!../bower_components/webvr-boilerplate/build/webvr-manager.js");
     require("script!../bower_components/webvr-boilerplate/js/deps/VRControls.js");
 }
-
 if (cfg.do_logging)
     require('script!../bower_components/sockjs-client/dist/sockjs.js');
+if (cfg.do_sound)
+    require('script!../node_modules/osc/dist/osc-browser.js');
+
 // require('script!../bower_components/msgpack-lite/dist/msgpack.min.js');
 require("../node_modules/three/examples/js/loaders/MTLLoader.js");
 require("../node_modules/three/examples/js/loaders/OBJLoader.js");
@@ -157,6 +159,8 @@ class App {
         this.init_gauge();
         this.jump_to_street_position(0, false);
         keyboard_input.init();
+        if (cfg.do_sound)
+            this.init_sound();
 
         this.last_time = performance.now();
         console.log("issued animation");
@@ -255,18 +259,18 @@ class App {
     }
 
     init_sound() {
-        require('script!../bower_components/osc.js/dist/osc-browser');
         osc.WebSocketPort.prototype.send_float = function (addr, val) {
             this.send({ address: addr, args: [val] });
         };
         const osc_port = new osc.WebSocketPort({
             url: "ws://localhost:8081"
         });
-        osc_port.on('open', function () {
+        osc_port.on('open', () => {
             osc_port.send_float('/startEngine', 0);
+            this.osc_port = osc_port;
         });
         osc_port.open();
-        this.osc_por = osc_port;
+
         $(function () {
             document.addEventListener('keydown', function (ev) {
                 if (ev.keyCode == 72)
@@ -703,11 +707,6 @@ class App {
         const car_stats = this.car_stats;
         const inputs = car2d.inputs;
 
-        this.gauge_needle.rotation.z = -0.806 + this.gauge_kmh_slope * (Math.max(car2d.kmh(), 0) - 10);
-        if (cfg.do_sound) {
-            this.osc_port.send_float('/rpm', 0.1 + car2d.engine.rel_rpm() * 0.8);
-        }
-
         var accel = null,
             steering = null,
             got_keyboard_input = false;
@@ -759,23 +758,30 @@ class App {
         }
         // const log_item = {'dt': dt, 'throttle': inputs.throttle, 
         //                   'brake': inputs.brake, 'gear': car2d.gearbox.gear};
-        if (cfg.do_logging && !this.started && inputs.throttle > 0) {
-            console.log("starting logging")
+        if (!this.started && inputs.throttle > 0) {
             this.started = true;
-            this.log = [];
-            this.save_log = () => {
-                console.log("sending " + this.log.length + " items");
-                const s = this.log_websocket;
-                s.send('__setFilename logs/test');
-                s.send(JSON.stringify(this.log));
-            };
-            this.gui.add(this, 'save_log');            
+            if (cfg.do_logging) {
+                console.log("starting logging")
+                this.log = [];
+                this.save_log = () => {
+                    console.log("sending " + this.log.length + " items");
+                    const s = this.log_websocket;
+                    s.send('__setFilename logs/test');
+                    s.send(JSON.stringify(this.log));
+                };
+                this.gui.add(this, 'save_log');
+            }
         }
-        if (this.started) {
+        if (cfg.do_logging && this.started) {
             const log_item = new LogItem(dt, inputs.throttle, inputs.brake, car2d.gearbox.gear);
             this.log.push(log_item);
         }
         car2d.update(dt * 1000);
+
+        this.gauge_needle.rotation.z = -0.806 + this.gauge_kmh_slope * (Math.max(car2d.kmh(), 0) - 10);
+        if (this.started && this.osc_port) {
+            this.osc_port.send_float('/rpm', 0.1 + car2d.engine.rel_rpm() * 0.8);
+        }        
 
         car_model.rotation.y = -car2d.heading;
         car_model.position.x = -car2d.position.y;
