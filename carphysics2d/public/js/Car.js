@@ -34,6 +34,8 @@ class ConsumptionMonitor {
 		this.reset();
 		this.tick(0,0,0);
 		this.update_callback = update_callback;
+		this.tick_counter = 0; // counter for tick production
+		this.l_per_tick = 0.001 * 2; //ml;
 	}
 	tick(liter_s, dt, speed) {
 		this.liters_used += dt * liter_s;
@@ -50,7 +52,12 @@ class ConsumptionMonitor {
 		}
 		this.liters_per_second_cont = liter_s;
 		this.liters_per_100km_cont = liter_s / speed * 1000 * 100;
-
+		this.tick_counter += dt * liter_s;
+		if (this.tick_counter >= this.l_per_tick) {
+			this.tick_counter -= this.l_per_tick;
+			if (window.osc_port)
+				window.osc_port.send_float('/consumption_tick', this.liters_per_100km_cont);
+		}
 	}
 	reset() {
 		this.liters_used = 0; // total usage

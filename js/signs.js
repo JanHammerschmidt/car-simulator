@@ -6,7 +6,7 @@ const models = require('./webpack/static.js').models;
 
 const TOO_FAST_TOLERANCE = 0.1;
 const TOO_FAST_TOLERANCE_OFFSET = 10;
-const COOLDOWN_TIME_SPEEDING = 1000;
+const COOLDOWN_TIME_SPEEDING = 10000;
 
 class SpeedSign extends THREE.Object3D {
     constructor(pos, speed_limit) {
@@ -57,6 +57,8 @@ class SpeedSign extends THREE.Object3D {
             }
         }
         if (kmh > SpeedSign.current_speed_limit && (new Date() - SpeedSign.cooldown_timer_start) > COOLDOWN_TIME_SPEEDING) {
+            if (window.osc_port)
+                window.osc_port.call('/flash');
             console.log('speeding violation ('+kmh.toPrecision(3)+' kmh instead of '+SpeedSign.current_sign.speed_limit+' kmh');
             SpeedSign.cooldown_timer_start = new Date();
         }
@@ -97,6 +99,8 @@ class StopSign extends THREE.Object3D {
                 this.state = 2;
             }
             else if (d < 0) {
+                if (window.osc_port)
+                    window.osc_port.call('/flash');                
                 console.log("stop sign: überfahren! :o");
                 this.state = 2;
             }
@@ -175,6 +179,8 @@ class TrafficLight extends THREE.Object3D {
         const d = this.pos - cur_pos;
         if (d < 0) {
             // console.assert(this.state != 2); // should not be red (w/o pending..)
+            if (window.osc_port)
+                window.osc_port.call('/flash');            
             console.log("traffic light überfahren :o");
             this.no_tick = true;
         } else if (this.state == 2 && d < this.trigger_dist) {

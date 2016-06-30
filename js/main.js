@@ -18,6 +18,8 @@ const cfg = {
 }
 window.cfg = cfg;
 
+const keycode = require('keycode');
+
 const misc = require("./misc.js");
 misc.init_perf();
 const plog = misc.plog;
@@ -31,8 +33,6 @@ if (cfg.do_vr) {
 }
 if (cfg.do_logging)
     require('script!../bower_components/sockjs-client/dist/sockjs.js');
-if (cfg.do_sound)
-    require('script!../node_modules/osc/dist/osc-browser.js');
 
 // require('script!../bower_components/msgpack-lite/dist/msgpack.min.js');
 require("../node_modules/three/examples/js/loaders/MTLLoader.js");
@@ -259,28 +259,64 @@ class App {
     }
 
     init_sound() {
-        osc.WebSocketPort.prototype.send_float = function (addr, val) {
+        require('script!../node_modules/osc/dist/osc-browser.js');        
+        osc.WebSocketPort.prototype.send_float = function(addr, val, no_log) {
+            // if (!no_log)
+            //     console.log('osc:', addr, val)
             this.send({ address: addr, args: [val] });
         };
+        osc.WebSocketPort.prototype.call = function(addr, no_log) {
+            this.send_float(addr, 0, no_log);
+        }
         const osc_port = new osc.WebSocketPort({
             url: "ws://localhost:8081"
         });
         osc_port.on('open', () => {
             osc_port.send_float('/startEngine', 0);
             this.osc_port = osc_port;
+            window.osc_port = osc_port;
         });
         osc_port.open();
 
-        $(function () {
-            document.addEventListener('keydown', function (ev) {
-                if (ev.keyCode == 72)
+        this.fedis = {'1': 'slurp', '2': 'pitch', '3': 'grain'};
+        this.sound_modus = '0';
+
+        $(() => {            
+            document.addEventListener('keydown', ev => {
+                const c = keycode(ev);
+                if (c == 'h')
                     osc_port.send_float('/honk', 0);
+                else if (c == 'p') {
+                    osc_port.call('/stopEngine');
+                } else if (c == '0' || c == '1' || c == '2' || c == '3')
+                    this.set_sound_modus(c);
+                else if (c == '8')
+                    osc_port.call('/grain_toggle_pitch');
+                else if (c == '9')
+                    osc_port.call('/show_controls');
             });
-            window.addEventListener('unload', function () {
+            window.addEventListener('unload', () => {
+                this.set_sound_modus('0');
                 osc_port.send_float('/stopEngine', 0);
-                osc_port.close(1000);
+                // osc_port.close();
             });
         });
+    }
+
+    set_sound_modus(c) {
+        if (c == this.sound_modus)
+            return;
+        if (true) { // if (this.started) // eslint-disable-line
+            this.toggle_fedi(this.sound_modus, false)
+            this.toggle_fedi(c, true);
+        }
+        this.sound_modus = c;
+        console.log("sound modus:", c)
+    }
+    toggle_fedi(c, enable) {
+        const fedi = this.fedis[c];
+        if (fedi)
+            this.osc_port.call('/'+fedi+ '_' + (enable ? 'start' : 'stop'));
     }
 
     place_sign(sign, t, gui_folder) {
@@ -384,7 +420,7 @@ class App {
         effect.setSize(window.innerWidth, window.innerHeight); // TODO: do you really need this?
         this.vr_manager = new WebVRManager(renderer, effect);
         //vr_manager.
-        $(document).ready(function () {
+        $(() => {
             $("img[title='Fullscreen mode']").css('bottom', '').css('right', '').css('left', '0px').css('top', '0px');
         });
 
@@ -395,8 +431,8 @@ class App {
         vr_cam.add(camera);
         this.camera_first_person_object.add(vr_cam);
         const controls = new THREE.VRControls(camera);
-        $(document).ready(function () {
-            document.addEventListener('keydown', function (ev) {
+        $(() => {
+            document.addEventListener('keydown', ev => {
                 if (ev.keyCode == 13)
                     controls.resetSensor();
             });
@@ -451,9 +487,9 @@ class App {
         controls.movementSpeed = speeds["normal"];
         controls.lookSpeed = 0.2;
         controls.lookVertical = true;
-        $(document).ready(function () {
+        $(() => {
             let mod = false;
-            document.addEventListener('keydown', function (ev) {
+            document.addEventListener('keydown', ev => {
                 if (ev.keyCode == 16) // shift
                     controls.movementSpeed = speeds[mod ? "very fast" : "fast"];
                 else if (ev.keyCode == 17) // ctlr
@@ -465,7 +501,7 @@ class App {
                     else if (speed == speeds["fast"]) controls.movementSpeed = speeds["very fast"];
                 }
             });
-            document.addEventListener('keyup', function (ev) {
+            document.addEventListener('keyup', ev => {
                 if (ev.keyCode == 16 || ev.keyCode == 17)
                     controls.movementSpeed = speeds["normal"];
                 else if (ev.keyCode == 18) {
@@ -780,7 +816,8 @@ class App {
 
         this.gauge_needle.rotation.z = -0.806 + this.gauge_kmh_slope * (Math.max(car2d.kmh(), 0) - 10);
         if (this.started && this.osc_port) {
-            this.osc_port.send_float('/rpm', 0.1 + car2d.engine.rel_rpm() * 0.8);
+            this.osc_port.send_float('/rpm', 0.1 + car2d.engine.rel_rpm() * 0.8, true);
+            this.osc_port.send_float('/L_100km', car2d.consumption_monitor.liters_per_100km_cont, true);
         }        
 
         car_model.rotation.y = -car2d.heading;
