@@ -145,8 +145,8 @@ class Street extends THREE.Object3D {
         const track = load_track();
         var cfg = {
             ver2: true,
-            deviation_mult: 3.0, //3.0, // max. ~5.4
-            distance_mult: 0.1, //0.07, // 0.1
+            deviation_mult: 4.0, //3.0, // max. ~5.4
+            distance_mult: 0.07, //0.07, // 0.1
             scale: 1500.0
         };
         var scale = cfg.scale;
