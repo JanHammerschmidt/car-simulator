@@ -8,17 +8,25 @@ const cfg = {
     do_vr: false,
     do_sound: true,
     random_street: 0,
+    show_car: true,
     force_on_street: true,
     show_terrain: false,
     show_buildings: false,
-    show_car: true,
     smooth_terrain: false,
     hq_street: false,
     do_logging: false
 }
 window.cfg = cfg;
 
-const keycode = require('keycode');
+const mousetrap = require('mousetrap');
+// https://jsfiddle.net/9f6j76dL/1/
+
+function mbind(key, callback) {
+    mousetrap.bind(key, e => {
+        if (!e.repeat)
+            callback(e);
+    }, 'keydown')
+}
 
 const misc = require("./misc.js");
 misc.init_perf();
@@ -205,12 +213,7 @@ class App {
         this.gui.add(this, "camera_change", Object.keys(this.cameras)).onChange(() => this.update_camera());
         this.update_camera();
 
-        $(() => {
-            document.addEventListener('keydown', ev => {
-                if (ev.keyCode == 67)
-                    this.toggle_camera();
-            });
-        });
+        mbind('c', () => { this.toggle_camera(); });
         plog("cameras ready");
     }
 
@@ -281,20 +284,14 @@ class App {
         this.fedis = {'1': 'slurp', '2': 'pitch', '3': 'grain'};
         this.sound_modus = '0';
 
+        mbind('h', () => { osc_port.call('/honk'); });
+        mbind('p', () => { osc_port.call('/stopEngine'); });
+        mbind(['0', '1', '2', '3'], e => {
+            this.set_sound_modus(e.key);
+        });
+        mbind('shift+g shift+p', () => { osc_port.call('/grain_toggle_pitch'); });
+        mbind('shift+c', () => { osc_port.call('/show_controls'); });
         $(() => {            
-            document.addEventListener('keydown', ev => {
-                const c = keycode(ev);
-                if (c == 'h')
-                    osc_port.send_float('/honk', 0);
-                else if (c == 'p') {
-                    osc_port.call('/stopEngine');
-                } else if (c == '0' || c == '1' || c == '2' || c == '3')
-                    this.set_sound_modus(c);
-                else if (c == '8')
-                    osc_port.call('/grain_toggle_pitch');
-                else if (c == '9')
-                    osc_port.call('/show_controls');
-            });
             window.addEventListener('unload', () => {
                 this.set_sound_modus('0');
                 osc_port.send_float('/stopEngine', 0);
@@ -431,12 +428,7 @@ class App {
         vr_cam.add(camera);
         this.camera_first_person_object.add(vr_cam);
         const controls = new THREE.VRControls(camera);
-        $(() => {
-            document.addEventListener('keydown', ev => {
-                if (ev.keyCode == 13)
-                    controls.resetSensor();
-            });
-        });
+        mbind('enter', () => {controls.resetSensor(); });
         this.cameras["vr_cam"] = [camera, controls];
     }
 
@@ -602,14 +594,9 @@ class App {
                 }
             });
         this.car2d.config_panel = new ConfigPanel(this.car2d);
-        $(() => {
-            document.addEventListener('keydown', ev => {
-                if (ev.keyCode == 87)
-                    this.car2d.gearbox.gear_up();
-                else if (ev.keyCode == 83)
-                    this.car2d.gearbox.gear_down();
-            });
-        });
+        mbind('r', () => this.car2d.gearbox.gear_up() );
+        mbind('f', () => this.car2d.gearbox.gear_down() );
+        mbind('shift+f', () => this.car2d.engine.max_torque = 600 );
     }
 
     init_car() {
@@ -816,7 +803,7 @@ class App {
 
         this.gauge_needle.rotation.z = -0.806 + this.gauge_kmh_slope * (Math.max(car2d.kmh(), 0) - 10);
         if (this.started && this.osc_port) {
-            this.osc_port.send_float('/rpm', 0.1 + car2d.engine.rel_rpm() * 0.8, true);
+            this.osc_port.send_float('/rpm', 0.05 + car2d.engine.rel_rpm() * 0.7, true);
             this.osc_port.send_float('/L_100km', car2d.consumption_monitor.liters_per_100km_cont, true);
         }        
 
