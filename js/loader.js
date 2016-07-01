@@ -1,4 +1,4 @@
-require("../node_modules/three/examples/js/controls/OrbitControls.js");
+require("../node_modules/three/examples/js/controls/TrackballControls.js");
 require("../node_modules/three/examples/js/loaders/MTLLoader.js");
 //require("../../node_modules/three/examples/js/loaders/OBJMTLLoader.js");
 require("../node_modules/three/examples/js/loaders/OBJLoader.js");
@@ -8,7 +8,7 @@ const misc = require('./misc.js');
 
 let camera = THREE.get_camera();
 camera.position.z = 30;
-var orbit = new THREE.OrbitControls(camera, renderer.domElement);
+var controls = new THREE.TrackballControls(camera, renderer.domElement);
 
 THREE.addDefaultLight();
 
@@ -28,10 +28,9 @@ if (false) { // eslint-disable-line
 		}
 	);
 } else if (true) { //eslint-disable-line
-	misc.load_obj_mtl_url('models/speed_sign/', 'speed_sign.obj', 'speed_sign.mtl').then(obj => {
-	//misc.load_obj_mtl_url('models/', 'traffic_sign_circle.obj', 'traffic_sign_circle.mtl').then(obj => {
+	misc.load_obj_mtl_url('models/', 'turbosquid_fbx.obj', 'turbosquid_fbx.mtl').then(obj => {
+	// misc.load_obj_mtl_url('models/speed_sign/', 'speed_sign.obj', 'speed_sign.mtl').then(obj => {
 	//misc.load_obj_mtl_url('models/stop_sign/', 'stop_sign.obj', 'stop_sign.mtl').then(obj => {
-		debugger;
 		const tloader = new THREE.TextureLoader();
 		tloader.load('models/speed_sign/30sign.jpg', tex => {
 			obj.children[1].material.map = tex;
@@ -122,7 +121,20 @@ if (false) { // eslint-disable-line
 scene.add(THREE.buildAxes( 1000 ));
 
 function render() {
+	// console.log("render");
 	renderer.render(scene, camera);
 }
-orbit.addEventListener('change', render);
+
+controls.rotateSpeed = 2.0;
+controls.zoomSpeed = 1.2;
+controls.panSpeed = 2.0;
+controls.dynamicDampingFactor = 0.3;
+
+function animate() {
+	controls.update();
+	requestAnimationFrame(animate);
+}
+
+controls.addEventListener('change', render);
 setTimeout(render, 500);
+animate();
