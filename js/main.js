@@ -66,7 +66,7 @@ var Terrain = require('./terrain.js');
 var Car = require("../carphysics2d/public/js/Car.js");
 var Stats = require('../carphysics2d/public/js/Stats.js');
 var ConfigPanel = require('../carphysics2d/public/js/ConfigPanel.js');
-require('!style!css!../carphysics2d/public/js/car_config.css');
+// require('!style!css!../carphysics2d/public/js/car_config.css');
 
 const track_study_1 = require('./webpack/static.js').track_study_1;
 
