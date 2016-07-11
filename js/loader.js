@@ -27,15 +27,11 @@ if (false) { // eslint-disable-line
 			scene.add( obj );
 		}
 	);
-} else if (true) { //eslint-disable-line
-	misc.load_obj_mtl_url('models/', 'turbosquid_fbx.obj', 'turbosquid_fbx.mtl').then(obj => {
+} else if (true) { //eslint-disable-line+
+	misc.load_obj_mtl_url('models/', 'test.obj', 'test.mtl').then(obj => {
 	// misc.load_obj_mtl_url('models/speed_sign/', 'speed_sign.obj', 'speed_sign.mtl').then(obj => {
 	//misc.load_obj_mtl_url('models/stop_sign/', 'stop_sign.obj', 'stop_sign.mtl').then(obj => {
-		const tloader = new THREE.TextureLoader();
-		tloader.load('models/speed_sign/30sign.jpg', tex => {
-			obj.children[1].material.map = tex;
-			scene.add(obj);
-		});
+		scene.add(obj);
 		
 	});
 } else if (false) { // eslint-disable-line
