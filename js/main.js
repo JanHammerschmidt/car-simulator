@@ -624,6 +624,21 @@ class App {
         if (cfg.use_audi) {
             const car_body = load_car.load_audi();
             this.car_model_slope.add(car_body);
+
+            let mats = [];
+            for (let c of car_body.children) {
+                const mat = c.material;
+                if (mat instanceof THREE.MultiMaterial)
+                    mats = mats.concat(mat.materials);
+                else
+                    mats = mats.concat(mat);
+            }
+            for (let m of mats) {
+                if (m.bumpMap)
+                    am.bumpScale *= 0.1;
+                m.side = THREE.DoubleSide;
+            }
+            
         } else {
             return new Promise(resolve => {
                 load_car.load_renault((car_body/*, wheel*/) => {
