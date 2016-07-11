@@ -14,6 +14,14 @@ THREE.addDefaultLight();
 
 var gui = new dat.GUI();
 
+dat.GUI.prototype.addnum = function(object, prop, prec) {
+    var prev = object[prop];
+    object[prop] = prec || 0.1;
+    const r = this.add(object, prop);
+    object[prop] = prev;
+    this.__controllers[this.__controllers.length - 1].updateDisplay();
+    return r;
+}
 
 if (false) { // eslint-disable-line
 	load_car.load_car(function(car) {
@@ -32,6 +40,59 @@ if (false) { // eslint-disable-line
 	// misc.load_obj_mtl_url('models/speed_sign/', 'speed_sign.obj', 'speed_sign.mtl').then(obj => {
 	//misc.load_obj_mtl_url('models/stop_sign/', 'stop_sign.obj', 'stop_sign.mtl').then(obj => {
 		scene.add(obj);
+		let mats = [], bmats = [];
+		for (let c of obj.children) {
+			const mat = c.material;
+			if (mat instanceof THREE.MultiMaterial)
+				mats = mats.concat(mat.materials);
+			else
+				mats = mats.concat(mat);
+		}
+		for (let m of mats) {
+			if (m.bumpMap) {
+				m.bumpScale2 = m.bumpScale;
+				bmats = bmats.concat(m);
+			}
+			m.shininess2 = m.shininess;
+			m.color2 = m.color.clone();
+			m.specular2 = m.specular.clone();
+			m.side = THREE.DoubleSide;
+		}
+		const scales = {'bump_scale': 0.1, 'shininess_scale': 1.0, 'diffuse_scale': 1.0, 'specular_scale': 1.0};
+		const set_bscale = s => {
+			for (let m of bmats) {
+				m.bumpScale = s * m.bumpScale2;
+			}
+			render();
+		}		
+		gui.addnum(scales, 'bump_scale').onChange(set_bscale);
+		set_bscale(scales.bump_scale);
+
+		const set_sscale = s => {
+			for (let m of mats) {
+				m.shininess = s * m.shininess2;
+			}
+			render();
+		}
+		gui.addnum(scales, 'shininess_scale').onChange(set_sscale);
+
+		const set_diff_scale = s => {
+			for (let m of mats) {
+				const hsl = m.color2.getHSL();
+				m.color.setHSL(hsl.h, hsl.s, hsl.l * s); 
+			}
+			render();			
+		}
+		gui.addnum(scales, 'diffuse_scale').onChange(set_diff_scale);
+
+		const set_spec_scale = s => {
+			for (let m of mats) {
+				const hsl = m.specular2.getHSL();
+				m.specular.setHSL(hsl.h, hsl.s, hsl.l * s); 
+			}
+			render();			
+		}
+		gui.addnum(scales, 'specular_scale').onChange(set_spec_scale);
 		
 	});
 } else if (false) { // eslint-disable-line
