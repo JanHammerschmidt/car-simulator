@@ -9,6 +9,7 @@ const cfg = {
     do_sound: true,
     random_street: 0,
     show_car: true,
+    use_audi: true,
     force_on_street: true,
     show_terrain: false,
     show_buildings: false,
@@ -620,27 +621,32 @@ class App {
         scene.add(this.car_model);
         if (!cfg.show_car)
             return;
-        return new Promise(resolve => {
-            load_car.load_car((car_body/*, wheel*/) => {
+        if (cfg.use_audi) {
+            const car_body = load_car.load_audi();
+            this.car_model_slope.add(car_body);
+        } else {
+            return new Promise(resolve => {
+                load_car.load_renault((car_body/*, wheel*/) => {
 
-                // var glass_mat = new THREE.MeshLambertMaterial({
-                //     color: 0xEEEEEE,
-                //     transparent: true,
-                //     opacity: 0.5
-                // });
+                    // var glass_mat = new THREE.MeshLambertMaterial({
+                    //     color: 0xEEEEEE,
+                    //     transparent: true,
+                    //     opacity: 0.5
+                    // });
 
-                car_body.rotateX(-Math.PI / 2);
+                    car_body.rotateX(-Math.PI / 2);
 
-                car_body.position.y = 0.29;
-                // gui.addFolder('car position').addnum(car_body.position, 'y');
-                // //vehicle_box.castShadow = vehicle_box.receiveShadow = true;
+                    car_body.position.y = 0.29;
+                    // gui.addFolder('car position').addnum(car_body.position, 'y');
+                    // //vehicle_box.castShadow = vehicle_box.receiveShadow = true;
 
-                this.car_model_slope.add(car_body);
+                    this.car_model_slope.add(car_body);
 
-                resolve(this.car_model_slope);
+                    resolve(this.car_model_slope);
 
+                });
             });
-        });
+        }
     }
 
     init_gauge() {

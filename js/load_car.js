@@ -1,4 +1,6 @@
 let async = require("../bower_components/async/dist/async.js");
+const models = require('./webpack/static.js').models;
+const misc = require('./misc.js');
 
 function load_car_parts(callback, meshtype) {
 
@@ -114,7 +116,7 @@ function load_car_parts(callback, meshtype) {
     });
 }
 
-function load_car(callback) {
+function load_renault(callback) {
     load_car_parts(function(car_body, wheel) {
         var car = new THREE.Object3D(); // = car_body
         car.add(car_body);
@@ -148,4 +150,12 @@ function load_car(callback) {
     });
 }
 
-module.exports = {'load_car_parts': load_car_parts, 'load_car': load_car};
+function load_audi() {
+    return misc.load_obj_mtl(models.audi_a3);
+}
+
+module.exports = {
+    load_car_parts: load_car_parts, 
+    load_renault: load_renault,
+    load_audi: load_audi
+};
