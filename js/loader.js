@@ -125,6 +125,9 @@ if (false) { // eslint-disable-line
 		controls.target.copy(cam_state.target);
 		controls.object.position.copy(cam_state.position);
 
+		scene.mname = 'name';
+		gui.add(scene, 'mname');
+
 		add_light(scene, 'light_inside', 0.52,1.69,-0.29, 0.65);
 		add_light(scene, 'light_left', 1.78,1.88,-0.08, 0.56);
 		add_light(scene, 'light_right', -2.01,2.23,-0.68, 0.56);
