@@ -10,7 +10,23 @@ let camera = THREE.get_camera();
 camera.position.z = 30;
 var controls = new THREE.TrackballControls(camera, renderer.domElement);
 
-THREE.addDefaultLight();
+THREE.addDefaultLight(true);
+
+function add_light(obj, name, x,y,z, intensity, light_factory) {
+	intensity = intensity || 1.0
+	light_factory = light_factory || ((c,i) => new THREE.PointLight(c,i));
+	var light = light_factory(0xffffff, intensity);
+	light.position.set(x,y,z);
+	var lf = gui.addFolder(name);
+	lf.addxyz(light.position, 0.1, () => render());
+	lf.addnum(light, 'intensity').onChange(() => render());
+	// lf.addnum(light, 'distance', 1);
+	// lf.addnum(light, 'decay');
+	obj.add(light);
+	
+	const plh = new THREE.PointLightHelper(light, 0.05);
+	scene.add(plh);
+}
 
 var gui = new dat.GUI();
 
@@ -21,6 +37,12 @@ dat.GUI.prototype.addnum = function(object, prop, prec) {
     object[prop] = prev;
     this.__controllers[this.__controllers.length - 1].updateDisplay();
     return r;
+}
+
+dat.GUI.prototype.addxyz = function(object, prec, callback) {
+    this.addnum(object, 'x', prec).onChange(callback);
+    this.addnum(object, 'y', prec).onChange(callback);
+    this.addnum(object, 'z', prec).onChange(callback);
 }
 
 if (false) { // eslint-disable-line
@@ -102,6 +124,11 @@ if (false) { // eslint-disable-line
 		cam_state = JSON.parse(cam_state);
 		controls.target.copy(cam_state.target);
 		controls.object.position.copy(cam_state.position);
+
+		add_light(scene, 'light_inside', 0.52,1.69,-0.29, 0.65);
+		add_light(scene, 'light_left', 1.78,1.88,-0.08, 0.56);
+		add_light(scene, 'light_right', -2.01,2.23,-0.68, 0.56);
+		add_light(scene, 'hemi_light', 0, 8, -8, 0.7, (c,i) => new THREE.HemisphereLight(0xfffff0, 0x101020, i));
 		
 	});
 } else if (false) { // eslint-disable-line
