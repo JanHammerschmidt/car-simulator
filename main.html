@@ -52,15 +52,18 @@
 			renderer.setSize( window.innerWidth, window.innerHeight );
 		}, false );
 
-		THREE.addDefaultLight = function() {
+		THREE.addDefaultLight = function(only_ambient) {
 
-			var ambientLight = new THREE.AmbientLight(0xAAAAAA);
+			var ambientLight = new THREE.AmbientLight(0xAAAAAA, 0.6);
 			scene.add(ambientLight);
 
+			if (only_ambient)
+				return;
+
 			var lights = [];
-			lights[0] = new THREE.PointLight(0xffffff, 1, 0);
-			lights[1] = new THREE.PointLight(0xffffff, 1, 0);
-			lights[2] = new THREE.PointLight(0xffffff, 1, 0);
+			lights[0] = new THREE.PointLight(0xffffff, 0.9);
+			lights[1] = new THREE.PointLight(0xffffff, 0.6);
+			lights[2] = new THREE.PointLight(0xffffff, 0.4);
 
 			lights[0].position.set(0, 200, 0);
 			lights[1].position.set(100, 200, 100);
