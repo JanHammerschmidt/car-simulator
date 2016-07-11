@@ -93,6 +93,15 @@ if (false) { // eslint-disable-line
 			render();			
 		}
 		gui.addnum(scales, 'specular_scale').onChange(set_spec_scale);
+		scene.dump_camera = () => {
+			// console.log(JSON.stringify(camera.matrix.toArray()));
+			console.log(JSON.stringify({'target':controls.target, 'position':controls.object.position}));
+		}
+		gui.add(scene, 'dump_camera');
+		let cam_state = '{"target":{"x":0.4653574635316403,"y":1.3639501225698958,"z":0.6915165387908757},"position":{"x":0.43844443752257944,"y":1.897284746757053,"z":-0.5325149172915407}}';
+		cam_state = JSON.parse(cam_state);
+		controls.target.copy(cam_state.target);
+		controls.object.position.copy(cam_state.position);
 		
 	});
 } else if (false) { // eslint-disable-line
