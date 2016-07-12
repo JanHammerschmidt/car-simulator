@@ -621,47 +621,41 @@ class App {
         scene.add(this.car_model);
         if (!cfg.show_car)
             return;
-        if (cfg.use_audi) {
-            const car_body = load_car.load_audi();
-            this.car_model_slope.add(car_body);
-
-            let mats = [];
-            for (let c of car_body.children) {
-                const mat = c.material;
-                if (mat instanceof THREE.MultiMaterial)
-                    mats = mats.concat(mat.materials);
-                else
-                    mats = mats.concat(mat);
-            }
-            for (let m of mats) {
-                if (m.bumpMap)
-                    am.bumpScale *= 0.1;
-                m.side = THREE.DoubleSide;
-            }
             
-        } else {
-            return new Promise(resolve => {
-                load_car.load_renault((car_body/*, wheel*/) => {
-
-                    // var glass_mat = new THREE.MeshLambertMaterial({
-                    //     color: 0xEEEEEE,
-                    //     transparent: true,
-                    //     opacity: 0.5
-                    // });
-
-                    car_body.rotateX(-Math.PI / 2);
-
-                    car_body.position.y = 0.29;
+        return new Promise(resolve => {
+            if (cfg.use_audi) {
+                load_car.load_audi().then(obj => {
+                    let mats = []; // gather mats
+                    for (let c of obj.children) {
+                        const mat = c.material;
+                        if (mat instanceof THREE.MultiMaterial)
+                            mats = mats.concat(mat.materials);
+                        else
+                            mats = mats.concat(mat);
+                    }
+                    for (let m of mats) {
+                        if (m.bumpMap)
+                            m.bumpScale *= 0.1; // set bumpmap scale
+                        m.side = THREE.DoubleSide; // set double-sided
+                    }
+                    this.car_model_slope.add(obj);
                     // gui.addFolder('car position').addnum(car_body.position, 'y');
-                    // //vehicle_box.castShadow = vehicle_box.receiveShadow = true;
-
-                    this.car_model_slope.add(car_body);
-
                     resolve(this.car_model_slope);
 
                 });
-            });
-        }
+            } else { // load renault
+                load_car.load_renault((car_body/*, wheel*/) => {
+
+                    car_body.rotateX(-Math.PI / 2);
+                    car_body.position.y = 0.29;
+                    
+                    this.car_model_slope.add(car_body);
+                    // gui.addFolder('car position').addnum(car_body.position, 'y');
+                    resolve(this.car_model_slope);
+
+                });
+            }
+        });
     }
 
     init_gauge() {
