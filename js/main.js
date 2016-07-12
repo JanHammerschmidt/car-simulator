@@ -10,6 +10,7 @@ const cfg = {
     random_street: 0,
     show_car: true,
     use_audi: true,
+    use_more_lights: true,
     force_on_street: true,
     show_terrain: false,
     show_buildings: false,
@@ -626,8 +627,18 @@ class App {
         this.car_model_slope = new THREE.Object3D();
         this.car_model.add(this.car_model_slope);
 
-        add_light(this.car_model_slope, 'car light', 0.37, 1.2, 0.01, this.gui, 1, 5, 0.5);
-        //light.position.set(0.37, 1.4, 1.55); // TODO?: light nicht mit auto mitdrehen?
+        if (cfg.use_audi) {
+            if (cfg.use_more_lights) {
+                const gf = this.gui.addFolder('car lights');
+                add_light(this.car_model_slope, 'inside', 0.26,2.08,0.3, gf, 0.65, 5, 0.5);
+                add_light(this.car_model_slope, 'left', 0.95,1.88,-0.4, gf, 0.56, 5, 0.5);
+                add_light(this.car_model_slope, 'right', -0.95,1.99,-0.4, gf, 0.56, 5, 0.5);
+            } else
+                add_light(this.car_model_slope, 'car light', 0.58,1.87,-0.07, this.gui, 1, 5, 0.5);
+        } else {
+            add_light(this.car_model_slope, 'car light', 0.37, 1.2, 0.01, this.gui, 1, 5, 0.5);
+            //light.position.set(0.37, 1.4, 1.55); // TODO?: light nicht mit auto mitdrehen?
+        }
 
         scene.add(this.car_model);
         if (!cfg.show_car)
