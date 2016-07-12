@@ -355,7 +355,10 @@ class App {
 
     init_first_person_view() {
         this.camera_first_person_object = new THREE.Object3D();
-        this.camera_first_person_object.position.set(0.37, 1.36, 0.09);
+        if (cfg.use_audi)
+            this.camera_first_person_object.position.set(0.53, 1.8, -0.4);
+        else
+            this.camera_first_person_object.position.set(0.37, 1.36, 0.09);
         this.car_model_slope.add(this.camera_first_person_object);
     }
 
@@ -440,6 +443,8 @@ class App {
 
         let f = this.gui.addFolder('first person cam');
         f.addxyz(this.camera_first_person_object.position);
+        this.camera_first_person_object.color = new THREE.Color(0xffffff); 
+        scene.add(new THREE.PointLightHelper(this.camera_first_person_object, 0.05));
         f.add(camera, 'fov').onChange(() => camera.updateProjectionMatrix());
         f.add(camera, 'near').onChange(() => camera.updateProjectionMatrix());
         f.add(camera, 'far').onChange(() => camera.updateProjectionMatrix());
