@@ -119,6 +119,22 @@ dat.GUI.prototype.addcolor = function(obj, prop) {
     });
 }
 
+function add_light(obj, name, x,y,z, gui, intensity, distance, decay, light_factory) {
+	intensity = intensity || 1.0
+	light_factory = light_factory || ((c,i,d,dc) => new THREE.PointLight(c,i,d,dc));
+	var light = light_factory(0xffffff, intensity, distance, decay);
+	light.position.set(x,y,z);
+    if (gui) {
+        var lf = gui.addFolder(name);
+        lf.addxyz(light.position, 0.1);
+        lf.addnum(light, 'intensity');
+        lf.addnum(light, 'distance', 1);
+        lf.addnum(light, 'decay');
+    }
+	obj.add(light);
+	const plh = new THREE.PointLightHelper(light, 0.05);
+	scene.add(plh);
+}
 
 class App {
     constructor() {
@@ -609,19 +625,9 @@ class App {
         this.car_model = new THREE.Object3D();
         this.car_model_slope = new THREE.Object3D();
         this.car_model.add(this.car_model_slope);
-        
-        var light = new THREE.PointLight(0xffffff, 1, 5, 0.5);
+
+        add_light(this.car_model_slope, 'car light', 0.37, 1.2, 0.01, this.gui, 1, 5, 0.5);
         //light.position.set(0.37, 1.4, 1.55); // TODO?: light nicht mit auto mitdrehen?
-        light.position.set(0.37, 1.2, 0.01);
-        var lf = this.gui.addFolder('car light');
-        lf.addxyz(light.position)
-        lf.addnum(light, 'intensity');
-        lf.addnum(light, 'distance', 1);
-        lf.addnum(light, 'decay');
-        this.car_model_slope.add(light);
-        
-        const plh = new THREE.PointLightHelper(light, 0.05);
-        scene.add(plh);
 
         scene.add(this.car_model);
         if (!cfg.show_car)
