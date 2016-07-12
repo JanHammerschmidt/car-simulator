@@ -17,8 +17,8 @@ module.exports = {
             /*{ test: /\.css$/, loader: "style!css" }*/
         ]
     },
-    devtool: 'source-map',
-    deubg: true,
+    devtool: 'cheap-module-source-map',
+    //deubg: true,
     plugins: [
         new CommonsChunkPlugin({
           names: ["static"],
