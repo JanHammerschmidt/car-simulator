@@ -5,7 +5,7 @@
 // function plog(s) {console.log(((perf.now()-t0)/1000).toPrecision(4), s);}
 
 const cfg = {
-    do_vr: false,
+    do_vr: true,
     do_sound: true,
     random_street: 0,
     show_car: true,
@@ -35,11 +35,10 @@ misc.init_perf();
 const plog = misc.plog;
 
 if (cfg.do_vr) {
-    // window.CARDBOARD_DEBUG = true;
-    require("script!../bower_components/webvr-boilerplate/js/deps/webvr-polyfill.js");
-    require("script!../bower_components/webvr-boilerplate/js/deps/VREffect.js");
-    require("script!../bower_components/webvr-boilerplate/build/webvr-manager.js");
-    require("script!../bower_components/webvr-boilerplate/js/deps/VRControls.js");
+    // require('script!webvr-polyfill');
+    require('script!webvr-boilerplate');
+    require('script!../node_modules/three/examples/js/effects/VREffect.js');
+    require('script!../node_modules/three/examples/js/controls/VRControls.js');
 }
 if (cfg.do_logging)
     require('script!../bower_components/sockjs-client/dist/sockjs.js');
@@ -402,42 +401,13 @@ class App {
     }
 
     init_vr() {
-
-        window.WebVRConfig = {
-            /**
-             * webvr-polyfill configuration
-             */
-
-            // Forces availability of VR mode.
-            //FORCE_ENABLE_VR: true, // Default: false.
-            // Complementary filter coefficient. 0 for accelerometer, 1 for gyro.
-            //K_FILTER: 0.98, // Default: 0.98.
-            // How far into the future to predict during fast motion.
-            //PREDICTION_TIME_S: 0.040, // Default: 0.040 (in seconds).
-            // Flag to disable touch panner. In case you have your own touch controls
-            //TOUCH_PANNER_DISABLED: true, // Default: false.
-            // Enable yaw panning only, disabling roll and pitch. This can be useful for
-            // panoramas with nothing interesting above or below.
-            //YAW_ONLY: true, // Default: false.
-
-            /**
-             * webvr-boilerplate configuration
-             */
-            // Forces distortion in VR mode.
-            //FORCE_DISTORTION: true, // Default: false.
-            // Override the distortion background color.
-            //DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
-            // Prevent distortion from happening.
-            //PREVENT_DISTORTION: true, // Default: false.
-            // Show eye centers for debugging.
-            //SHOW_EYE_CENTERS: true, // Default: false.
-        };
-        //var WebVRManager = require("../../webvr-boilerplate/src/webvr-manager.js");
-        //var WebVRManager = require("script!../../webvr-boilerplate/build/webvr-manager.js");
-        var effect = new THREE.VREffect(renderer);
+        //WebVRConfig: https://github.com/borismus/webvr-polyfill/
+        //window.WebVRConfig.DEFER_INITIALIZATION = true;
+        //window.WebVRConfig.FORCE_ENABLE_VR = true;
+        //window.WebVRConfig.BUFFER_SCALE = 1;
+        const effect = new THREE.VREffect(renderer);
         effect.setSize(window.innerWidth, window.innerHeight); // TODO: do you really need this?
         this.vr_manager = new WebVRManager(renderer, effect);
-        //vr_manager.
         $(() => {
             $("img[title='Fullscreen mode']").css('bottom', '').css('right', '').css('left', '0px').css('top', '0px');
         });
@@ -449,7 +419,7 @@ class App {
         vr_cam.add(camera);
         this.camera_first_person_object.add(vr_cam);
         const controls = new THREE.VRControls(camera);
-        mbind('enter', () => {controls.resetSensor(); });
+        mbind('enter', () => controls.resetSensor() );
         this.cameras["vr_cam"] = [camera, controls];
     }
 

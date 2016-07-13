@@ -10,7 +10,9 @@
     "osc": "2.*",
     "play-sound": ">=0.0.9",
     "sockjs": ">=0.3.17",
-    "three": ">=0.77.1"
+    "three": ">=0.77.1",
+    "webvr-boilerplate": "^0.4.5",
+    "webvr-polyfill": "^0.9.15"
   },
   "devDependencies": {
     "json-loader": ">=0.5.4",
