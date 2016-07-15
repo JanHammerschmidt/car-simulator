@@ -57,14 +57,11 @@ if (cfg.do_vr) {
 if (cfg.do_logging)
     require('script!../bower_components/sockjs-client/dist/sockjs.js');
 
-// require('script!../bower_components/msgpack-lite/dist/msgpack.min.js');
 require("../node_modules/three/examples/js/loaders/MTLLoader.js");
 require("../node_modules/three/examples/js/loaders/OBJLoader.js");
-//require("./lib/THREE.OBJMTLLoader.js");
 require("../node_modules/three/examples/js/controls/OrbitControls.js");
 require("./FirstPersonControls2.js");
 const Bezier = require('./lib/bezier.js');
-//require("../../three.js/examples/js/controls/FlyControls.js");
 
 let chase_cam = require("./cam_controls.js").chase_cam;
 let input = require('./wingman_input.js');

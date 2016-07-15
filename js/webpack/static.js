@@ -10,9 +10,6 @@ models.traffic_light = {'mtl': require('raw!../../models/traffic_lights/traffic_
 models.speed_sign = {'mtl': require('raw!../../models/speed_sign/speed_sign.mtl'),
                     'obj': require('raw!../../models/speed_sign/speed_sign.obj'),
                     'path': 'models/speed_sign/'};
-// models.audi_a3 = {'mtl': require('raw!../../models/test.mtl'),
-//                 'obj': require('raw!../../models/test.obj'),
-//                 'path': 'models/'};
 
 module.exports = {
     'models': models,
