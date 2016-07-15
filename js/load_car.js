@@ -151,7 +151,7 @@ function load_renault(callback) {
 }
 
 function load_audi() {
-    return misc.load_obj_mtl_url('models/', 'test.obj', 'test.mtl');
+    return misc.load_obj_mtl_url('models/AudiA3/', 'AudiA3.obj', 'AudiA3.mtl');
     // return misc.load_obj_mtl(models.audi_a3);
 }
 
