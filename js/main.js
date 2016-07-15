@@ -4,13 +4,13 @@
 // const t0 = perf.now();
 // function plog(s) {console.log(((perf.now()-t0)/1000).toPrecision(4), s);}
 
-const cfg = {
-    do_vr: true,
-    do_sound: true,
+const cfg_debug = {
+    do_vr: false,
+    do_sound: false,
     random_street: 0,
     show_car: true,
     use_audi: true,
-    use_more_lights: true,
+    use_more_lights: false,
     force_on_street: true,
     show_terrain: false,
     show_buildings: false,
@@ -18,7 +18,21 @@ const cfg = {
     hq_street: false,
     do_logging: false
 }
-window.cfg = cfg;
+const cfg_vr = { //eslint-disable-line
+    do_vr: true,
+    do_sound: false,
+    random_street: 0,
+    show_car: true,
+    use_audi: true,
+    use_more_lights: true,
+    force_on_street: true,
+    show_terrain: true,
+    show_buildings: true,
+    smooth_terrain: true,
+    hq_street: true,
+    do_logging: false
+}
+const cfg = window.cfg = cfg_debug;
 
 const mousetrap = require('mousetrap');
 // https://jsfiddle.net/9f6j76dL/1/
