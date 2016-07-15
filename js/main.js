@@ -80,7 +80,9 @@ var Stats = require('../carphysics2d/public/js/Stats.js');
 var ConfigPanel = require('../carphysics2d/public/js/ConfigPanel.js');
 // require('!style!css!../carphysics2d/public/js/car_config.css');
 
-const track_study_1 = require('./webpack/static.js').track_study_1;
+const statics = require('./webpack/static.js');
+const models = statics.models;
+const track_study_1 = statics.track_study_1;
 
 //var pointInPolygon = require('point-in-polygon-extended').pointInPolyRaycast; //pointInPolyWindingNumber
 
@@ -191,8 +193,8 @@ class App {
         console.timeEnd('new Terrain');
 
         this.init_car2d();
-        this.init_cameras("first_person_cam");
         this.init_gauge();
+        this.init_cameras("orbit_cam");
         this.jump_to_street_position(0, false);
         keyboard_input.init();
         if (cfg.do_sound)
@@ -233,7 +235,7 @@ class App {
         // this.init_chase_cam();
         this.init_fly_cam();
         // this.init_picking_controls();
-        //this.init_orbit_cam();
+        this.init_orbit_cam();
         if (cfg.do_vr)
             this.init_vr();
         this.camera = default_cam;
@@ -456,9 +458,10 @@ class App {
         camera.position.z = -0.01;
 
         const cam = new THREE.Object3D();
-        cam.position.set(0.37, 1.36, 0.09);
+        //cam.position.set(0.37, 1.36, 0.09);
         cam.add(camera);
-        this.car_model_slope.add(cam);
+        //this.car_model_slope.add(cam);
+        this.gauge_needle.add(cam);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enablePan = false;
@@ -642,8 +645,9 @@ class App {
                         m.side = THREE.DoubleSide; // set double-sided
                     }
                     this.car_model_slope.add(obj);
-                    // gui.addFolder('car position').addnum(car_body.position, 'y');
-                    resolve(this.car_model_slope);
+                    this.car_body = obj;
+                    // gui.addFolder('car position').addnum(obj.position, 'y');
+                    resolve(obj);
 
                 });
             } else { // load renault
@@ -654,7 +658,7 @@ class App {
                     
                     this.car_model_slope.add(car_body);
                     // gui.addFolder('car position').addnum(car_body.position, 'y');
-                    resolve(this.car_model_slope);
+                    resolve(car_body);
 
                 });
             }
@@ -662,26 +666,39 @@ class App {
     }
 
     init_gauge() {
-        const gauge_needle = new THREE.Mesh(
-            new THREE.BoxGeometry(0.04, 0.004, 0.002),
-            new THREE.MeshBasicMaterial({ color: 0xb31804 })
-        );
-        gauge_needle.geometry.translate(0.5 * gauge_needle.geometry.parameters.width, 0, 0);
-        gauge_needle.rotation.x = 0.606;
-        //gauge_needle.rotation.z = [-0.806,3.933] (10-210)
-        this.gauge_kmh_slope = (3.933 - (-0.806)) / (210 - 10);
-        const gauge = new THREE.Object3D(); gauge.add(gauge_needle);
-        gauge.position.set(0.365, 1.111, 0.806);
-        // camera_first_person_object.position.copy(gauge.position);
-        // camera.position.z = -0.3;
-        this.car_model_slope.add(gauge);
+        if (cfg.show_car && cfg.use_audi) {
+            this.gauge_needle = misc.load_obj_mtl(models.gauge_needle);
+            this.gauge_needle.position.set(0.412, 1.478, 0.75);
+            this.gauge_needle.rotation.x = 0.2;
+            this.car_model_slope.add(this.gauge_needle);
+            const gf = this.gui.addFolder('gauge');
+            gf.addxyz(this.gauge_needle.position, 0.01);            
+            gf.addxyz(this.gauge_needle.rotation);
+            this.car_loaded.then(car_body => {
+                car_body.children = car_body.children.filter(c => c.name.indexOf('speed_dial_right') < 0);
+            });
+        } else {
+            const gauge_needle = new THREE.Mesh(
+                new THREE.BoxGeometry(0.04, 0.004, 0.002),
+                new THREE.MeshBasicMaterial({ color: 0xb31804 })
+            );
+            gauge_needle.geometry.translate(0.5 * gauge_needle.geometry.parameters.width, 0, 0);
+            gauge_needle.rotation.x = 0.606;
+            //gauge_needle.rotation.z = [-0.806,3.933] (10-210)
+            this.gauge_kmh_slope = (3.933 - (-0.806)) / (210 - 10);
+            const gauge = new THREE.Object3D(); gauge.add(gauge_needle);
+            gauge.position.set(0.365, 1.111, 0.806);
+            // camera_first_person_object.position.copy(gauge.position);
+            // camera.position.z = -0.3;
+            this.car_model_slope.add(gauge);
 
-        var gf = this.gui.addFolder('gauge');
-        gf.addxyz(gauge.position, 0.01);
-        gf.addxyz(gauge_needle.rotation);
-        //gf.open();
-        // this.gauge = gauge;
-        this.gauge_needle = gauge_needle;
+            var gf = this.gui.addFolder('gauge');
+            gf.addxyz(gauge.position, 0.01);
+            gf.addxyz(gauge_needle.rotation);
+            //gf.open();
+            // this.gauge = gauge;
+            this.gauge_needle = gauge_needle;
+        }
     }
 
     add_crossing(_t, type, height_diff) {

@@ -10,6 +10,9 @@ models.traffic_light = {'mtl': require('raw!../../models/traffic_lights/traffic_
 models.speed_sign = {'mtl': require('raw!../../models/speed_sign/speed_sign.mtl'),
                     'obj': require('raw!../../models/speed_sign/speed_sign.obj'),
                     'path': 'models/speed_sign/'};
+models.gauge_needle = {'mtl': require('raw!../../models/AudiA3/gauge_needle.mtl'),
+                    'obj': require('raw!../../models/AudiA3/gauge_needle.obj'),
+                    'path': 'models/AudiA3/'};
 
 module.exports = {
     'models': models,
