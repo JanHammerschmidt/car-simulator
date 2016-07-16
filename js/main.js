@@ -458,10 +458,16 @@ class App {
         camera.position.z = -0.01;
 
         const cam = new THREE.Object3D();
-        //cam.position.set(0.37, 1.36, 0.09);
         cam.add(camera);
-        //this.car_model_slope.add(cam);
-        this.speedometer_needle.add(cam);
+        const anchor = this.top_needle_left;
+        const attach = false;
+        if (attach)
+            anchor.add(cam);
+        else {
+            cam.position.copy(anchor.position);
+            this.car_model_slope.add(cam);
+        }
+
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enablePan = false;
@@ -667,15 +673,26 @@ class App {
 
     init_dashboard() {
         if (cfg.show_car && cfg.use_audi) {
-            this.speedometer_needle = misc.load_obj_mtl(models.dashboard_needle1);
-            this.speedometer_needle.position.set(0.412, 1.478, 0.75);
-            this.speedometer_needle.rotation.x = 0.2;
-            this.car_model_slope.add(this.speedometer_needle);
-            const gf = this.gui.addFolder('speedometer needle');
-            gf.addxyz(this.speedometer_needle.position, 0.01);            
-            gf.addxyz(this.speedometer_needle.rotation);
+            const init_needle = (name, model, x,y,z, rx, ry, add_gui) => {
+                const needle = misc.load_obj_mtl(model);
+                needle.position.set(x,y,z);
+                needle.rotation.x = rx;
+                needle.rotation.y = ry;
+                this.car_model_slope.add(needle);
+                if (add_gui) {
+                    const gf = this.gui.addFolder(name);
+                    gf.addxyz(needle.position, 0.01);
+                    gf.addxyz(needle.rotation);
+                }
+                return needle;
+            }
+            this.speedometer_needle = init_needle('speedometer', models.dashboard_needle1, 0.412, 1.478, 0.75, 0.2, 0);
+            this.rpm_needle = init_needle('rpm display', models.dashboard_needle1, 0.692, 1.474, 0.75, 0.2, 0);
+            this.top_needle_left = init_needle('top needle left', models.dashboard_needle2, 0.5885, 1.52, 0.753, 0.2, 0.05);
+            this.top_needle_right = init_needle('top needle right', models.dashboard_needle2, 0.511, 1.52, 0.757, 0.2, 0.05);
             this.car_loaded.then(car_body => {
-                car_body.children = car_body.children.filter(c => c.name.indexOf('speed_dial_right') < 0);
+                for (let n of ['speed_dial_right', 'speed_dial_left', 'counter_top_left01', 'top_right_counter_dial'])
+                    car_body.children = car_body.children.filter(c => c.name.indexOf(n) < 0);
             });
         } else {
             const speedometer_needle = new THREE.Mesh(

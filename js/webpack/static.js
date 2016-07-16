@@ -13,6 +13,9 @@ models.speed_sign = {'mtl': require('raw!../../models/speed_sign/speed_sign.mtl'
 models.dashboard_needle1 = {'mtl': require('raw!../../models/AudiA3/dashboard_needle1.mtl'),
                              'obj': require('raw!../../models/AudiA3/dashboard_needle1.obj'),
                              'path': 'models/AudiA3/'};
+models.dashboard_needle2 = {'mtl': require('raw!../../models/AudiA3/dashboard_needle2.mtl'),
+                             'obj': require('raw!../../models/AudiA3/dashboard_needle2.obj'),
+                             'path': 'models/AudiA3/'};
 
 module.exports = {
     'models': models,
