@@ -193,7 +193,7 @@ class App {
         console.timeEnd('new Terrain');
 
         this.init_car2d();
-        this.init_gauge();
+        this.init_dashboard();
         this.init_cameras("orbit_cam");
         this.jump_to_street_position(0, false);
         keyboard_input.init();
@@ -461,7 +461,7 @@ class App {
         //cam.position.set(0.37, 1.36, 0.09);
         cam.add(camera);
         //this.car_model_slope.add(cam);
-        this.gauge_needle.add(cam);
+        this.speedometer_needle.add(cam);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enablePan = false;
@@ -665,39 +665,38 @@ class App {
         });
     }
 
-    init_gauge() {
+    init_dashboard() {
         if (cfg.show_car && cfg.use_audi) {
-            this.gauge_needle = misc.load_obj_mtl(models.gauge_needle);
-            this.gauge_needle.position.set(0.412, 1.478, 0.75);
-            this.gauge_needle.rotation.x = 0.2;
-            this.car_model_slope.add(this.gauge_needle);
-            const gf = this.gui.addFolder('gauge');
-            gf.addxyz(this.gauge_needle.position, 0.01);            
-            gf.addxyz(this.gauge_needle.rotation);
+            this.speedometer_needle = misc.load_obj_mtl(models.dashboard_needle1);
+            this.speedometer_needle.position.set(0.412, 1.478, 0.75);
+            this.speedometer_needle.rotation.x = 0.2;
+            this.car_model_slope.add(this.speedometer_needle);
+            const gf = this.gui.addFolder('speedometer needle');
+            gf.addxyz(this.speedometer_needle.position, 0.01);            
+            gf.addxyz(this.speedometer_needle.rotation);
             this.car_loaded.then(car_body => {
                 car_body.children = car_body.children.filter(c => c.name.indexOf('speed_dial_right') < 0);
             });
         } else {
-            const gauge_needle = new THREE.Mesh(
+            const speedometer_needle = new THREE.Mesh(
                 new THREE.BoxGeometry(0.04, 0.004, 0.002),
                 new THREE.MeshBasicMaterial({ color: 0xb31804 })
             );
-            gauge_needle.geometry.translate(0.5 * gauge_needle.geometry.parameters.width, 0, 0);
-            gauge_needle.rotation.x = 0.606;
-            //gauge_needle.rotation.z = [-0.806,3.933] (10-210)
-            this.gauge_kmh_slope = (3.933 - (-0.806)) / (210 - 10);
-            const gauge = new THREE.Object3D(); gauge.add(gauge_needle);
-            gauge.position.set(0.365, 1.111, 0.806);
-            // camera_first_person_object.position.copy(gauge.position);
+            speedometer_needle.geometry.translate(0.5 * speedometer_needle.geometry.parameters.width, 0, 0);
+            speedometer_needle.rotation.x = 0.606;
+            //speedometer_needle.rotation.z = [-0.806,3.933] (10-210)
+            this.speedometer_kmh_slope = (3.933 - (-0.806)) / (210 - 10);
+            const speedometer = new THREE.Object3D(); speedometer.add(speedometer_needle);
+            speedometer.position.set(0.365, 1.111, 0.806);
+            // camera_first_person_object.position.copy(speedometer.position);
             // camera.position.z = -0.3;
-            this.car_model_slope.add(gauge);
+            this.car_model_slope.add(speedometer);
 
-            var gf = this.gui.addFolder('gauge');
-            gf.addxyz(gauge.position, 0.01);
-            gf.addxyz(gauge_needle.rotation);
+            var gf = this.gui.addFolder('speedometer needle');
+            gf.addxyz(speedometer.position, 0.01);
+            gf.addxyz(speedometer_needle.rotation);
             //gf.open();
-            // this.gauge = gauge;
-            this.gauge_needle = gauge_needle;
+            this.speedometer_needle = speedometer_needle;
         }
     }
 
@@ -836,7 +835,7 @@ class App {
         }
         car2d.update(dt * 1000);
 
-        this.gauge_needle.rotation.z = -0.806 + this.gauge_kmh_slope * (Math.max(car2d.kmh(), 0) - 10);
+        //this.speedometer_needle.rotation.z = -0.806 + this.this.speedometer_kmh_slope * (Math.max(car2d.kmh(), 0) - 10);
         if (this.started && this.osc_port) {
             this.osc_port.send_float('/rpm', 0.05 + car2d.engine.rel_rpm() * 0.7, true);
             this.osc_port.send_float('/L_100km', car2d.consumption_monitor.liters_per_100km_cont, true);
