@@ -5,7 +5,8 @@
 // function plog(s) {console.log(((perf.now()-t0)/1000).toPrecision(4), s);}
 
 const cfg_debug = {
-    do_vr: false,
+    do_vr: true,
+    antialias: true,
     do_sound: false,
     random_street: 0,
     show_car: true,
@@ -152,6 +153,7 @@ function add_light(obj, name, x,y,z, gui, intensity, distance, decay, light_fact
 class App {
     constructor() {
         plog("App entry point");
+        window.init_threejs({antialias: cfg.antialias});
 
         if (cfg.do_logging) {
             this.log_websocket = new SockJS('http://localhost:9999/log-server'); // eslint-disable-line
