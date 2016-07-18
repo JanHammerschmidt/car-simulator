@@ -129,8 +129,7 @@ class TrafficLight extends THREE.Object3D {
         this.lights_off = [0x142d0b, 0x262300, 0x1f0000];
         this.light = new THREE.PointLight(0xffffff, 1.25, 10, 0.5);
         this.model.add(this.light);
-        //const plh = new THREE.PointLightHelper(this.light, 0.05);
-        //scene.add(plh);
+        scene.helper_objects.add(new THREE.PointLightHelper(this.light, 0.05));
         this.set_state(2);
         //this.demo()
         this.add(this.model);

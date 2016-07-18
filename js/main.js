@@ -147,8 +147,7 @@ function add_light(obj, name, x,y,z, gui, intensity, distance, decay, light_fact
         lf.addnum(light, 'decay');
     }
 	obj.add(light);
-	const plh = new THREE.PointLightHelper(light, 0.05);
-	scene.add(plh);
+	scene.helper_objects.add(new THREE.PointLightHelper(light, 0.05));
 }
 
 class App {
@@ -167,7 +166,10 @@ class App {
             }
         }
         this.cameras = {};
+        scene.helper_objects = new THREE.Object3D();
+        scene.add(scene.helper_objects);
         this.gui = new dat.GUI();
+        this.gui.addFolder('helper objects').add(scene.helper_objects, 'visible');
 
         renderer.setClearColor(0xd8e7ff);
         scene.fog = new THREE.FogExp2(0xd0e0f0, 0.0025);
@@ -450,7 +452,7 @@ class App {
         let f = this.gui.addFolder('first person cam');
         f.addxyz(this.camera_first_person_object.position);
         this.camera_first_person_object.color = new THREE.Color(0xffffff); 
-        scene.add(new THREE.PointLightHelper(this.camera_first_person_object, 0.05));
+        scene.helper_objects.add(new THREE.PointLightHelper(this.camera_first_person_object, 0.05));
         f.add(camera, 'fov').onChange(() => camera.updateProjectionMatrix());
         f.add(camera, 'near').onChange(() => camera.updateProjectionMatrix());
         f.add(camera, 'far').onChange(() => camera.updateProjectionMatrix());
