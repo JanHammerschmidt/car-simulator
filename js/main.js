@@ -422,7 +422,7 @@ class App {
         //window.WebVRConfig.FORCE_ENABLE_VR = true;
         //window.WebVRConfig.BUFFER_SCALE = 1;
         const effect = new THREE.VREffect(renderer);
-        effect.setSize(window.innerWidth, window.innerHeight); // TODO: do you really need this?
+        //effect.setSize(window.innerWidth, window.innerHeight); // TODO: do you really need this?
         this.vr_manager = new WebVRManager(renderer, effect);
         $(() => {
             $("img[title='Fullscreen mode']").css('bottom', '').css('right', '').css('left', '0px').css('top', '0px');
@@ -437,6 +437,9 @@ class App {
         const controls = new THREE.VRControls(camera);
         mbind('enter', () => controls.resetSensor() );
         this.cameras["vr_cam"] = [camera, controls];
+
+        mbind('o', () => { this.vr_manager.enterVRMode_(); this.vr_manager.setMode_(3) });
+        // mbind('l', () => { this.vr_manager.setMode_(1) });
     }
 
     init_first_person_cam() {
