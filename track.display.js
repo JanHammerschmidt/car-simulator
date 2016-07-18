@@ -43,7 +43,7 @@ $(function() {
 
           var scale = cfg.scale * canvas.height;
           var origin = new THREE.Vector2(0, 0);
-          var p = new THREE.Vector2(0.9*canvas.width,canvas.height);
+          var p = new THREE.Vector2(0.9*canvas.width,0.8*canvas.height);
           var t = new THREE.Vector2(0,-1); // tangent
           var first = true;
           var signs = track.signs;
