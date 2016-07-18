@@ -132,6 +132,19 @@ if (false) { // eslint-disable-line
 		add_light(scene, 'light_left', 1.78,1.88,-0.08, 0.56);
 		add_light(scene, 'light_right', -2.01,2.23,-0.68, 0.56);
 		add_light(scene, 'hemi_light', 0, 8, -8, 0.7, (c,i) => new THREE.HemisphereLight(0xfffff0, 0x101020, i));
+
+		// const cam_matrix = [-0.7559852600097656,0.029572896659374237,-0.6539202928543091,0,-0.10186368972063065,0.9814943671226501,0.1621498465538025,0,0.6466143131256104,0.18919363617897034,-0.7389828562736511,0,2.312574863433838,1.8540887832641602,-1.2792788743972778,1];
+		// camera.matrix.fromArray(JSON.parse(cam_matrix));
+		// camera.matrix.decompose(camera.position, camera.quaternion, camera.scale);
+		// gui.addnum(
+		// 	obj.children.filter(c => c.name.indexOf('SEATS_driver') >= 0)[0].material.materials[0], 
+		// 	'bumpScale', 0.001).onChange(() => render());
+		render();
+		// const tloader = new THREE.TextureLoader();
+		// tloader.load('models/speed_sign/30sign.jpg', tex => {
+		// 	obj.children[1].material.map = tex;
+		// 	scene.add(obj);
+		// });
 		
 	});
 } else if (false) { // eslint-disable-line
