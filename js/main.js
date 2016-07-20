@@ -5,8 +5,8 @@
 // function plog(s) {console.log(((perf.now()-t0)/1000).toPrecision(4), s);}
 
 const cfg_debug = {
-    do_vr: true,
-    antialias: true,
+    do_vr: false,
+    antialias: false,
     do_sound: false,
     random_street: 0,
     show_car: true,
@@ -467,7 +467,7 @@ class App {
 
         const cam = new THREE.Object3D();
         cam.add(camera);
-        const anchor = this.speedometer_needle;
+        const anchor = this.rpm_needle;
         const attach = false;
         if (attach)
             anchor.add(cam);
@@ -694,8 +694,8 @@ class App {
                 }
                 return needle;
             }
-            this.speedometer_needle = init_needle('speedometer', models.dashboard_needle1, 0.412, 1.478, 0.75, 0.2, 0, true);
-            this.rpm_needle = init_needle('rpm display', models.dashboard_needle1, 0.692, 1.474, 0.75, 0.2, 0);
+            this.speedometer_needle = init_needle('speedometer', models.dashboard_needle1, 0.412, 1.478, 0.75, 0.2, 0);
+            this.rpm_needle = init_needle('rpm display', models.dashboard_needle1, 0.692, 1.474, 0.75, 0.2, 0, true);
             this.top_needle_left = init_needle('top needle left', models.dashboard_needle2, 0.5885, 1.52, 0.753, 0.2, 0.05);
             this.top_needle_right = init_needle('top needle right', models.dashboard_needle2, 0.511, 1.52, 0.757, 0.2, 0.05);
             this.car_loaded.then(car_body => {
@@ -705,6 +705,13 @@ class App {
             //speedometer_needle.rotation.z = [-0.48,4.32] (10-210)
             this.speedometer_z10kmh = -0.48;
             this.speedometer_kmh_slope = (4.32 - (-0.48)) / (210 - 10);
+            //rpm_needle.rotation.z = [-0.45,4.32] (0-7k)
+            this.rpm0 = -0.45;
+            this.rpm_slope = (4.30 - this.rpm0) / 7000;
+            this.rpm_needle.rpm = 0;
+            // this.gui.addnum(this.rpm_needle, 'rpm').onChange(rpm => {
+            //     this.rpm_needle.rotation.z = this.rpm0 + this.rpm_slope * rpm;
+            // });
         } else {
             const speedometer_needle = new THREE.Mesh(
                 new THREE.BoxGeometry(0.04, 0.004, 0.002),
@@ -865,6 +872,7 @@ class App {
         car2d.update(dt * 1000);
 
         this.speedometer_needle.rotation.z = this.speedometer_z10kmh + this.speedometer_kmh_slope * (Math.max(car2d.kmh(), 0) - 10);
+        this.rpm_needle.rotation.z = this.rpm0 + this.rpm_slope * car2d.engine.rpm();
         if (this.started && this.osc_port) {
             this.osc_port.send_float('/rpm', 0.05 + car2d.engine.rel_rpm() * 0.7, true);
             this.osc_port.send_float('/L_100km', car2d.consumption_monitor.liters_per_100km_cont, true);
