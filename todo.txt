@@ -17,14 +17,21 @@ todo
     OK: speeding notifications
     OK: 2D ansicht läuft?
     OK: logging (auch: logging.h) (sockJS)
-    0) get slurp running
-    0) get oculus running
+    OK: get slurp running
+    OK: get oculus running
     0) impl. panning
     0) dist-mult kleiner / dauer der strecke messen
+    0) L/100km Darstellung
     1) ende der strecke
+    1) motor-sound
+    1) check (unfreiwilliges) rückwärts fahren
     2) schöne speeding/stop-sign/traffic lights notifications
     2) too slow notifications?
     2) oculus "eye" tracking
+    2) Hände/Leap Motion
+    2) Nasenflügel einbauen
+    3) Avatar (Beine)
+    3) re-check rpm/speedometer mappings
     OK: check visual studio code
     3) trackeditor?
     3) change based on vp_id / durchs experiment führen ..
