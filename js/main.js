@@ -801,35 +801,23 @@ class App {
         const inputs = car2d.inputs;
 
         var accel = null,
-            steering = null,
-            got_keyboard_input = false;
+            steering = null;
         if (keyboard_input.tick()) {
             accel = keyboard_input.accel;
             steering = keyboard_input.steering;
-            got_keyboard_input = true;
         }
         if (wingman_input.tick()) {
             accel = wingman_input.accel;
             steering = wingman_input.steering;
         }
         if (accel != null) {
-            //console.log('accel', accel, 'steering', steering);
+            // console.log('accel', accel, 'steering', steering);
             if (accel > 0) {
-                if (got_keyboard_input && car2d.velocity_c.x < 0) {
-                    inputs.throttle = 0;
-                    inputs.brake = accel;
-                } else {
-                    inputs.throttle = accel;
-                    inputs.brake = 0;
-                }
+                inputs.throttle = accel;
+                inputs.brake = 0;
             } else { // is braking
-                if (got_keyboard_input && car2d.velocity_c.x <= 0) {
-                    inputs.throttle = accel;
-                    inputs.brake = 0;
-                } else {
-                    inputs.throttle = 0;
-                    inputs.brake = -accel;
-                }
+                inputs.throttle = 0;
+                inputs.brake = -accel;
             }
             if (steering > 0) {
                 inputs.right = steering;
