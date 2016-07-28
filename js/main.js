@@ -680,7 +680,7 @@ class App {
     }
 
     init_dashboard() {
-        if (cfg.show_car && cfg.use_audi) {
+        if (cfg.use_audi) {
             const init_needle = (name, model, x,y,z, rx, ry, add_gui) => {
                 const needle = misc.load_obj_mtl(model);
                 needle.position.set(x,y,z);
@@ -698,10 +698,6 @@ class App {
             this.rpm_needle = init_needle('rpm display', models.dashboard_needle1, 0.692, 1.474, 0.75, 0.2, 0, true);
             this.top_needle_left = init_needle('top needle left', models.dashboard_needle2, 0.5885, 1.52, 0.753, 0.2, 0.05);
             this.top_needle_right = init_needle('top needle right', models.dashboard_needle2, 0.511, 1.52, 0.757, 0.2, 0.05);
-            this.car_loaded.then(car_body => {
-                for (let n of ['speed_dial_right', 'speed_dial_left', 'counter_top_left01', 'top_right_counter_dial'])
-                    car_body.children = car_body.children.filter(c => c.name.indexOf(n) < 0);
-            });
             //speedometer_needle.rotation.z = [-0.48,4.32] (10-210)
             this.speedometer_z10kmh = -0.48;
             this.speedometer_kmh_slope = (4.32 - (-0.48)) / (210 - 10);
@@ -712,6 +708,12 @@ class App {
             // this.gui.addnum(this.rpm_needle, 'rpm').onChange(rpm => {
             //     this.rpm_needle.rotation.z = this.rpm0 + this.rpm_slope * rpm;
             // });
+            if (cfg.show_car) {
+                this.car_loaded.then(car_body => {
+                    for (let n of ['speed_dial_right', 'speed_dial_left', 'counter_top_left01', 'top_right_counter_dial'])
+                        car_body.children = car_body.children.filter(c => c.name.indexOf(n) < 0);
+                });
+            }            
         } else {
             const speedometer_needle = new THREE.Mesh(
                 new THREE.BoxGeometry(0.04, 0.004, 0.002),
