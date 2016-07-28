@@ -9,7 +9,7 @@ const cfg_debug = {
     antialias: false,
     do_sound: false,
     random_street: 0,
-    show_car: true,
+    show_car: false,
     use_audi: true,
     use_more_lights: false,
     force_on_street: true,
@@ -64,6 +64,19 @@ require("../node_modules/three/examples/js/loaders/OBJLoader.js");
 require("../node_modules/three/examples/js/controls/OrbitControls.js");
 require("./FirstPersonControls2.js");
 const Bezier = require('./lib/bezier.js');
+
+const smoothie = require('../bower_components/smoothie/smoothie.js');
+window.smoothie = smoothie;
+smoothie.engine_angular_velocity = new smoothie.TimeSeries();
+smoothie.angular_vel_should_be = new smoothie.TimeSeries();
+
+$(() => {
+    const chart = new smoothie.SmoothieChart({interpolation:'linear'});
+    chart.addTimeSeries(smoothie.engine_angular_velocity, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 1 });
+    chart.addTimeSeries(smoothie.angular_vel_should_be, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 1 });
+    chart.streamTo(document.getElementById("chart"), 0);
+    smoothie.chart = chart;
+})
 
 let chase_cam = require("./cam_controls.js").chase_cam;
 let input = require('./wingman_input.js');
@@ -199,7 +212,7 @@ class App {
 
         this.init_car2d();
         this.init_dashboard();
-        this.init_cameras("orbit_cam");
+        this.init_cameras("first_person_cam");
         this.jump_to_street_position(0, false);
         keyboard_input.init();
         if (cfg.do_sound)
@@ -240,7 +253,7 @@ class App {
         // this.init_chase_cam();
         this.init_fly_cam();
         // this.init_picking_controls();
-        this.init_orbit_cam();
+        //this.init_orbit_cam();
         if (cfg.do_vr)
             this.init_vr();
         this.camera = default_cam;

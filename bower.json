@@ -24,6 +24,7 @@
     "dat-gui": "dat.gui.js#^0.5.1",
     "webvr-boilerplate": "git://github.com/the-cable-center/webvr-boilerplate",
     "async": "^1.5.2",
-    "sockjs-client": "^1.1.1"
+    "sockjs-client": "^1.1.1",
+    "smoothie": "^1.27.0"
   }
 }
