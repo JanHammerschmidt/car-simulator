@@ -19,15 +19,19 @@ todo
     OK: logging (auch: logging.h) (sockJS)
     OK: get slurp running
     OK: get oculus running
-    0) impl. panning
-    0) dist-mult kleiner / dauer der strecke messen
-    0) L/100km Darstellung
+    OK: impl. panning
+    OK: check (unfreiwilliges) rückwärts fahren
+    0) oculus "eye" tracking
+    0) track erstellen für panning-studie
+    0) reagieren auf geschwindigkeitsänderungen => panning
+        - erstmal nur zu schnell!
     1) ende der strecke
-    1) motor-sound
-    1) check (unfreiwilliges) rückwärts fahren
+
+    2) dist-mult kleiner / dauer der strecke messen
+    2) L/100km Darstellung
+    2) motor-sound
     2) schöne speeding/stop-sign/traffic lights notifications
     2) too slow notifications?
-    2) oculus "eye" tracking
     2) Hände/Leap Motion
     2) Nasenflügel einbauen
     3) Avatar (Beine)
