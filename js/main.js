@@ -65,18 +65,16 @@ require("../node_modules/three/examples/js/controls/OrbitControls.js");
 require("./FirstPersonControls2.js");
 const Bezier = require('./lib/bezier.js');
 
-const smoothie = require('../bower_components/smoothie/smoothie.js');
-window.smoothie = smoothie;
-smoothie.engine_angular_velocity = new smoothie.TimeSeries();
-smoothie.angular_vel_should_be = new smoothie.TimeSeries();
+// const smoothie = require('../bower_components/smoothie/smoothie.js');
+// window.smoothie = smoothie;
+// smoothie.data = new smoothie.TimeSeries();
 
-$(() => {
-    const chart = new smoothie.SmoothieChart({interpolation:'linear'});
-    chart.addTimeSeries(smoothie.engine_angular_velocity, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 1 });
-    chart.addTimeSeries(smoothie.angular_vel_should_be, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 1 });
-    chart.streamTo(document.getElementById("chart"), 0);
-    smoothie.chart = chart;
-})
+// $(() => {
+//     const chart = new smoothie.SmoothieChart({interpolation:'linear'});
+//     chart.addTimeSeries(smoothie.data, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 1 });
+//     chart.streamTo(document.getElementById("chart"), 0);
+//     smoothie.chart = chart;
+// })
 
 let chase_cam = require("./cam_controls.js").chase_cam;
 let input = require('./wingman_input.js');

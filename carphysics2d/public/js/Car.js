@@ -297,15 +297,10 @@ Car.Clutch.prototype = {
 		}
 	},
 	counter_torque: function(engine, gearbox, speed, dt) {
-		// window.smoothie.chart.start();
-		console.log('rpm', engine.rpm());
 		console.assert(this.acting());
 		var w_t = this.w_t0 + this.t * this.a_w; // what the angular difference should be
-		console.log('w_t', w_t);
 		var rpm = gearbox.speed2engine_rpm(speed); // what the engine rpm would be if the clutch would be engaged
 		var w_t_real = engine.angular_velocity - engine.rpm2angular_velocity(rpm); // what the angular difference actually is
-		window.smoothie.engine_angular_velocity.append(new Date().getTime(), engine.angular_velocity);
-		window.smoothie.angular_vel_should_be.append(new Date().getTime(), engine.rpm2angular_velocity(rpm));
 		var a_w_e = (w_t - w_t_real) / dt; // what the acceleration of the engine-angular_velocity must be
 		return engine.torque_out - engine.inertia * a_w_e;
 	}
@@ -319,7 +314,7 @@ Car.Gearbox = function() {
 	this.gears_mass_factors = [1.32, 1.15, 1.1, 1.07, 1.05]; // massenfaktoren
 	this.end_transmission = 4.764; // engine (plus differential) is running this times faster than the wheels
 	this.gear = 0;
-	this.t_gear_change = 0.3; //0.3; // duration of a gear change
+	this.t_gear_change = 0.3; // duration of a gear change
 	this.t = this.t_gear_change; // accumulated time since last gear change
 	this.clutch = new Car.Clutch();
 };
@@ -346,10 +341,7 @@ Car.Gearbox.prototype = {
 	},
 	auto_clutch_control: function(car) {
 		if (!this.clutch.engage && car.engine.rpm() > 1000 && !this.gear_change()) {
-			console.log('rpm', car.engine.rpm());
-			console.log('clutch in');
 			this.clutch.clutch_in(car.engine, car.gearbox, car.speed);
-			console.log('rpm', car.engine.rpm());
 		}
 	},
 	gear_change: function() { return this.t < this.t_gear_change; }, // gear change in progress
@@ -372,8 +364,6 @@ Car.Gearbox.prototype = {
 			engine.torque_counter = this.clutch.counter_torque(engine, this, speed, dt);
 		} else if (this.clutch.engage) { // clutch is (fully) engaged
 			engine.torque_counter = engine.torque_out;
-			window.smoothie.engine_angular_velocity.append(new Date().getTime(), engine.angular_velocity);
-			window.smoothie.angular_vel_should_be.append(new Date().getTime(), engine.angular_velocity);			
 		} else {
 			engine.torque_counter = 0;
 		}
@@ -528,10 +518,6 @@ Car.prototype.doPhysics = function( dt )
 	this.stats.add('speed sideways (raw)', this.velocity_c.y)
 	this.stats.add('accleration', this.accel_c.x);
 	this.stats.add('yawRate', this.yawRate);
-	this.stats.add('inputs.throttle', this.inputs.throttle);
-	this.stats.add('brake', brake);
-	this.stats.add('inputs.brake', this.inputs.brake);
-	this.stats.add('inputs.ebrake', this.inputs.ebrake);
 	// this.stats.add('yawSpeedFront', yawSpeedFront);
 	// this.stats.add('yawSpeedRear', yawSpeedRear);
 	// this.stats.add('weightFront', axleWeightFront);
