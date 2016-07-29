@@ -723,7 +723,15 @@ class App {
                 this.car_loaded.then(car_body => {
                     for (let n of ['speed_dial_right', 'speed_dial_left', 'counter_top_left01', 'top_right_counter_dial'])
                         car_body.children = car_body.children.filter(c => c.name.indexOf(n) < 0);
+                    this.car_windows = car_body.children.filter(c => (c.name.toLowerCase().indexOf('window') >= 0 || c.name.indexOf('windscreen') >= 0) 
+                                                        && c.name.indexOf('frame') < 0 && c.name.indexOf('holder') < 0 && c.name.indexOf('surround') < 0);
+                    this.show_car_windows = true;
+                    this.gui.add(this, 'show_car_windows').onChange(() => {
+                        for (let w of this.car_windows)
+                            w.visible = this.show_car_windows;
+                    });
                 });
+                                
             }            
         } else {
             const speedometer_needle = new THREE.Mesh(
