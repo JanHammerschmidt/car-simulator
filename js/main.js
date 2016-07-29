@@ -725,11 +725,13 @@ class App {
                         car_body.children = car_body.children.filter(c => c.name.indexOf(n) < 0);
                     this.car_windows = car_body.children.filter(c => (c.name.toLowerCase().indexOf('window') >= 0 || c.name.indexOf('windscreen') >= 0) 
                                                         && c.name.indexOf('frame') < 0 && c.name.indexOf('holder') < 0 && c.name.indexOf('surround') < 0);
-                    this.show_car_windows = true;
-                    this.gui.add(this, 'show_car_windows').onChange(() => {
+                    this.show_car_windows = false;
+                    const update_car_windows = () => {
                         for (let w of this.car_windows)
                             w.visible = this.show_car_windows;
-                    });
+                    };
+                    this.gui.add(this, 'show_car_windows').onChange(update_car_windows);
+                    update_car_windows();
                 });
                                 
             }            
