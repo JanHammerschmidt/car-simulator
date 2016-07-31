@@ -10,7 +10,7 @@ const cfg_debug = {
     do_sound: false,
     random_street: 0,
     show_car: false,
-    use_audi: true,
+    use_audi: false,
     use_more_lights: false,
     force_on_street: true,
     show_terrain: false,
@@ -65,16 +65,18 @@ require("../node_modules/three/examples/js/controls/OrbitControls.js");
 require("./FirstPersonControls2.js");
 const Bezier = require('./lib/bezier.js');
 
-// const smoothie = require('../bower_components/smoothie/smoothie.js');
+const smoothie = require('../bower_components/smoothie/smoothie.js');
 // window.smoothie = smoothie;
-// smoothie.data = new smoothie.TimeSeries();
+smoothie.upperbound = new smoothie.TimeSeries();
+smoothie.speed = new smoothie.TimeSeries();
 
-// $(() => {
-//     const chart = new smoothie.SmoothieChart({interpolation:'linear'});
-//     chart.addTimeSeries(smoothie.data, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 1 });
-//     chart.streamTo(document.getElementById("chart"), 0);
-//     smoothie.chart = chart;
-// })
+$(() => {
+    const chart = new smoothie.SmoothieChart({interpolation:'linear'});
+    chart.addTimeSeries(smoothie.upperbound, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 1 });
+    chart.addTimeSeries(smoothie.speed, { strokeStyle: 'rgba(255, 255, 255, 1)', fillStyle: 'rgba(255, 255, 255, 0.2)', lineWidth: 1 });
+    chart.streamTo(document.getElementById("chart"), 0);
+    smoothie.chart = chart;
+});
 
 let chase_cam = require("./cam_controls.js").chase_cam;
 let input = require('./wingman_input.js');

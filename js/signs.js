@@ -1,5 +1,6 @@
 'use strict';
 
+const smoothie = require('../bower_components/smoothie/smoothie.js');
 const misc = require("./misc.js");
 const delay = misc.delay;
 const models = require('./webpack/static.js').models;
@@ -56,6 +57,8 @@ class SpeedSign extends THREE.Object3D {
                 SpeedSign.set_next_sign();
             }
         }
+        smoothie.speed.append(new Date().getTime(), kmh);
+        smoothie.upperbound.append(new Date().getTime(), SpeedSign.current_speed_limit);        
         if (kmh > SpeedSign.current_speed_limit && (new Date() - SpeedSign.cooldown_timer_start) > COOLDOWN_TIME_SPEEDING) {
             if (window.osc_port)
                 window.osc_port.call('/flash');
