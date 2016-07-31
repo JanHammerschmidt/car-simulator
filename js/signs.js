@@ -9,6 +9,8 @@ const TOO_FAST_TOLERANCE = 0.1;
 const TOO_FAST_TOLERANCE_OFFSET = 10;
 const COOLDOWN_TIME_SPEEDING = 10000;
 
+const BRAKING = 5; // kmh per meter (?)
+
 class SpeedObserver {
     constructor(street) {
         this.precision = 0.5;
@@ -24,6 +26,16 @@ class SpeedObserver {
             for (let n = from; n < to; n++) {
                 console.assert(this.upper[n] == def_speed_limit);
                 this.upper[n] = s.speed_limit;
+            }
+            const prev_limit = i > 0 ? SpeedSign.signs[i-1].speed_limit : def_speed_limit;
+            if (prev_limit > s.speed_limit) { // coming from a faster limit
+                let tlimit = s.speed_limit; 
+                for (let n = from; n >= 0; n--) {
+                    this.upper[n] = Math.min(tlimit, this.upper[n]);
+                    tlimit += BRAKING / this.precision;
+                    if (tlimit > prev_limit)
+                        break;
+                }
             }
         }
     }
