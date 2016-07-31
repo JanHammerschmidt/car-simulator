@@ -9,6 +9,37 @@ const TOO_FAST_TOLERANCE = 0.1;
 const TOO_FAST_TOLERANCE_OFFSET = 10;
 const COOLDOWN_TIME_SPEEDING = 10000;
 
+class SpeedObserver {
+    constructor(street) {
+        this.precision = 0.5;
+        const def_speed_limit = Math.max(...SpeedSign.signs.map(s=>s.speed_limit));
+        const n_items = Math.ceil(street.poly_bezier.total_length * this.precision); 
+        this.upper = new Array(n_items).fill(def_speed_limit); // speed limit
+        this.lower = new Array(n_items).fill(0); // min speed
+        for (let [i,s] of SpeedSign.signs.entries()) {
+            const from = Math.ceil(s.pos * this.precision);
+            let to = n_items;
+            if (i < SpeedSign.signs.length - 1)
+                to = Math.ceil(SpeedSign.signs[i+1].pos * this.precision);
+            for (let n = from; n < to; n++) {
+                console.assert(this.upper[n] == def_speed_limit);
+                this.upper[n] = s.speed_limit;
+            }
+        }
+    }
+    plot() {
+        const data = {
+            x: [...this.upper.keys()],
+            y: this.upper,
+            type: 'scatter' 
+        };
+        const layout = {
+            margin: {l:30,r:0,t:0,b:0,p:0}
+        }
+        window.Plotly.newPlot('plotly', [data], layout);
+    }
+}
+
 class SpeedSign extends THREE.Object3D {
     constructor(pos, speed_limit) {
         super();
@@ -200,4 +231,5 @@ class TrafficLight extends THREE.Object3D {
 
 }
 
-module.exports = {'TrafficLight': TrafficLight, 'StopSign': StopSign, 'SpeedSign': SpeedSign};
+module.exports = {'SpeedObserver': SpeedObserver, 'TrafficLight': TrafficLight, 
+                    'StopSign': StopSign, 'SpeedSign': SpeedSign};
