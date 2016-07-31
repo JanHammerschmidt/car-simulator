@@ -9,7 +9,7 @@ const TOO_FAST_TOLERANCE = 0.1;
 const TOO_FAST_TOLERANCE_OFFSET = 10;
 const COOLDOWN_TIME_SPEEDING = 10000;
 
-const BRAKING = 5; // kmh per meter (?)
+const BRAKING = 2; // kmh per meter (?)
 
 class SpeedObserver {
     constructor(street) {
@@ -95,6 +95,11 @@ class SpeedSign extends THREE.Object3D {
         v.limit = Math.max(...SpeedSign.signs.map(s=>s.speed_limit));
         v.cooldown_timer_start = new Date();
         SpeedSign.violation_set_next_sign();
+
+        const c = new CurrentSign(SpeedSign.signs);
+        SpeedSign.speed_channel = c;
+        c.limit = v.limit;
+        c.set_next_sign();
     }
     static violation_set_next_sign() {
         const v = this.violations;
@@ -116,7 +121,7 @@ class SpeedSign extends THREE.Object3D {
         const v = SpeedSign.violations;
         if (v.next) {
             const d = v.next.pos - cur_pos;
-            smoothie.speed.append(new Date().getTime(), d);
+            //smoothie.speed.append(new Date().getTime(), d);
             if (d < v.trigger_dist) {
                 console.log("speed limit: " + v.next.speed_limit + " kmh");
                 v.limit = v.next.speed_limit * (1+TOO_FAST_TOLERANCE) + TOO_FAST_TOLERANCE_OFFSET; // apply speed limit from next sign
@@ -124,14 +129,26 @@ class SpeedSign extends THREE.Object3D {
                 SpeedSign.violation_set_next_sign();
             }
         }
-        //smoothie.speed.append(new Date().getTime(), kmh);
-        //smoothie.upperbound.append(new Date().getTime(), SpeedSign.current_speed_limit);        
         if (kmh > v.limit && (new Date() - v.cooldown_timer_start) > COOLDOWN_TIME_SPEEDING) {
             if (window.osc_port)
                 window.osc_port.call('/flash');
             console.log('speeding violation ('+kmh.toPrecision(3)+' kmh instead of '+v.current.speed_limit+' kmh');
             v.cooldown_timer_start = new Date();
         }
+
+        const c = SpeedSign.speed_channel;
+        if (c.next) {
+            const d = c.next.pos - cur_pos;
+            if (d <= 0) {
+                c.limit = c.next.speed_limit;
+                c.next_i++;
+                c.set_next_sign();
+            } else {
+                c.limit = Math.min(c.limit, c.next.speed_limit + BRAKING * d);
+            }
+        }
+        smoothie.speed.append(new Date().getTime(), kmh);
+        smoothie.upperbound.append(new Date().getTime(), c.limit);
     }
 }
 
