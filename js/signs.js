@@ -52,6 +52,17 @@ class SpeedObserver {
     }
 }
 
+class CurrentSign {
+    constructor(signs) {
+        this.signs = signs;
+        this.next_i = 0;
+    }
+    set_next_sign() {
+        this.current = this.next;
+        this.next = this.next_i >= this.signs.length ? null : this.signs[this.next_i];
+    }
+}
+
 class SpeedSign extends THREE.Object3D {
     constructor(pos, speed_limit) {
         super();
@@ -77,36 +88,49 @@ class SpeedSign extends THREE.Object3D {
         sign.material = new THREE.MeshBasicMaterial({map:sign.material.map, color: '#e8e8e8'});
         SpeedSign._model = obj;
         SpeedSign.signs = [];
-        SpeedSign.next_sign_i = 0;
-        SpeedSign.current_speed_limit = 999;
-        SpeedSign.cooldown_timer_start = new Date();
     }
-    static set_next_sign() { // based on next_sign_i (and update current_sign based on next_sign)
-        const signs = SpeedSign.signs;
-        const i = SpeedSign.next_sign_i;
-        SpeedSign.current_sign = SpeedSign.next_sign;
-        SpeedSign.next_sign = i >= signs.length ? null : signs[i];
-        if (SpeedSign.next_sign)
-            SpeedSign.trigger_dist = SpeedSign.current_sign && 
-                                     SpeedSign.next_sign.speed_limit > SpeedSign.current_sign.speed_limit ? 30 : -30;
+    static init_observer() {
+        const v = new CurrentSign(SpeedSign.signs);
+        SpeedSign.violations = v;
+        v.limit = Math.max(...SpeedSign.signs.map(s=>s.speed_limit));
+        v.cooldown_timer_start = new Date();
+        SpeedSign.violation_set_next_sign();
     }
+    static violation_set_next_sign() {
+        const v = this.violations;
+        v.set_next_sign();
+        if (v.next)
+            v.trigger_dist = v.current && v.next.speed_limit > v.limit ? 30 : -30;
+    }
+    // static set_next_sign() { // based on next_sign_i (and update current_sign based on next_sign)
+    //     const signs = SpeedSign.signs;
+    //     const i = SpeedSign.next_sign_i;
+    //     SpeedSign.current_sign = SpeedSign.next_sign;
+    //     SpeedSign.next_sign = i >= signs.length ? null : signs[i];
+    //     if (SpeedSign.next_sign)
+    //         SpeedSign.trigger_dist = SpeedSign.current_sign && 
+    //                                  SpeedSign.next_sign.speed_limit > SpeedSign.current_sign.speed_limit ? 30 : -30;
+    // }
     static tick(cur_pos, kmh) {
-        if (SpeedSign.next_sign) {
-            const d = SpeedSign.next_sign.pos - cur_pos;
-            if (d < SpeedSign.trigger_dist) {
-                console.log("speed limit: " + SpeedSign.next_sign.speed_limit + " kmh");
-                SpeedSign.current_speed_limit = SpeedSign.next_sign.speed_limit * (1+TOO_FAST_TOLERANCE) + TOO_FAST_TOLERANCE_OFFSET; // apply speed limit from next sign
-                SpeedSign.next_sign_i++;
-                SpeedSign.set_next_sign();
+        // observe violations
+        const v = SpeedSign.violations;
+        if (v.next) {
+            const d = v.next.pos - cur_pos;
+            smoothie.speed.append(new Date().getTime(), d);
+            if (d < v.trigger_dist) {
+                console.log("speed limit: " + v.next.speed_limit + " kmh");
+                v.limit = v.next.speed_limit * (1+TOO_FAST_TOLERANCE) + TOO_FAST_TOLERANCE_OFFSET; // apply speed limit from next sign
+                v.next_i++;
+                SpeedSign.violation_set_next_sign();
             }
         }
-        smoothie.speed.append(new Date().getTime(), kmh);
-        smoothie.upperbound.append(new Date().getTime(), SpeedSign.current_speed_limit);        
-        if (kmh > SpeedSign.current_speed_limit && (new Date() - SpeedSign.cooldown_timer_start) > COOLDOWN_TIME_SPEEDING) {
+        //smoothie.speed.append(new Date().getTime(), kmh);
+        //smoothie.upperbound.append(new Date().getTime(), SpeedSign.current_speed_limit);        
+        if (kmh > v.limit && (new Date() - v.cooldown_timer_start) > COOLDOWN_TIME_SPEEDING) {
             if (window.osc_port)
                 window.osc_port.call('/flash');
-            console.log('speeding violation ('+kmh.toPrecision(3)+' kmh instead of '+SpeedSign.current_sign.speed_limit+' kmh');
-            SpeedSign.cooldown_timer_start = new Date();
+            console.log('speeding violation ('+kmh.toPrecision(3)+' kmh instead of '+v.current.speed_limit+' kmh');
+            v.cooldown_timer_start = new Date();
         }
     }
 }

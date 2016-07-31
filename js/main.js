@@ -591,10 +591,9 @@ class App {
                 fc.addnum(c.position, 'y');
             }
         }
-        signs.SpeedSign.set_next_sign();
+        signs.SpeedSign.init_observer();
         this.signs_loaded = true;
         plog('signs loaded');
-
     }
 
     jump_to_street_position(t, reverse) {
