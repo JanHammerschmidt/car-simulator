@@ -17,7 +17,7 @@ const cfg_debug = {
     show_buildings: false,
     smooth_terrain: false,
     hq_street: false,
-    do_logging: false
+    do_logging: true
 }
 const cfg_vr = { //eslint-disable-line
     do_vr: true,
@@ -106,13 +106,10 @@ const track_study_1 = statics.track_study_1;
 $('body').append(require('html!../carphysics2d/public/js/car_config.html'));
 
 class LogItem extends Array {
-    constructor(dt, throttle, brake, gear) {
+    constructor(dt, throttle, brake, gear, speed) {
         super(dt, throttle, brake, gear);
     }
-    dt(v) {this[0] = v}
-    throttle(v) {this[1] = v}
-    brake(v) {this[2] = v}
-    gear(v) {this[3] = v}
+    speed(v) {this[4] = v}
 }
 
 // renderer.shadowMap.enabled = true;
@@ -883,8 +880,7 @@ class App {
             }
         }
         if (cfg.do_logging && this.started) {
-            const log_item = new LogItem(dt, inputs.throttle, inputs.brake, car2d.gearbox.gear);
-            this.log.push(log_item);
+            var log_item = new LogItem(dt, inputs.throttle, inputs.brake, car2d.gearbox.gear);
         }
         car2d.update(dt * 1000);
 
@@ -965,6 +961,11 @@ class App {
         car_stats.add('car.z', car_model.position.z);
         car_stats.add('car.y', car_model.position.y);
         car_stats.render();
+
+        if (cfg.do_logging && this.started) {
+            log_item.speed(kmh);
+            this.log.push(log_item);
+        }
 
         if (car_model && this.camera == "chase_cam") //"chase_cam" in this.cameras)
             this.cameras["chase_cam"][1].tick(car_model.position, new THREE.Quaternion().multiplyQuaternions(car_model.quaternion, car_model_slope.quaternion), dt);
