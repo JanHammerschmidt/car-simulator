@@ -956,7 +956,7 @@ class App {
         if (this.signs_loaded) {
             for (let s of this.signs) // these are all except for the speed signs
                 s.tick(street_position, kmh);
-            signs.SpeedSign.tick(street_position, kmh);
+            signs.SpeedSign.tick(street_position, kmh, dt);
             smoothie.upperbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.limit, ...this.signs.map(s => s.limit)));
             smoothie.lowerbound.append(new Date().getTime(), signs.SpeedSign.speed_channel.lower);
         }
