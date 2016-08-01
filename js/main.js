@@ -632,6 +632,7 @@ class App {
         mbind('r', () => this.car2d.gearbox.gear_up() );
         mbind('f', () => this.car2d.gearbox.gear_down() );
         mbind('shift+f', () => this.car2d.engine.max_torque = 600 );
+        mbind('ctrl+shift+f', () => this.car2d.engine.max_torque = 2000 );
     }
 
     init_car() {
