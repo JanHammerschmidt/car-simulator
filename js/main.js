@@ -68,11 +68,13 @@ const Bezier = require('./lib/bezier.js');
 const smoothie = require('../bower_components/smoothie/smoothie.js');
 // window.smoothie = smoothie;
 smoothie.upperbound = new smoothie.TimeSeries();
+smoothie.lowerbound = new smoothie.TimeSeries();
 smoothie.speed = new smoothie.TimeSeries();
 
 $(() => {
     const chart = new smoothie.SmoothieChart({interpolation:'linear'});
     chart.addTimeSeries(smoothie.upperbound, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 1 });
+    chart.addTimeSeries(smoothie.lowerbound, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 1 });
     chart.addTimeSeries(smoothie.speed, { strokeStyle: 'rgba(255, 255, 255, 1)', fillStyle: 'rgba(255, 255, 255, 0.2)', lineWidth: 1 });
     chart.streamTo(document.getElementById("chart"), 0);
     smoothie.chart = chart;
@@ -956,6 +958,7 @@ class App {
                 s.tick(street_position, kmh);
             signs.SpeedSign.tick(street_position, kmh);
             smoothie.upperbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.limit, ...this.signs.map(s => s.limit)));
+            smoothie.lowerbound.append(new Date().getTime(), signs.SpeedSign.speed_channel.lower);
         }
         car_stats.add('street position', street_position);
         car_stats.add('car.x', car_model.position.x);

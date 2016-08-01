@@ -11,6 +11,8 @@ const COOLDOWN_TIME_SPEEDING = 10000;
 
 const DEF_SPEED_LIMIT = 200;
 const BRAKING = 1; // kmh per meter (?)
+const ACCELERATION = 0.6; // !! this is nonlinear (and depends on slope..) !!
+const DECELERATION = 0.5;
 
 class SpeedObserver {
     constructor(street) {
@@ -100,6 +102,8 @@ class SpeedSign extends THREE.Object3D {
         const c = new CurrentSign(SpeedSign.signs);
         SpeedSign.speed_channel = c;
         c.limit = Math.max(...SpeedSign.signs.map(s=>s.speed_limit));
+        c.lower = 0; // minimum speed
+        c.prev_limit = 0;
         c.set_next_sign();
     }
     static violation_set_next_sign() {
@@ -136,11 +140,15 @@ class SpeedSign extends THREE.Object3D {
             console.log('speeding violation ('+kmh.toPrecision(3)+' kmh instead of '+(v.current ? v.current.speed_limit : v.limit)+' kmh)');
             v.cooldown_timer_start = new Date();
         }
-
+        // observe speed channel
         const c = SpeedSign.speed_channel;
+        const t = cur_pos - (c.current ? c.current.pos : 0); // how much traveled since last sign
+        c.lower = Math.min(c.current ? c.current.speed_limit : c.next.speed_limit, c.prev_limit + t * ACCELERATION);
         if (c.next) {
-            const d = c.next.pos - cur_pos;
+            const d = c.next.pos - cur_pos; // how much until next sign
+            c.lower = Math.min(c.lower, c.next.speed_limit + DECELERATION * Math.max(d, 0));
             if (d <= 0) {
+                c.prev_limit = c.current ? c.current.speed_limit : kmh;
                 c.limit = c.next.speed_limit;
                 c.next_i++;
                 c.set_next_sign();
