@@ -92,13 +92,13 @@ class SpeedSign extends THREE.Object3D {
     static init_observer() {
         const v = new CurrentSign(SpeedSign.signs);
         SpeedSign.violations = v;
-        v.limit = Math.max(...SpeedSign.signs.map(s=>s.speed_limit));
+        v.limit = Math.max(...SpeedSign.signs.map(s=>s.speed_limit)) * (1+TOO_FAST_TOLERANCE) + TOO_FAST_TOLERANCE_OFFSET;
         v.cooldown_timer_start = new Date();
         SpeedSign.violation_set_next_sign();
 
         const c = new CurrentSign(SpeedSign.signs);
         SpeedSign.speed_channel = c;
-        c.limit = v.limit;
+        c.limit = Math.max(...SpeedSign.signs.map(s=>s.speed_limit));
         c.set_next_sign();
     }
     static violation_set_next_sign() {
@@ -132,7 +132,7 @@ class SpeedSign extends THREE.Object3D {
         if (kmh > v.limit && (new Date() - v.cooldown_timer_start) > COOLDOWN_TIME_SPEEDING) {
             if (window.osc_port)
                 window.osc_port.call('/flash');
-            console.log('speeding violation ('+kmh.toPrecision(3)+' kmh instead of '+v.current.speed_limit+' kmh');
+            console.log('speeding violation ('+kmh.toPrecision(3)+' kmh instead of '+(v.current ? v.current.speed_limit : v.limit)+' kmh)');
             v.cooldown_timer_start = new Date();
         }
 
