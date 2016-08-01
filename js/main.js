@@ -213,7 +213,7 @@ class App {
         this.init_car2d();
         this.init_dashboard();
         this.init_cameras("first_person_cam");
-        this.jump_to_street_position(0, false);
+        this.jump_to_street_position(0.5, false);
         keyboard_input.init();
         if (cfg.do_sound)
             this.init_sound();
@@ -950,10 +950,12 @@ class App {
 
         const street_position = t * this.street_length; // should be [m]
         const kmh = car2d.kmh();
+        smoothie.speed.append(new Date().getTime(), kmh);
         if (this.signs_loaded) {
-            for (let s of this.signs)
+            for (let s of this.signs) // these are all except for the speed signs
                 s.tick(street_position, kmh);
             signs.SpeedSign.tick(street_position, kmh);
+            smoothie.upperbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.limit, ...this.signs.map(s => s.limit)));
         }
         car_stats.add('street position', street_position);
         car_stats.add('car.x', car_model.position.x);

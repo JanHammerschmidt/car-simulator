@@ -10,6 +10,7 @@ const TOO_FAST_TOLERANCE_OFFSET = 10;
 const COOLDOWN_TIME_SPEEDING = 10000;
 
 const BRAKING = 2; // kmh per meter (?)
+const DEF_SPEED_LIMIT = 200;
 
 class SpeedObserver {
     constructor(street) {
@@ -147,8 +148,6 @@ class SpeedSign extends THREE.Object3D {
                 c.limit = Math.min(c.limit, c.next.speed_limit + BRAKING * d);
             }
         }
-        smoothie.speed.append(new Date().getTime(), kmh);
-        smoothie.upperbound.append(new Date().getTime(), c.limit);
     }
 }
 
@@ -158,7 +157,8 @@ class StopSign extends THREE.Object3D {
         this.pos = pos;
         this.model = StopSign._model.clone();
         this.add(this.model);
-        this.state = 0; // {0: too far away, 1: approaching (must stop), 2: past sign / has stopped / has issued warning}
+        this.state = 0; // {0: too far away, 1: approaching (must slow down), 2: approaching (must stop), 3: past sign (has stopped / has issued warning)}
+        this.limit = DEF_SPEED_LIMIT;
     }
     static load_model() {
         const obj = misc.load_obj_mtl(models.stop_sign);
@@ -172,27 +172,35 @@ class StopSign extends THREE.Object3D {
         misc.plog("stop sign model loaded");
     }
     tick(cur_pos, kmh) {
-        if (this.state == 2)
+        if (this.state == 3)
             return;
         const d = this.pos - cur_pos;
         if (this.state == 0) {
-            if (d < 50) {
-                console.log("stop sign: trigger");
+            if (d < 150)
                 this.state = 1;
-            }
-        } else { // state == 1
-            if (kmh < 10) {
-                console.log("stop sign: stopped")
-                this.state = 2;
-            }
-            else if (d < 0) {
-                if (window.osc_port)
-                    window.osc_port.call('/flash');                
-                console.log("stop sign: überfahren! :o");
-                this.state = 2;
+        } else { // 1 or 2
+            //smoothie.speed.append(new Date().getTime(), d);
+            this.limit = Math.max(0, (d-5) * BRAKING);
+            if (this.state == 1) {
+                if (d < 50) {
+                    console.log("stop sign: trigger");
+                    this.state = 2;
+                }
+            } else { // state == 2
+                if (kmh < 10) {
+                    console.log("stop sign: stopped")
+                    this.state = 3;
+                    this.limit = DEF_SPEED_LIMIT;
+                }
+                else if (d < 0) {
+                    if (window.osc_port)
+                        window.osc_port.call('/flash');                
+                    console.log("stop sign: überfahren! :o");
+                    this.state = 3;
+                    this.limit = DEF_SPEED_LIMIT;
+                }
             }
         }
-
     }
 }
 
@@ -221,6 +229,7 @@ class TrafficLight extends THREE.Object3D {
         //this.demo()
         this.add(this.model);
         this.no_tick = false;
+        this.limit = DEF_SPEED_LIMIT;
     }
     static load_model() {
         const obj = misc.load_obj_mtl(models.traffic_light);
