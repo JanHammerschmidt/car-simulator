@@ -268,15 +268,18 @@ class TrafficLight extends THREE.Object3D {
         if (this.no_tick)
             return;
         if (this.state < 2) {
+            this.limit = DEF_SPEED_LIMIT;
             this.no_tick = true;
             return;
         }
         const d = this.pos - cur_pos;
+        this.limit = Math.max(0, (d-5) * BRAKING);
         if (d < 0) {
             // console.assert(this.state != 2); // should not be red (w/o pending..)
             if (window.osc_port)
                 window.osc_port.call('/flash');            
             console.log("traffic light überfahren :o");
+            this.limit = DEF_SPEED_LIMIT;
             this.no_tick = true;
         } else if (this.state == 2 && d < this.trigger_dist) {
             this.trigger();
