@@ -213,7 +213,7 @@ class App {
         this.init_car2d();
         this.init_dashboard();
         this.init_cameras("first_person_cam");
-        this.jump_to_street_position(0.5, false);
+        this.jump_to_street_position(0.0, false);
         keyboard_input.init();
         if (cfg.do_sound)
             this.init_sound();

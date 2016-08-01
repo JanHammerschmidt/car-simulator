@@ -9,8 +9,8 @@ const TOO_FAST_TOLERANCE = 0.1;
 const TOO_FAST_TOLERANCE_OFFSET = 10;
 const COOLDOWN_TIME_SPEEDING = 10000;
 
-const BRAKING = 2; // kmh per meter (?)
 const DEF_SPEED_LIMIT = 200;
+const BRAKING = 1; // kmh per meter (?)
 
 class SpeedObserver {
     constructor(street) {
