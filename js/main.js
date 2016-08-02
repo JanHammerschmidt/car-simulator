@@ -10,7 +10,7 @@ const cfg_debug = {
     do_sound: false,
     random_street: 0,
     show_car: false,
-    use_audi: false,
+    use_audi: true,
     use_more_lights: false,
     force_on_street: true,
     show_terrain: false,
@@ -949,7 +949,7 @@ class App {
         const street_position = t * this.street_length; // should be [m]
         const kmh = car2d.kmh();
         smoothie.speed.append(new Date().getTime(), kmh);
-        if (this.signs_loaded) {
+        if (this.started && this.signs_loaded) {
             for (let s of this.signs) // these are all except for the speed signs
                 s.tick(street_position, kmh);
             signs.SpeedSign.tick(street_position, kmh, dt);
