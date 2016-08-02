@@ -10,8 +10,8 @@ const TOO_FAST_TOLERANCE_OFFSET = 10;
 const COOLDOWN_TIME_SPEEDING = 10000;
 
 const DEF_SPEED_LIMIT = 200;
-const BRAKING = 1; // kmh per meter (?)
-const DECELERATION = 0.5; // [kmh/m]
+const BRAKING = 1; // kmh per meter
+const DECELERATION = 0.1; // [kmh/m]
 
 class SpeedObserver {
     constructor(street) {
@@ -68,7 +68,7 @@ class CurrentSign {
 function acceleration(dt, kmh) {
     // return dt * (15 - 0.05*kmh);
     kmh = Math.min(130, kmh);
-    return Math.max(0, dt * (15 - 0.009*Math.pow(Math.max(0,kmh),1.5))); // works until ~130
+    return 0.4 * Math.max(0, dt * (15 - 0.012*Math.pow(Math.max(0,kmh),1.48))); // works until ~130
     // return dt * (15 - 0.003*kmh - 0.0005*(kmh*kmh))
 }
 

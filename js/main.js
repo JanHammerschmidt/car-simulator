@@ -212,7 +212,7 @@ class App {
         this.init_car2d();
         this.init_dashboard();
         this.init_cameras("first_person_cam");
-        this.jump_to_street_position(0.0, false);
+        this.jump_to_street_position(0.3, false);
         keyboard_input.init();
         if (cfg.do_sound)
             this.init_sound();
@@ -839,7 +839,7 @@ class App {
         if (accel != null) {
             // console.log('accel', accel, 'steering', steering);
             if (accel > 0) {
-                inputs.throttle = accel;
+                inputs.throttle = 0.5 * accel;
                 inputs.brake = 0;
             } else { // is braking
                 inputs.throttle = 0;
