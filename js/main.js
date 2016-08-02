@@ -954,7 +954,7 @@ class App {
                 s.tick(street_position, kmh);
             signs.SpeedSign.tick(street_position, kmh, dt);
             smoothie.upperbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.limit, ...this.signs.map(s => s.limit)));
-            smoothie.lowerbound.append(new Date().getTime(), signs.SpeedSign.speed_channel.lower);
+            smoothie.lowerbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.lower, ...this.signs.map(s => s.lower)));
         }
         car_stats.add('street position', street_position);
         car_stats.add('car.x', car_model.position.x);

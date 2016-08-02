@@ -171,8 +171,9 @@ class StopSign extends THREE.Object3D {
         this.pos = pos;
         this.model = StopSign._model.clone();
         this.add(this.model);
-        this.state = 0; // {0: too far away, 1: approaching (must slow down), 2: approaching (must stop), 3: past sign (has stopped / has issued warning)}
+        this.state = 0; // {0: too far away, 1: approaching (can/must slow down), 2: approaching (must stop), 3: past sign (has stopped / has issued warning)}
         this.limit = DEF_SPEED_LIMIT;
+        this.lower = DEF_SPEED_LIMIT;
     }
     static load_model() {
         const obj = misc.load_obj_mtl(models.stop_sign);
@@ -190,11 +191,12 @@ class StopSign extends THREE.Object3D {
             return;
         const d = this.pos - cur_pos;
         if (this.state == 0) {
-            if (d < 150)
+            if (d < 500)
                 this.state = 1;
         } else { // 1 or 2
             //smoothie.speed.append(new Date().getTime(), d);
             this.limit = Math.max(0, (d-5) * BRAKING);
+            this.lower = Math.max(0, (d-5) * DECELERATION);
             if (this.state == 1) {
                 if (d < 50) {
                     console.log("stop sign: trigger");
@@ -204,14 +206,14 @@ class StopSign extends THREE.Object3D {
                 if (kmh < 10) {
                     console.log("stop sign: stopped")
                     this.state = 3;
-                    this.limit = DEF_SPEED_LIMIT;
+                    this.limit = this.lower = DEF_SPEED_LIMIT;
                 }
                 else if (d < 0) {
                     if (window.osc_port)
                         window.osc_port.call('/flash');                
                     console.log("stop sign: überfahren! :o");
                     this.state = 3;
-                    this.limit = DEF_SPEED_LIMIT;
+                    this.limit = this.lower = DEF_SPEED_LIMIT;
                 }
             }
         }
@@ -244,6 +246,7 @@ class TrafficLight extends THREE.Object3D {
         this.add(this.model);
         this.no_tick = false;
         this.limit = DEF_SPEED_LIMIT;
+        this.lower = DEF_SPEED_LIMIT;
     }
     static load_model() {
         const obj = misc.load_obj_mtl(models.traffic_light);
