@@ -145,7 +145,7 @@ class Street extends THREE.Object3D {
         const track = load_track();
         var cfg = {
             ver2: true,
-            deviation_mult: 4.0, //3.0, // max. ~5.4
+            deviation_mult: 0, //4.0, //3.0, // max. ~5.4
             distance_mult: 0.07, //0.07, // 0.1
             scale: 1500.0
         };
@@ -323,8 +323,8 @@ class Street extends THREE.Object3D {
         this.create_geometry();
         if (random && terrain)
             this.adjust_height_from_terrain(terrain);
-        if (!random)
-            this.apply_height_from_json();
+        // if (!random)
+        //     this.apply_height_from_json();
         this.calculate_lut_points();
         if (!isNode && !no_create_mesh) {
             this.create_mesh();

@@ -11,7 +11,6 @@ const COOLDOWN_TIME_SPEEDING = 10000;
 
 const DEF_SPEED_LIMIT = 200;
 const BRAKING = 1; // kmh per meter (?)
-const ACCELERATION = 10; // [kmh/s] ( !! this is nonlinear (and depends on slope..) [and does not really depend on distance travelled, but more on time] !! )
 const DECELERATION = 0.5; // [kmh/m]
 
 class SpeedObserver {
@@ -51,7 +50,7 @@ class SpeedObserver {
         const layout = {
             margin: {l:30,r:0,t:0,b:0,p:0}
         }
-        window.Plotly.newPlot('plotly', [data], layout);
+        //window.Plotly.newPlot('plotly', [data], layout);
     }
 }
 
@@ -64,6 +63,13 @@ class CurrentSign {
         this.current = this.next;
         this.next = this.next_i >= this.signs.length ? null : this.signs[this.next_i];
     }
+}
+
+function acceleration(dt, kmh) {
+    // return dt * (15 - 0.05*kmh);
+    kmh = Math.min(130, kmh);
+    return Math.max(0, dt * (15 - 0.009*Math.pow(Math.max(0,kmh),1.5))); // works until ~130
+    // return dt * (15 - 0.003*kmh - 0.0005*(kmh*kmh))
 }
 
 class SpeedSign extends THREE.Object3D {
@@ -143,7 +149,7 @@ class SpeedSign extends THREE.Object3D {
         // observe speed channel
         const c = SpeedSign.speed_channel;
         // const t = cur_pos - (c.current ? c.current.pos : 0); // how much traveled since last sign
-        c.lower = Math.min(c.current ? c.current.speed_limit : c.next.speed_limit, c.lower + dt * ACCELERATION);
+        c.lower = Math.min(c.current ? c.current.speed_limit : c.next.speed_limit, c.lower + acceleration(dt, kmh));
         if (c.next) {
             const d = c.next.pos - cur_pos; // how much until next sign
             c.lower = Math.min(c.lower, c.next.speed_limit + DECELERATION * Math.max(d, 0));
