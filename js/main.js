@@ -65,20 +65,19 @@ require("../node_modules/three/examples/js/controls/OrbitControls.js");
 require("./FirstPersonControls2.js");
 const Bezier = require('./lib/bezier.js');
 
-const smoothie = require('../bower_components/smoothie/smoothie.js');
-// window.smoothie = smoothie;
-smoothie.upperbound = new smoothie.TimeSeries();
-smoothie.lowerbound = new smoothie.TimeSeries();
-smoothie.speed = new smoothie.TimeSeries();
+// const smoothie = require('../bower_components/smoothie/smoothie.js');
+// smoothie.upperbound = new smoothie.TimeSeries();
+// smoothie.lowerbound = new smoothie.TimeSeries();
+// smoothie.speed = new smoothie.TimeSeries();
 
-$(() => {
-    const chart = new smoothie.SmoothieChart({interpolation:'linear'});
-    chart.addTimeSeries(smoothie.upperbound, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 1 });
-    chart.addTimeSeries(smoothie.lowerbound, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 1 });
-    chart.addTimeSeries(smoothie.speed, { strokeStyle: 'rgba(255, 255, 255, 1)', fillStyle: 'rgba(255, 255, 255, 0.2)', lineWidth: 1 });
-    chart.streamTo(document.getElementById("chart"), 0);
-    smoothie.chart = chart;
-});
+// $(() => {
+//     const chart = new smoothie.SmoothieChart({interpolation:'linear'});
+//     chart.addTimeSeries(smoothie.upperbound, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 1 });
+//     chart.addTimeSeries(smoothie.lowerbound, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 1 });
+//     chart.addTimeSeries(smoothie.speed, { strokeStyle: 'rgba(255, 255, 255, 1)', fillStyle: 'rgba(255, 255, 255, 0.2)', lineWidth: 1 });
+//     chart.streamTo(document.getElementById("chart"), 0);
+//     smoothie.chart = chart;
+// });
 
 let chase_cam = require("./cam_controls.js").chase_cam;
 let input = require('./wingman_input.js');
@@ -211,8 +210,9 @@ class App {
 
         this.init_car2d();
         this.init_dashboard();
+        this.steering_wheel = this.init_steering_wheel();
         this.init_cameras("first_person_cam");
-        this.jump_to_street_position(0.3, false);
+        this.jump_to_street_position(0.0, false);
         keyboard_input.init();
         if (cfg.do_sound)
             this.init_sound();
@@ -254,7 +254,7 @@ class App {
         // this.init_chase_cam();
         this.init_fly_cam();
         // this.init_picking_controls();
-        //this.init_orbit_cam();
+        // this.init_orbit_cam();
         if (cfg.do_vr)
             this.init_vr();
         this.camera = default_cam;
@@ -481,14 +481,16 @@ class App {
 
         const cam = new THREE.Object3D();
         cam.add(camera);
-        const anchor = this.rpm_needle;
-        const attach = false;
-        if (attach)
-            anchor.add(cam);
-        else {
-            cam.position.copy(anchor.position);
-            this.car_model_slope.add(cam);
-        }
+        this.steering_wheel.then(w => {
+            const anchor = w;
+            const attach = false;
+            if (attach)
+                anchor.add(cam);
+            else {
+                cam.position.copy(anchor.position);
+                this.car_model_slope.add(cam);
+            }
+        });
 
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -693,6 +695,28 @@ class App {
         });
     }
 
+    init_steering_wheel() {
+        if (!cfg.use_audi)
+            return;
+        if (cfg.show_car) {
+            this.car_loaded.then(car_body => {
+                car_body.children = car_body.children.filter(c => c.name.indexOf('STEERING') < 0 || c.name.indexOf('ignition') > 0);
+            });
+        }
+        return new Promise(resolve => {
+            misc.load_obj_mtl_url('models/AudiA3/', 'steering_wheel.obj', 'steering_wheel.mtl').then(wheel => {
+                wheel.position.set(0.562,1.458,0.332);
+                wheel.rotation.set(0.446,0,0);
+                const gf = this.gui.addFolder('steering wheel');
+                gf.addxyz(wheel.position, 0.01);
+                gf.addxyz(wheel.rotation, 0.01);
+                gf.add(wheel, 'visible');
+                this.car_model_slope.add(wheel);
+                resolve(wheel);
+            });
+        });
+    }
+
     init_dashboard() {
         if (cfg.use_audi) {
             const init_needle = (name, model, x,y,z, rx, ry, add_gui) => {
@@ -839,7 +863,7 @@ class App {
         if (accel != null) {
             // console.log('accel', accel, 'steering', steering);
             if (accel > 0) {
-                inputs.throttle = 0.5 * accel;
+                inputs.throttle = accel;
                 inputs.brake = 0;
             } else { // is braking
                 inputs.throttle = 0;
@@ -852,16 +876,6 @@ class App {
                 inputs.right = 0;
                 inputs.left = -steering;
             }
-            // if (accel > 0)
-            //     vehicle.applyEngineForce(accel * 300);
-            // else {
-            //     vehicle.applyEngineForce(0);
-            //     vehicle.setBrake(50 * -accel, 2);
-            //     vehicle.setBrake(50 * -accel, 3);
-            // }
-            // vehicle.setSteering(steering * 0.6, 0);
-            // vehicle.setSteering(steering * 0.6, 1);
-            //debugger;
         }
         // const log_item = {'dt': dt, 'throttle': inputs.throttle, 
         //                   'brake': inputs.brake, 'gear': car2d.gearbox.gear};
@@ -895,6 +909,7 @@ class App {
         car_model.rotation.y = -car2d.heading;
         car_model.position.x = -car2d.position.y;
         car_model.position.z = car2d.position.x;
+        this.steering_wheel.then(w => {w.rotation.z = -steering * 0.9});
 
         car_model.position.y = this.terrain.p2height({ x: car_model.position.x, y: car_model.position.z }) + street.position.y;
         // car_model_slope.rotation.x = 0;
@@ -948,13 +963,13 @@ class App {
 
         const street_position = t * this.street_length; // should be [m]
         const kmh = car2d.kmh();
-        smoothie.speed.append(new Date().getTime(), kmh);
+        // smoothie.speed.append(new Date().getTime(), kmh);
         if (this.started && this.signs_loaded) {
             for (let s of this.signs) // these are all except for the speed signs
                 s.tick(street_position, kmh);
             signs.SpeedSign.tick(street_position, kmh, dt);
-            smoothie.upperbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.limit, ...this.signs.map(s => s.limit)));
-            smoothie.lowerbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.lower, ...this.signs.map(s => s.lower)));
+            // smoothie.upperbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.limit, ...this.signs.map(s => s.limit)));
+            // smoothie.lowerbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.lower, ...this.signs.map(s => s.lower)));
         }
         car_stats.add('street position', street_position);
         car_stats.add('car.x', car_model.position.x);
