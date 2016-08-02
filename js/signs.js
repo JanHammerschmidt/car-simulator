@@ -149,7 +149,7 @@ class SpeedSign extends THREE.Object3D {
         // observe speed channel
         const c = SpeedSign.speed_channel;
         // const t = cur_pos - (c.current ? c.current.pos : 0); // how much traveled since last sign
-        c.lower = Math.min(c.current ? c.current.speed_limit : c.next.speed_limit, c.lower + acceleration(dt, kmh));
+        c.lower = Math.min(c.current ? c.current.speed_limit : c.next.speed_limit, c.lower + acceleration(dt, c.lower));
         if (c.next) {
             const d = c.next.pos - cur_pos; // how much until next sign
             c.lower = Math.min(c.lower, c.next.speed_limit + DECELERATION * Math.max(d, 0));
