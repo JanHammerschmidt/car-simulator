@@ -153,7 +153,7 @@ Car.TorqueMap.prototype = {
 		for (var i = 1; i < ramps.length; i++) {
 			if (throttle <= ramps[i].throttle) {
 				return this.linear_interp(throttle, ramps[i-1].throttle, ramps[i].throttle, 
-					this.get_ramp_torque(rpm, ramps[i-1]), this.get_ramp_torque(rpm, ramps[i]));
+					this.get_ramp_torque(rpm, ramps[i-1].ramp), this.get_ramp_torque(rpm, ramps[i].ramp));
 			}
 		}
 		// console.assert(false);
