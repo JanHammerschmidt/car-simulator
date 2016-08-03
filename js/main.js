@@ -178,6 +178,7 @@ class App {
         }
         this.cameras = {};
         scene.helper_objects = new THREE.Object3D();
+        scene.helper_objects.visible = false;
         scene.add(scene.helper_objects);
         this.gui = new dat.GUI();
         this.gui.addFolder('helper objects').add(scene.helper_objects, 'visible');
