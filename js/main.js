@@ -145,6 +145,18 @@ dat.GUI.prototype.addcolor = function(obj, prop) {
     });
 }
 
+class Event {
+    constructor() {
+        this.promise = new Promise(r => this._resolve = r);
+        this.resolved = false;
+    }
+    then(f) { this.promise.then(f); }
+    resolve(v) { 
+        this._resolve(v);
+        this.resolved = true;
+    }
+}
+
 function add_light(obj, name, x,y,z, gui, intensity, distance, decay, light_factory) {
 	intensity = intensity || 1.0
 	light_factory = light_factory || ((c,i,d,dc) => new THREE.PointLight(c,i,d,dc));
@@ -195,7 +207,7 @@ class App {
         f.addxyz(light.position);
         scene.add(light);
 
-        this.car_loaded = this.init_car();
+        this.init_car();
         this.streets = [];
         this.init_street();
 
@@ -661,6 +673,44 @@ class App {
         mbind('ctrl+shift+f', () => this.car2d.engine.max_torque = 2000 );
     }
 
+    load_car() {
+        if (this['load_car_button'])
+            this.gui.remove(this.load_car_button);
+        if (cfg.use_audi) {
+            load_car.load_audi().then(obj => {
+                let mats = []; // gather mats
+                for (let c of obj.children) {
+                    const mat = c.material;
+                    if (mat instanceof THREE.MultiMaterial)
+                        mats = mats.concat(mat.materials);
+                    else
+                        mats = mats.concat(mat);
+                }
+                for (let m of mats) {
+                    if (m.bumpMap)
+                        m.bumpScale *= 0.1; // set bumpmap scale
+                    m.side = THREE.DoubleSide; // set double-sided
+                }
+                this.car_model_slope.add(obj);
+                this.car_body = obj;
+                // gui.addFolder('car position').addnum(obj.position, 'y');
+                this.car_loaded._resolve(obj);
+
+            });
+        } else { // load renault
+            load_car.load_renault((car_body/*, wheel*/) => {
+
+                car_body.rotateX(-Math.PI / 2);
+                car_body.position.y = 0.29;
+                
+                this.car_model_slope.add(car_body);
+                // gui.addFolder('car position').addnum(car_body.position, 'y');
+                this.car_loaded._resolve(car_body);
+
+            });
+        }
+    }
+
     init_car() {
         this.car_model = new THREE.Object3D();
         this.car_model_slope = new THREE.Object3D();
@@ -680,54 +730,19 @@ class App {
         }
 
         scene.add(this.car_model);
-        if (!cfg.show_car)
-            return;
-            
-        return new Promise(resolve => {
-            if (cfg.use_audi) {
-                load_car.load_audi().then(obj => {
-                    let mats = []; // gather mats
-                    for (let c of obj.children) {
-                        const mat = c.material;
-                        if (mat instanceof THREE.MultiMaterial)
-                            mats = mats.concat(mat.materials);
-                        else
-                            mats = mats.concat(mat);
-                    }
-                    for (let m of mats) {
-                        if (m.bumpMap)
-                            m.bumpScale *= 0.1; // set bumpmap scale
-                        m.side = THREE.DoubleSide; // set double-sided
-                    }
-                    this.car_model_slope.add(obj);
-                    this.car_body = obj;
-                    // gui.addFolder('car position').addnum(obj.position, 'y');
-                    resolve(obj);
-
-                });
-            } else { // load renault
-                load_car.load_renault((car_body/*, wheel*/) => {
-
-                    car_body.rotateX(-Math.PI / 2);
-                    car_body.position.y = 0.29;
-                    
-                    this.car_model_slope.add(car_body);
-                    // gui.addFolder('car position').addnum(car_body.position, 'y');
-                    resolve(car_body);
-
-                });
-            }
-        });
+        this.car_loaded = new Event();
+        if (cfg.show_car)
+            this.load_car();
+        else
+            this.load_car_button = this.gui.add(this, 'load_car');
     }
 
     init_steering_wheel() {
         if (!cfg.use_audi)
             return;
-        if (cfg.show_car) {
-            this.car_loaded.then(car_body => {
-                car_body.children = car_body.children.filter(c => c.name.indexOf('STEERING') < 0 || c.name.indexOf('ignition') > 0);
-            });
-        }
+        this.car_loaded.then(car_body => {
+            car_body.children = car_body.children.filter(c => c.name.indexOf('STEERING') < 0 || c.name.indexOf('ignition') > 0);
+        });
         return new Promise(resolve => {
             misc.load_obj_mtl_url('models/AudiA3/', 'steering_wheel.obj', 'steering_wheel.mtl').then(wheel => {
                 wheel.position.set(0.562,1.458,0.332);
@@ -771,22 +786,19 @@ class App {
             // this.gui.addnum(this.rpm_needle, 'rpm').onChange(rpm => {
             //     this.rpm_needle.rotation.z = this.rpm0 + this.rpm_slope * rpm;
             // });
-            if (cfg.show_car) {
-                this.car_loaded.then(car_body => {
-                    for (let n of ['speed_dial_right', 'speed_dial_left', 'counter_top_left01', 'top_right_counter_dial'])
-                        car_body.children = car_body.children.filter(c => c.name.indexOf(n) < 0);
-                    this.car_windows = car_body.children.filter(c => (c.name.toLowerCase().indexOf('window') >= 0 || c.name.indexOf('windscreen') >= 0) 
-                                                        && c.name.indexOf('frame') < 0 && c.name.indexOf('holder') < 0 && c.name.indexOf('surround') < 0);
-                    this.show_car_windows = false;
-                    const update_car_windows = () => {
-                        for (let w of this.car_windows)
-                            w.visible = this.show_car_windows;
-                    };
-                    this.gui.add(this, 'show_car_windows').onChange(update_car_windows);
-                    update_car_windows();
-                });
-                                
-            }            
+            this.car_loaded.then(car_body => {
+                for (let n of ['speed_dial_right', 'speed_dial_left', 'counter_top_left01', 'top_right_counter_dial'])
+                    car_body.children = car_body.children.filter(c => c.name.indexOf(n) < 0);
+                this.car_windows = car_body.children.filter(c => (c.name.toLowerCase().indexOf('window') >= 0 || c.name.indexOf('windscreen') >= 0) 
+                                                    && c.name.indexOf('frame') < 0 && c.name.indexOf('holder') < 0 && c.name.indexOf('surround') < 0);
+                this.show_car_windows = false;
+                const update_car_windows = () => {
+                    for (let w of this.car_windows)
+                        w.visible = this.show_car_windows;
+                };
+                this.gui.add(this, 'show_car_windows').onChange(update_car_windows);
+                update_car_windows();
+            });            
         } else {
             const speedometer_needle = new THREE.Mesh(
                 new THREE.BoxGeometry(0.04, 0.004, 0.002),
