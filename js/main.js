@@ -13,9 +13,9 @@ const cfg_debug = {
     use_audi: true,
     use_more_lights: false,
     force_on_street: true,
-    show_terrain: false,
+    show_terrain: true,
     show_buildings: false,
-    smooth_terrain: false,
+    smooth_terrain: true,
     hq_street: false,
     do_logging: true
 }
@@ -211,6 +211,7 @@ class App {
         this.init_car2d();
         this.init_dashboard();
         this.steering_wheel = this.init_steering_wheel();
+        this.init_distractions();
         this.init_cameras("first_person_cam");
         this.jump_to_street_position(0.0, false);
         keyboard_input.init();
@@ -246,6 +247,24 @@ class App {
         }
 
         this.gui.close();
+    }
+
+    init_distractions() {
+        const files = ['025Pikachu_OS_anime_5', '007Squirtle_AG_anime'];
+        const textureLoader = new THREE.TextureLoader();
+        var textures = files.map(f => new Promise(resolve => textureLoader.load('textures/pokemon/'+f+'.png', t => resolve(t))));
+        Promise.all(textures).then(textures => {
+            for (let t of textures) {
+                const scale = 8;
+                const mat = new THREE.SpriteMaterial({map:t, fog:true});
+                const sprite = new THREE.Sprite(mat);
+                const p = {x: -700, y: -800};
+                const y = this.terrain.p2height(p);
+                sprite.position.set(p.x, y + 0.5*scale, p.y);
+                sprite.scale.set(scale,scale,scale);
+                scene.add(sprite);
+            }
+        });
     }
 
     init_cameras(default_cam) {
