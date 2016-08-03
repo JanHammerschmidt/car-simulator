@@ -14,7 +14,7 @@ const cfg_debug = {
     use_more_lights: false,
     force_on_street: true,
     show_terrain: true,
-    show_buildings: false,
+    show_buildings: true,
     smooth_terrain: true,
     hq_street: false,
     do_logging: true
@@ -254,15 +254,20 @@ class App {
         const textureLoader = new THREE.TextureLoader();
         var textures = files.map(f => new Promise(resolve => textureLoader.load('textures/pokemon/'+f+'.png', t => resolve(t))));
         Promise.all(textures).then(textures => {
-            for (let t of textures) {
-                const scale = 8;
-                const mat = new THREE.SpriteMaterial({map:t, fog:true});
-                const sprite = new THREE.Sprite(mat);
-                const p = {x: -700, y: -800};
+            const street = this.street;
+            const street_bezier = street.poly_bezier;
+            const scale = 8;
+            const mats = textures.map(t => new THREE.SpriteMaterial({map:t, fog:true}));
+            for (let i = 0; i < 20; i++) {
+                const t = misc.rand(0,1);
+                const p = new THREE.Vector2().copy(street_bezier.get(t));
+                const n = new THREE.Vector2().copy(street_bezier.normal(t));
+                p.addScaledVector(n, misc.rand(0,50));
+                const s = new THREE.Sprite(mats[misc.rand_int(0, mats.length)]);
                 const y = this.terrain.p2height(p);
-                sprite.position.set(p.x, y + 0.5*scale, p.y);
-                sprite.scale.set(scale,scale,scale);
-                scene.add(sprite);
+                s.position.set(p.x, y + 0.5*scale, p.y);
+                s.scale.set(scale,scale,scale);
+                scene.add(s);                
             }
         });
     }

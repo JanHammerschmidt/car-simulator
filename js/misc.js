@@ -6,6 +6,10 @@ const misc = {
         return Math.random() * (max - min) + min;
     },
 
+    rand_int(min, max) { // max-exclusive
+        return Math.floor(Math.random() * (max - min)) + min
+    },
+
     find_two_smallest_values: function(array) {
         console.assert(array.length >= 2);
         var first = Number.MAX_VALUE;
