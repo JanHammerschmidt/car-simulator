@@ -4,7 +4,7 @@
  * @author paulirish / http://paulirish.com/
  */
 
-THREE.FirstPersonControls2 = function ( object, domElement ) {
+THREE.FirstPersonControls2 = function ( object, domElement, process_keyboard_input ) {
 
 	this.object = object;
 	this.target = new THREE.Vector3( 0, 0, 0 );
@@ -118,60 +118,66 @@ THREE.FirstPersonControls2 = function ( object, domElement ) {
 
 	};
 
-	this.onKeyDown = function ( event ) {
+	if (typeof process_keyboard_input == 'undefined')
+		process_keyboard_input = true;
+	this.process_keyboard_input = process_keyboard_input;
+	if (process_keyboard_input) { 
 
-		//event.preventDefault();
+		this.onKeyDown = function ( event ) {
 
-		switch ( event.keyCode ) {
+			//event.preventDefault();
 
-			//case 38: /*up*/
-			case 87: /*W*/ this.moveForward = true; 
-				// console.log("lat", this.lat);
-				// console.log("lon", this.lon);
-				// console.log("phi", this.phi);
-				// console.log("theta", this.theta);
-				// console.log();
-			break;
+			switch ( event.keyCode ) {
 
-			//case 37: /*left*/
-			case 65: /*A*/ this.moveLeft = true; break;
+				//case 38: /*up*/
+				case 87: /*W*/ this.moveForward = true; 
+					// console.log("lat", this.lat);
+					// console.log("lon", this.lon);
+					// console.log("phi", this.phi);
+					// console.log("theta", this.theta);
+					// console.log();
+				break;
 
-			//case 40: /*down*/
-			case 83: /*S*/ this.moveBackward = true; break;
+				//case 37: /*left*/
+				case 65: /*A*/ this.moveLeft = true; break;
 
-			//case 39: /*right*/
-			case 68: /*D*/ this.moveRight = true; break;
+				//case 40: /*down*/
+				case 83: /*S*/ this.moveBackward = true; break;
 
-			case 82: /*R*/ this.moveUp = true; break;
-			case 70: /*F*/ this.moveDown = true; break;
+				//case 39: /*right*/
+				case 68: /*D*/ this.moveRight = true; break;
 
-		}
+				case 82: /*R*/ this.moveUp = true; break;
+				case 70: /*F*/ this.moveDown = true; break;
 
-	};
+			}
 
-	this.onKeyUp = function ( event ) {
+		};
 
-		switch ( event.keyCode ) {
+		this.onKeyUp = function ( event ) {
 
-			case 38: /*up*/
-			case 87: /*W*/ this.moveForward = false; break;
+			switch ( event.keyCode ) {
 
-			case 37: /*left*/
-			case 65: /*A*/ this.moveLeft = false; break;
+				case 38: /*up*/
+				case 87: /*W*/ this.moveForward = false; break;
 
-			case 40: /*down*/
-			case 83: /*S*/ this.moveBackward = false; break;
+				case 37: /*left*/
+				case 65: /*A*/ this.moveLeft = false; break;
 
-			case 39: /*right*/
-			case 68: /*D*/ this.moveRight = false; break;
+				case 40: /*down*/
+				case 83: /*S*/ this.moveBackward = false; break;
 
-			case 82: /*R*/ this.moveUp = false; break;
-			case 70: /*F*/ this.moveDown = false; break;
+				case 39: /*right*/
+				case 68: /*D*/ this.moveRight = false; break;
 
-		}
+				case 82: /*R*/ this.moveUp = false; break;
+				case 70: /*F*/ this.moveDown = false; break;
 
-	};
+			}
 
+		};
+	}
+	
 	this.headingFromCameraMatrix = function( m ) {
 		const e = new THREE.Euler(0,0,0, "YXZ");
 		e.setFromRotationMatrix(m, "YXZ");
@@ -262,9 +268,11 @@ THREE.FirstPersonControls2 = function ( object, domElement ) {
 		this.domElement.removeEventListener( 'mousedown', _onMouseDown, false );
 		this.domElement.removeEventListener( 'mousemove', _onMouseMove, false );
 		this.domElement.removeEventListener( 'mouseup', _onMouseUp, false );
-
-		window.removeEventListener( 'keydown', _onKeyDown, false );
-		window.removeEventListener( 'keyup', _onKeyUp, false );
+		
+		if (this.process_keyboard_input) {
+			window.removeEventListener( 'keydown', _onKeyDown, false );
+			window.removeEventListener( 'keyup', _onKeyUp, false );
+		}
 		window.removeEventListener( 'resize', _handleResize, false );
 
 	}
@@ -272,8 +280,10 @@ THREE.FirstPersonControls2 = function ( object, domElement ) {
 	var _onMouseMove = bind( this, this.onMouseMove );
 	var _onMouseDown = bind( this, this.onMouseDown );
 	var _onMouseUp = bind( this, this.onMouseUp );
-	var _onKeyDown = bind( this, this.onKeyDown );
-	var _onKeyUp = bind( this, this.onKeyUp );
+	if (this.process_keyboard_input) {
+		var _onKeyDown = bind( this, this.onKeyDown );
+		var _onKeyUp = bind( this, this.onKeyUp );
+	}
 	var _handleResize = bind( this, this.handleResize ); 
 
 	// this.domElement.addEventListener( 'contextmenu', contextmenu, false );
@@ -281,8 +291,10 @@ THREE.FirstPersonControls2 = function ( object, domElement ) {
 	this.domElement.addEventListener( 'mousedown', _onMouseDown, false );
 	this.domElement.addEventListener( 'mouseup', _onMouseUp, false );
 
-	window.addEventListener( 'keydown', _onKeyDown, false );
-	window.addEventListener( 'keyup', _onKeyUp, false );
+	if (this.process_keyboard_input) {
+		window.addEventListener( 'keydown', _onKeyDown, false );
+		window.addEventListener( 'keyup', _onKeyUp, false );
+	}
 	window.addEventListener( 'resize', _handleResize, false );
 
 	function bind( scope, fn ) {

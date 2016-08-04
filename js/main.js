@@ -500,8 +500,14 @@ class App {
 
     init_first_person_cam() {
         let camera = THREE.get_camera();
+        let controls = null;
         camera.lookAt(new THREE.Vector3(0, 0, 1));
-        this.camera_first_person_object.add(camera);
+        if (!this.use_static_first_person_cam) {
+            controls = new THREE.FirstPersonControls2(camera, renderer.domElement, false);
+            controls.lookSpeed = 0.2;
+            controls.lookVertical = true;
+        }
+        this.camera_first_person_object.add(camera);        
 
         let f = this.gui.addFolder('first person cam');
         f.addxyz(this.camera_first_person_object.position);
@@ -511,7 +517,7 @@ class App {
         f.add(camera, 'near').onChange(() => camera.updateProjectionMatrix());
         f.add(camera, 'far').onChange(() => camera.updateProjectionMatrix());
 
-        this.cameras["first_person_cam"] = [camera, null];
+        this.cameras["first_person_cam"] = [camera, controls];
     }
 
     init_orbit_cam() {
@@ -1033,6 +1039,9 @@ class App {
             this.cameras["orbit_cam"][1].update();
         if (this.camera == "picking_cam")
             this.cameras["picking_cam"][1].update();
+        if (!this.use_static_first_person_cam && this.camera == "first_person_cam")
+            this.cameras["first_person_cam"][1].update(dt);
+            
 
         if (this.active)
             requestAnimationFrame(this.animate.bind(this));
