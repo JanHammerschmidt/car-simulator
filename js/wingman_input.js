@@ -73,21 +73,28 @@ var keyboard_input = {
     },
 
     init: function() {
+        keyboard_input.no_wasd = false;
         document.addEventListener('keydown', function(ev) {
+            if (keyboard_input.no_wasd && [65, 87, 68, 83].indexOf(ev.keyCode) >= 0)
+                return;
             switch (ev.keyCode) {
                 case 37: // left
+                case 65: // A
                     keyboard_input.direction = 1;
                     break;
 
                 case 38: // forward
+                case 87: // W
                     keyboard_input.power = true;
                     break;
 
                 case 39: // right
+                case 68: // D
                     keyboard_input.direction = -1;
                     break;
 
                 case 40: // back
+                case 83: // S
                     keyboard_input.power = false;
                     break;
             }
@@ -95,18 +102,22 @@ var keyboard_input = {
         document.addEventListener('keyup', function(ev) {
             switch (ev.keyCode) {
                 case 37: // left
+                case 65: // A
                     keyboard_input.direction = null;
                     break;
 
                 case 38: // forward
+                case 87: // W
                     keyboard_input.power = null;
                     break;
 
                 case 39: // right
+                case 68: // D
                     keyboard_input.direction = null;
                     break;
 
                 case 40: // back
+                case 83: // S
                     keyboard_input.power = null;
                     break;
             }

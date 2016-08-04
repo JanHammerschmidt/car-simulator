@@ -325,6 +325,7 @@ class App {
         }
 
         if (this.camera_change == "fly_cam") {
+            keyboard_input.no_wasd = true;
             this.fly_cam.copy(this.cameras[this.camera][0]);
             this.fly_controls.headingFromCameraMatrix(this.cameras[this.camera][0].matrixWorld);
             if (this.camera == "first_person_cam") {
@@ -332,6 +333,8 @@ class App {
                     this.car_model.position.clone().add(this.camera_first_person_object.position));
             }
         }
+        if (this.camera_change == "first_person_cam")
+            keyboard_input.no_wasd = false;
 
         // if (this.camera_change == "fly_cam" || this.camera_change == "chase_cam") {
         //     this.cameras[this.camera_change][0].matrixWorldInverse.copy(
