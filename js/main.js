@@ -667,6 +667,9 @@ class App {
                 stats: this.car_stats
                 , consumption_update: L_100km => { // eslint-disable-line
                     // console.log("consumption", L_100km);
+                },
+                gear_change_callback: gear => {
+                    $('#gears_display').text(gear+1);
                 }
             });
         this.car2d.config_panel = new ConfigPanel(this.car2d);

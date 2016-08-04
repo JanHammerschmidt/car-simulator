@@ -124,7 +124,7 @@ var Car = function( opts )
 	this.setConfig();
 
 	this.engine = new Car.Engine();
-	this.gearbox = new Car.Gearbox();
+	this.gearbox = new Car.Gearbox(opts.gear_change_callback);
 	this.speed = 0;
 	this.consumption_monitor = new ConsumptionMonitor(opts.consumption_update);
 };
@@ -308,7 +308,7 @@ Car.Clutch.prototype = {
 
 // Car.Gearbox
 
-Car.Gearbox = function() {
+Car.Gearbox = function(gear_change_callback) {
 	this.wheel_rolling_circumference = 1.93; // [m] //TODO?: von wheel radius (0.216) herleitbar? => 2*pi*radius = 1.35m => wie groß sind reifen so..? :P
 	this.gears = [3.266, 1.85, 1.15, 0.82, 0.6]; // übersetzungen
 	this.gears_mass_factors = [1.32, 1.15, 1.1, 1.07, 1.05]; // massenfaktoren
@@ -317,6 +317,7 @@ Car.Gearbox = function() {
 	this.t_gear_change = 0.3; // duration of a gear change
 	this.t = this.t_gear_change; // accumulated time since last gear change
 	this.clutch = new Car.Clutch();
+	this.gear_change_callback = gear_change_callback;
 };
 
 Car.Gearbox.prototype = {
@@ -356,7 +357,8 @@ Car.Gearbox.prototype = {
 				if (!this.gear_change())
 					this.t = 0;
 			}
-			// gear change notification
+			if (this.gear_change_callback)
+				this.gear_change_callback(gear);
 		}
 	},
 	torque2force_engine2wheels: function(engine, car, speed, dt) {
