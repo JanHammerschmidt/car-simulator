@@ -263,21 +263,24 @@ class App {
     }
 
     init_distractions() {
-        const files = ['025Pikachu_OS_anime_5', '007Squirtle_AG_anime'];
+        const files = ['025Pikachu_OS_anime_5', '007Squirtle_AG_anime', '133Eevee_AG_anime', '393Piplup_DP_anime_3', '001Bulbasaur_AG_anime'];
         const textureLoader = new THREE.TextureLoader();
         var textures = files.map(f => new Promise(resolve => textureLoader.load('textures/pokemon/'+f+'.png', t => resolve(t))));
         Promise.all(textures).then(textures => {
             const street = this.street;
             const street_bezier = street.poly_bezier;
-            const scale = 8;
             const mats = textures.map(t => new THREE.SpriteMaterial({map:t, fog:true}));
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 80; i++) {
                 const t = misc.rand(0,1);
                 const p = new THREE.Vector2().copy(street_bezier.get(t));
                 const n = new THREE.Vector2().copy(street_bezier.normal(t));
-                p.addScaledVector(n, misc.rand(0,50));
+                const dist = misc.rand(-50,50);
+                const scale = 2 + Math.abs(dist)/50 * 4;
+                p.addScaledVector(n, dist);
                 const s = new THREE.Sprite(mats[misc.rand_int(0, mats.length)]);
-                const y = this.terrain.p2height(p);
+                let y = this.terrain.p2height(p);
+                if (Math.abs(dist) <= 0.5* street.street_width)
+                    y += street.position.y 
                 s.position.set(p.x, y + 0.5*scale, p.y);
                 s.scale.set(scale,scale,scale);
                 scene.add(s);                
