@@ -269,6 +269,7 @@ class App {
         Promise.all(textures).then(textures => {
             const street = this.street;
             const street_bezier = street.poly_bezier;
+            this.distractions = new THREE.Object3D();
             const mats = textures.map(t => new THREE.SpriteMaterial({map:t, fog:true}));
             for (let i = 0; i < 80; i++) {
                 const t = misc.rand(0,1);
@@ -283,8 +284,38 @@ class App {
                     y += street.position.y 
                 s.position.set(p.x, y + 0.5*scale, p.y);
                 s.scale.set(scale,scale,scale);
-                scene.add(s);                
+                s.pos = p; // save 2d position
+                this.distractions.add(s);
             }
+            scene.add(this.distractions);
+            mbind('space', () => {
+                const car_pos = {x: -this.car2d.position.y, y: this.car2d.position.x};
+                // for (let d of this.distractions.children) {
+                //     d.dist = d.pos.distanceTo(car_pos);
+                // }                
+                let nearest = this.distractions.children.filter(d => d.pos.distanceTo(car_pos) <= 100);
+                if (nearest.length > 0) {
+                    const cam = this.cameras["first_person_cam"][0];
+                    const p0 = new THREE.Vector3().unproject(cam);
+                    const p1 = new THREE.Vector3(0,0,1).unproject(cam);
+                    const cam_dir = new THREE.Vector3().subVectors(p1, p0).normalize();
+                    for (let d of nearest) {
+                        const d_dir = new THREE.Vector3().subVectors(d.position, p0).normalize();
+                        d.dot = d_dir.dot(cam_dir);
+                    }
+                    nearest = nearest.filter(d => d.dot > 0);
+                    if (nearest.length > 0) {
+                        const n = nearest.sort((a,b) => a.dot < b.dot)[0];
+                        console.log(Math.acos(n.dot) * 180 / Math.PI);
+                        // n.scale.multiplyScalar(2);
+                        // this.distractions.children.splice(this.distractions.children.indexOf(Math.min(...dots)), 1);
+                    }
+                }
+                // const dists = this.distractions.children.map(s => s.pos.distanceTo(car_pos));
+                // const nearest = dists.indexOf(Math.min(...dists));
+                // console.log('distance', dists[nearest]);
+                // this.distractions.children.splice(nearest, 1);
+            });
         });
     }
 
@@ -509,6 +540,7 @@ class App {
             controls = new THREE.FirstPersonControls2(camera, renderer.domElement, false);
             controls.lookSpeed = 0.2;
             controls.lookVertical = true;
+            scene.add(new THREE.CameraHelper(camera));
         }
         this.camera_first_person_object.add(camera);        
 
@@ -1044,7 +1076,6 @@ class App {
             this.cameras["picking_cam"][1].update();
         if (!this.use_static_first_person_cam && this.camera == "first_person_cam")
             this.cameras["first_person_cam"][1].update(dt);
-            
 
         if (this.active)
             requestAnimationFrame(this.animate.bind(this));
