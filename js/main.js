@@ -298,9 +298,9 @@ class App {
                     const cam = this.cameras["first_person_cam"][0];
                     const p0 = new THREE.Vector3().unproject(cam);
                     const p1 = new THREE.Vector3(0,0,1).unproject(cam);
-                    const cam_dir = new THREE.Vector3().subVectors(p1, p0).normalize();
+                    const cam_dir = new THREE.Vector3().subVectors(p1, p0).setY(0).normalize();
                     for (let d of nearest) {
-                        const d_dir = new THREE.Vector3().subVectors(d.position, p0).normalize();
+                        const d_dir = new THREE.Vector3().subVectors(d.position, p0).setY(0).normalize();
                         d.dot = d_dir.dot(cam_dir);
                     }
                     nearest = nearest.filter(d => d.dot > 0);
