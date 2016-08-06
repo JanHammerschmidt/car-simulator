@@ -13,11 +13,11 @@ const cfg_debug = {
     use_audi: true,
     use_more_lights: false,
     force_on_street: true,
-    show_terrain: true,
-    show_buildings: true,
-    smooth_terrain: true,
+    show_terrain: false,
+    show_buildings: false,
+    smooth_terrain: false,
     hq_street: false,
-    do_logging: true
+    do_logging: false
 }
 const cfg_vr = { //eslint-disable-line
     do_vr: true,
@@ -157,6 +157,31 @@ class Event {
     }
 }
 
+class AnimatePokeball {
+    constructor(ball, p0, target, app) {
+        this.ball = ball;
+        this.p0 = p0;
+        this.target = target;
+        this.p1 = target.position;
+        this.dist = this.p1.clone().sub(p0).length();
+        ball.position.copy(p0);
+        scene.add(ball);
+        this.t = 0;
+        this.app = app;
+    }
+    tick(dt) {
+        this.t += 80 *  dt / (15*Math.sqrt(this.dist*0.5));
+        if (this.t > 1) {
+            const d = this.app.distractions.children;
+            d.splice(d.indexOf(this.target), 1); // remove distractions
+            this.ball.visible = false;
+            return true;
+        }
+        this.ball.position.copy(this.p1.clone().multiplyScalar(this.t).add(this.p0.clone().multiplyScalar(1-this.t)));
+        this.ball.position.y += Math.sin(this.t * Math.PI) * 4;
+    }
+}
+
 function add_light(obj, name, x,y,z, gui, intensity, distance, decay, light_factory) {
 	intensity = intensity || 1.0
 	light_factory = light_factory || ((c,i,d,dc) => new THREE.PointLight(c,i,d,dc));
@@ -188,6 +213,7 @@ class App {
                 this.gui.open();
             }
         }
+        this.animations = [];
         this.cameras = {};
         scene.helper_objects = new THREE.Object3D();
         scene.helper_objects.visible = false;
@@ -263,6 +289,11 @@ class App {
     }
 
     init_distractions() {
+        misc.load_obj_mtl_url('models/', 'pokeball.obj', 'pokeball.mtl').then(obj => {
+            obj.scale.multiplyScalar(1.1);
+            obj.rotation.y = Math.PI;
+            this.pokeball = obj;
+        });
         const files = ['025Pikachu_OS_anime_5', '007Squirtle_AG_anime', '133Eevee_AG_anime', '393Piplup_DP_anime_3', '001Bulbasaur_AG_anime'];
         const textureLoader = new THREE.TextureLoader();
         var textures = files.map(f => new Promise(resolve => textureLoader.load('textures/pokemon/'+f+'.png', t => resolve(t))));
@@ -292,7 +323,7 @@ class App {
                 const car_pos = {x: -this.car2d.position.y, y: this.car2d.position.x};
                 // for (let d of this.distractions.children) {
                 //     d.dist = d.pos.distanceTo(car_pos);
-                // }                
+                // }
                 let nearest = this.distractions.children.filter(d => d.pos.distanceTo(car_pos) <= 100);
                 if (nearest.length > 0) {
                     const cam = this.cameras["first_person_cam"][0];
@@ -307,7 +338,7 @@ class App {
                     if (nearest.length > 0) {
                         const n = nearest.sort((a,b) => a.dot < b.dot)[0];
                         console.log(Math.acos(n.dot) * 180 / Math.PI);
-                        // n.scale.multiplyScalar(2);
+                        this.animations.push(new AnimatePokeball(this.pokeball.clone(), p0.add(cam_dir.multiplyScalar(1.5)), n, this));
                         // this.distractions.children.splice(this.distractions.children.indexOf(Math.min(...dots)), 1);
                     }
                 }
@@ -1064,6 +1095,11 @@ class App {
         if (cfg.do_logging && this.started) {
             log_item.speed(kmh);
             this.log.push(log_item);
+        }
+
+        for (var i = this.animations.length-1; i >= 0; i--) {
+            if (this.animations[i].tick(dt))
+                this.animations.splice(i, 1);
         }
 
         if (car_model && this.camera == "chase_cam") //"chase_cam" in this.cameras)
