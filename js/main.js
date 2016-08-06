@@ -320,11 +320,13 @@ class App {
             }
             scene.add(this.distractions);
             mbind('space', () => {
+                if (this.animations.length > 0)
+                    return;
                 const car_pos = {x: -this.car2d.position.y, y: this.car2d.position.x};
                 // for (let d of this.distractions.children) {
                 //     d.dist = d.pos.distanceTo(car_pos);
                 // }
-                let nearest = this.distractions.children.filter(d => d.pos.distanceTo(car_pos) <= 100);
+                let nearest = this.distractions.children.filter(d => d.pos.distanceTo(car_pos) <= 120);
                 if (nearest.length > 0) {
                     const cam = this.cameras["first_person_cam"][0];
                     const p0 = new THREE.Vector3().unproject(cam);
@@ -337,8 +339,10 @@ class App {
                     nearest = nearest.filter(d => d.dot > 0);
                     if (nearest.length > 0) {
                         const n = nearest.sort((a,b) => a.dot < b.dot)[0];
-                        console.log(Math.acos(n.dot) * 180 / Math.PI);
-                        this.animations.push(new AnimatePokeball(this.pokeball.clone(), p0.add(cam_dir.multiplyScalar(1.5)), n, this));
+                        const angle = Math.acos(n.dot) * 180 / Math.PI;
+                        console.log(angle);
+                        if (angle < 12)
+                            this.animations.push(new AnimatePokeball(this.pokeball.clone(), p0.add(cam_dir.multiplyScalar(1.5)), n, this));
                         // this.distractions.children.splice(this.distractions.children.indexOf(Math.min(...dots)), 1);
                     }
                 }
