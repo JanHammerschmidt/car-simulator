@@ -13,9 +13,9 @@ const cfg_debug = {
     use_audi: true,
     use_more_lights: false,
     force_on_street: true,
-    show_terrain: false,
-    show_buildings: false,
-    smooth_terrain: false,
+    show_terrain: true,
+    show_buildings: true,
+    smooth_terrain: true,
     hq_street: false,
     do_logging: false
 }
@@ -289,43 +289,18 @@ class App {
     }
 
     init_distractions() {
+        this.distractions = new THREE.Object3D();
+        this.m_driven = 0;
+        this.next_distraction = 2;
+        scene.add(this.distractions);
         misc.load_obj_mtl_url('models/', 'pokeball.obj', 'pokeball.mtl').then(obj => {
             obj.scale.multiplyScalar(1.1);
             obj.rotation.y = Math.PI;
             this.pokeball = obj;
-        });
-        const files = ['025Pikachu_OS_anime_5', '007Squirtle_AG_anime', '133Eevee_AG_anime', '393Piplup_DP_anime_3', '001Bulbasaur_AG_anime'];
-        const textureLoader = new THREE.TextureLoader();
-        var textures = files.map(f => new Promise(resolve => textureLoader.load('textures/pokemon/'+f+'.png', t => resolve(t))));
-        Promise.all(textures).then(textures => {
-            const street = this.street;
-            const street_bezier = street.poly_bezier;
-            this.distractions = new THREE.Object3D();
-            const mats = textures.map(t => new THREE.SpriteMaterial({map:t, fog:true}));
-            for (let i = 0; i < 80; i++) {
-                const t = misc.rand(0,1);
-                const p = new THREE.Vector2().copy(street_bezier.get(t));
-                const n = new THREE.Vector2().copy(street_bezier.normal(t));
-                const dist = misc.rand(-50,50);
-                const scale = 2 + Math.abs(dist)/50 * 4;
-                p.addScaledVector(n, dist);
-                const s = new THREE.Sprite(mats[misc.rand_int(0, mats.length)]);
-                let y = this.terrain.p2height(p);
-                if (Math.abs(dist) <= 0.5* street.street_width)
-                    y += street.position.y 
-                s.position.set(p.x, y + 0.5*scale, p.y);
-                s.scale.set(scale,scale,scale);
-                s.pos = p; // save 2d position
-                this.distractions.add(s);
-            }
-            scene.add(this.distractions);
             mbind('space', () => {
                 if (this.animations.length > 0)
                     return;
                 const car_pos = {x: -this.car2d.position.y, y: this.car2d.position.x};
-                // for (let d of this.distractions.children) {
-                //     d.dist = d.pos.distanceTo(car_pos);
-                // }
                 let nearest = this.distractions.children.filter(d => d.pos.distanceTo(car_pos) <= 120);
                 if (nearest.length > 0) {
                     const cam = this.cameras["first_person_cam"][0];
@@ -343,14 +318,56 @@ class App {
                         console.log(angle);
                         if (angle < 12)
                             this.animations.push(new AnimatePokeball(this.pokeball.clone(), p0.add(cam_dir.multiplyScalar(1.5)), n, this));
-                        // this.distractions.children.splice(this.distractions.children.indexOf(Math.min(...dots)), 1);
                     }
                 }
-                // const dists = this.distractions.children.map(s => s.pos.distanceTo(car_pos));
-                // const nearest = dists.indexOf(Math.min(...dists));
-                // console.log('distance', dists[nearest]);
-                // this.distractions.children.splice(nearest, 1);
+            });            
+        });
+        const files = ['025Pikachu_OS_anime_5', '007Squirtle_AG_anime', '133Eevee_AG_anime', '393Piplup_DP_anime_3', '001Bulbasaur_AG_anime'];
+        const textureLoader = new THREE.TextureLoader();
+        var textures = files.map(f => new Promise(resolve => textureLoader.load('textures/pokemon/'+f+'.png', t => resolve(t))));
+        this.distraction_materials = new Promise(resolve => {
+            Promise.all(textures).then(textures => {
+                const mats = textures.map(t => new THREE.SpriteMaterial({map:t, fog:true}));
+                this.last_distraction = mats[0];
+                resolve(mats);
             });
+        });
+    }
+
+    distractions_handler(m_driven, t) {
+        this.m_driven += m_driven;
+        if (this.m_driven > this.next_distraction) {
+            const distractions_placement_distance = 200;
+            const distraction_place_every_m_driven = [100, 200];
+            //console.log('place distraction at', t, '+', distractions_placement_distance / this.street.length, '=', t + distractions_placement_distance / this.street.length);
+            this.place_distraction(t + distractions_placement_distance / this.street_length);
+            this.m_driven = 0;
+            this.next_distraction = misc.rand_int(...distraction_place_every_m_driven);
+        }
+    }
+
+    place_distraction(t) {
+        t = t || misc.rand(0,1);
+        this.distraction_materials.then(mats => {
+            mats = mats.slice();
+            mats.splice(mats.indexOf(this.last_distraction), 1);
+            const street = this.street;
+            const street_bezier = street.poly_bezier;                
+            const p = new THREE.Vector2().copy(street_bezier.get(t));
+            const n = new THREE.Vector2().copy(street_bezier.normal(t));
+            const dist = misc.rand(-50,50);
+            const scale = 2 + Math.abs(dist)/50 * 4;
+            p.addScaledVector(n, dist);
+            const mat = mats[misc.rand_int(0, mats.length)];
+            this.last_distraction = mat;
+            const s = new THREE.Sprite(mat);
+            let y = this.terrain.p2height(p);
+            if (Math.abs(dist) <= 0.5* street.street_width)
+                y += street.position.y 
+            s.position.set(p.x, y + 0.5*scale, p.y);
+            s.scale.set(scale,scale,scale);
+            s.pos = p; // save 2d position
+            this.distractions.add(s);            
         });
     }
 
@@ -1081,6 +1098,8 @@ class App {
         }
 
         const street_position = t * this.street_length; // should be [m]
+        const m_driven = street_position - ("prev_street_position" in this ? this.prev_street_position : 0);
+        this.prev_street_position = street_position;
         const kmh = car2d.kmh();
         // smoothie.speed.append(new Date().getTime(), kmh);
         if (this.started && this.signs_loaded) {
@@ -1101,6 +1120,7 @@ class App {
             this.log.push(log_item);
         }
 
+        this.distractions_handler(m_driven, t);
         for (var i = this.animations.length-1; i >= 0; i--) {
             if (this.animations[i].tick(dt))
                 this.animations.splice(i, 1);
