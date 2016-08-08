@@ -1,15 +1,24 @@
+dat.GUI.prototype.clearFolders = function() {
+  for (let f of Object.values(this.__folders)) {
+    f.close();
+    this.__ul.removeChild(f.domElement.parentNode);
+  }
+  this.__folders = {};
+  this.onResize();
+}
+
 $(function() {
   var canvas = document.getElementById('tutorial');
   if (canvas.getContext){
     var cfg = {ver2: true, deviation_mult: 4.0, distance_mult: 0.07, scale: 1.0, 
       draw_height: false, scale_x: 0.1, scale_y: 0.5, draw_signs: false, t: 1, y:0.01};
     var c = canvas.getContext('2d');
-    var bezier_draw = bindDrawFunctions(c);
+    var bezier_draw = bindDrawFunctions(c); // eslint-disable-line
 
     var gui = new dat.GUI();
     // gui.add(cfg, 'ver2');
     gui.add(cfg, 'deviation_mult', 0.5, 7);
-    gui.add(cfg, 'distance_mult', 0.03, 0.3);
+    gui.add(cfg, 'distance_mult', 0.01, 0.2);
     gui.add(cfg, 'scale', 0.4, 1.5);
     // gui.add(cfg, 'draw_height');
     // gui.add(cfg, 'scale_x', 0.08,1.2);
@@ -22,14 +31,17 @@ $(function() {
 
       $.getJSON('track.panning-study.json', function(track) {
 
-        const track_length = track.points[track.points.length-1].x;
-        for (let s of track.signs) {
-          if (!('percent' in s)) {
-            s.percent = s.at_length / track_length;
-          }
-        }
+        gui.clearFolders();
         
         function draw() {
+
+          const track_length = track.points[track.points.length-1].x;
+          for (let s of track.signs) {
+            if ('no_percent_present' in s || !('percent' in s)) {
+              s.percent = s.at_length / track_length;
+              s.no_percent_present = true;
+            }
+          }          
 
           c.clearRect(0,0,canvas.width,canvas.height);
           
@@ -56,7 +68,7 @@ $(function() {
               }
             } else {
               pb.cacheLengths();
-              let p = pb.get(cfg.t);
+              const p = pb.get(cfg.t);
               cfg.y = p.y;
               bezier_draw.drawCircle(p,3);
             }
@@ -65,7 +77,7 @@ $(function() {
             var poly_bezier = new Bezier.PolyBezier();
             var scale = cfg.scale * canvas.height;
             var origin = new THREE.Vector2(0, 0);
-            var p = new THREE.Vector2(0.5*canvas.width,0.6*canvas.height);
+            let p = new THREE.Vector2(0.5*canvas.width,0.6*canvas.height);
             var t = new THREE.Vector2(0,-1); // tangent
             var first = true;
             var signs = track.signs;
@@ -97,9 +109,19 @@ $(function() {
               var distance = (cur_percent - prev.percent) * scale;
               do_bezier(p_deviation, distance);
             }
+            let sign_count = 0;
             for (let i = 0; i < signs.length; i++) {
               var sign = signs[i];
               if (sign.type >= 13) {
+                sign_count++;
+                const fname = 'sign ' + sign_count;
+                if (!(fname in gui.__folders)) {
+                  const gf = gui.addFolder(fname);
+                  gf.add({'right': sign.type == 14}, 'right').onChange(v => {sign.type = 13+v; draw();});
+                  gf.add(sign, 'at_length').onChange(draw);
+                  gf.add(sign, 'duration').onChange(draw);
+                  gf.add(sign, 'intensity').onChange(draw);
+                }
                 if (cfg.ver2) {
                   //const p0 = p.clone();
                   var percent1 = (sign.percent - cur_percent);
