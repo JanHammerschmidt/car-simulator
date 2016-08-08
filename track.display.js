@@ -41,9 +41,10 @@ $(function() {
           }
         } else { // draw track (top view)
 
+          var poly_bezier = new Bezier.PolyBezier();
           var scale = cfg.scale * canvas.height;
           var origin = new THREE.Vector2(0, 0);
-          var p = new THREE.Vector2(0.9*canvas.width,0.8*canvas.height);
+          var p = new THREE.Vector2(0.5*canvas.width,0.6*canvas.height);
           var t = new THREE.Vector2(0,-1); // tangent
           var first = true;
           var signs = track.signs;
@@ -62,6 +63,7 @@ $(function() {
             bezier_draw.drawCurve(segment);
             t.copy(segment.derivative(1)).normalize();
             p.copy(p2);
+            poly_bezier.addCurve(segment);
             return segment.length();
           }
           function proc_sign(sign) {
@@ -86,6 +88,8 @@ $(function() {
                   // bezier_draw.drawLine(p0, p);
                   do_bezier(0, percent1 * scale);
                 }
+                if (percent1 < 0)
+                  console.log('!!');
                 cur_percent += Math.max(percent1,0) + proc_sign(sign);
               } else {
                 if (first) {
@@ -108,6 +112,8 @@ $(function() {
             }
           } else
             proc_prev_sign(prev,1);
+          poly_bezier.cacheLengths();
+          console.log((poly_bezier.total_length / scale).toFixed(3));          
         }
         
       } // draw()
