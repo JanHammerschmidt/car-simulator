@@ -6,7 +6,14 @@ $(function() {
     var c = canvas.getContext('2d');
     var bezier_draw = bindDrawFunctions(c);
 
-    $.getJSON('track.study1.json', function(track) {
+    $.getJSON('track.panning-study.json', function(track) {
+
+      const track_length = track.points[track.points.length-1].x;
+      for (let s of track.signs) {
+        if (!('percent' in s)) {
+          s.percent = s.at_length / track_length;
+        }
+      }
       
       function draw() {
 
@@ -113,7 +120,7 @@ $(function() {
           } else
             proc_prev_sign(prev,1);
           poly_bezier.cacheLengths();
-          console.log((poly_bezier.total_length / scale).toFixed(3));          
+          //console.log((poly_bezier.total_length / scale).toFixed(3));          
         }
         
       } // draw()
