@@ -1,8 +1,8 @@
 $(function() {
   var canvas = document.getElementById('tutorial');
   if (canvas.getContext){
-    var cfg = {ver2: false, deviation_mult: 2, distance_mult: 0.1, scale: 1.0, 
-      draw_height: true, scale_x: 0.1, scale_y: 0.5, draw_signs: false, t: 1, y:0.01};
+    var cfg = {ver2: true, deviation_mult: 4.0, distance_mult: 0.07, scale: 1.0, 
+      draw_height: false, scale_x: 0.1, scale_y: 0.5, draw_signs: false, t: 1, y:0.01};
     var c = canvas.getContext('2d');
     var bezier_draw = bindDrawFunctions(c);
 
