@@ -158,6 +158,12 @@ $(function() {
             poly_bezier.cacheLengths();
             //console.log((poly_bezier.total_length / scale).toFixed(3));          
           }
+            for (let s of signs) {
+              if (s.type < 13) {
+                bezier_draw.drawCircle(poly_bezier.get(s.percent), 2);
+              }
+            }
+          } // if (cfg.draw_signs)
           
         } // draw()
 
