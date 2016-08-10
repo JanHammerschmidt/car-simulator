@@ -14,13 +14,12 @@ const cfg_base = {
     signs_scale: 0.625,
     signs_dist_mult: 0.6
 }
-
 const cfg_debug = {
     do_vr: false,
     antialias: false,
     use_more_lights: false,
     show_terrain: true,
-    show_buildings: false,
+    show_buildings: true,
     smooth_terrain: false,
     hq_street: false,
     show_car: false
@@ -295,7 +294,7 @@ class App {
         this.next_distraction = 2;
         scene.add(this.distractions);
         misc.load_obj_mtl_url('models/', 'pokeball.obj', 'pokeball.mtl').then(obj => {
-            obj.scale.multiplyScalar(1.1);
+            obj.scale.multiplyScalar(0.9);
             obj.rotation.y = Math.PI;
             this.pokeball = obj;
             mbind('space', () => {
@@ -357,7 +356,7 @@ class App {
             const p = new THREE.Vector2().copy(street_bezier.get(t));
             const n = new THREE.Vector2().copy(street_bezier.normal(t));
             const dist = misc.rand(-50,50);
-            const scale = 2 + Math.abs(dist)/50 * 4;
+            const scale = (2 + Math.abs(dist)/50 * 4) * 0.7;
             p.addScaledVector(n, dist);
             const mat = mats[misc.rand_int(0, mats.length)];
             this.last_distraction = mat;
@@ -747,6 +746,8 @@ class App {
         // }
         const street = this.street;
         const p = street.xytovec3(street.poly_bezier.get(t));
+        const n = street.xytovec3(street.poly_bezier.normal(t));
+        p.addScaledVector(n, this.street.street_width * 0.25);
         this.car2d.setFromPosition3d(p);
         const d = street.poly_bezier.derivative(t);
         const angle = -Math.atan2(d.x, d.y) + (reverse ? Math.PI : 0);
@@ -854,10 +855,10 @@ class App {
                 const m = cfg.car_scale;
                 wheel.position.set(m*0.562, m*1.458, m*0.332);
                 wheel.rotation.set(0.446,0,0);
-                const gf = this.gui.addFolder('steering wheel');
-                gf.addxyz(wheel.position, 0.01);
-                gf.addxyz(wheel.rotation, 0.01);
-                gf.add(wheel, 'visible');
+                // const gf = this.gui.addFolder('steering wheel');
+                // gf.addxyz(wheel.position, 0.01);
+                // gf.addxyz(wheel.rotation, 0.01);
+                // gf.add(wheel, 'visible');
                 this.car_model_slope.add(wheel);
                 resolve(wheel);
             });
