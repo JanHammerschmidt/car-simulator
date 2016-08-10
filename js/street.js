@@ -151,7 +151,7 @@ class Street extends THREE.Object3D {
         };
         var scale = cfg.scale;
         var origin = new THREE.Vector2(0, 0);
-        var p = new THREE.Vector2(-700, -800); // current/starting point
+        var p = new THREE.Vector2(...track.starting_point); // current/starting point
         var t = new THREE.Vector2(0, 1); // tangent
         var first = true,
             prev = null;
@@ -250,7 +250,7 @@ class Street extends THREE.Object3D {
         var scale_x = this.poly_bezier.total_length / track.points[track.points.length - 1].x;
         for (let i = 0; i < ps.length; i++) {
             ps[i].x *= scale_x;
-            ps[i].y = (ps[i].y - 82) * 0.3; // <-- y scale <-- 0.3 (testweise vllt auch 1.3)
+            ps[i].y = (ps[i].y - track.street_height_offset) * track.street_height_mult; // <-- y scale <-- 0.3 (testweise vllt auch 1.3)
         }
         var tpb = new Bezier.PolyBezier(); // track height profile's poly bezier
         for (let i = 0; i < ps.length - 2; i += 3) {

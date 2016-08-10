@@ -682,7 +682,7 @@ class App {
 
     init_street() {
         this.street = new Street();
-        this.street.position.y = 0.53;
+        this.street.position.y = track.street_above_ground;
         var f = this.gui.addFolder('street position');
         f.addnum(this.street.position, 'y');
         this.street.create_road(cfg.random_street);
