@@ -11,7 +11,8 @@ const cfg_base = {
     use_audi: true,
     do_logging: false,
     do_sound: false,
-    show_car: false    
+    signs_scale: 0.625,
+    signs_dist_mult: 0.6
 }
 
 const cfg_debug = {
@@ -21,7 +22,8 @@ const cfg_debug = {
     show_terrain: true,
     show_buildings: false,
     smooth_terrain: false,
-    hq_street: false
+    hq_street: false,
+    show_car: false
 }
 const cfg_vr = { //eslint-disable-line
     do_vr: true,
@@ -30,7 +32,8 @@ const cfg_vr = { //eslint-disable-line
     show_terrain: true,
     show_buildings: true,
     smooth_terrain: true,
-    hq_street: true
+    hq_street: true,
+    show_car: true
 }
 const cfg = window.cfg = Object.assign(cfg_base, cfg_debug);
 
@@ -489,29 +492,6 @@ class App {
             this.osc_port.call('/'+fedi+ '_' + (enable ? 'start' : 'stop'));
     }
 
-    place_sign(sign, t, gui_folder) {
-        const street = this.street;
-        const street_bezier = street.poly_bezier;
-        const p = new THREE.Vector2().copy(street_bezier.get(t));
-        const n = new THREE.Vector2().copy(street_bezier.normal(t));
-        const d = street_bezier.derivative(t);
-        const y = street.height_profile.get(t).y;
-        p.addScaledVector(n, 0.5 * street.street_width);
-        sign.position.copy(street.xytovec3(p, y));
-        gui_folder.addnum(sign.position, 'y');
-        gui_folder.addscale(sign.scale);
-        const obj = sign.children[0];
-        const name = obj.children[0].name;
-        if (name.search('circle') != -1) {
-            gui_folder.addcolor(obj.children[1].material, 'color');
-        } else if (name.search('stop') != -1) {
-            gui_folder.addcolor(obj.children[0].material.materials[1], 'color');
-            // gui_folder.addcolor(g[2].material, 'emissive');
-        }
-        sign.rotation.y = Math.atan2(d.x, d.y);
-        scene.add(sign);
-    }
-
     init_chase_cam() {
         this.chase_camera = THREE.get_camera();
 
@@ -690,6 +670,29 @@ class App {
         // street.show_lut_points();
         this.streets.push(this.street);
     }
+
+    place_sign(sign, t, gui_folder) {
+        const street = this.street;
+        const street_bezier = street.poly_bezier;
+        const p = new THREE.Vector2().copy(street_bezier.get(t));
+        const n = new THREE.Vector2().copy(street_bezier.normal(t));
+        const d = street_bezier.derivative(t);
+        const y = street.height_profile.get(t).y;
+        p.addScaledVector(n, cfg.signs_dist_mult * street.street_width);
+        sign.position.copy(street.xytovec3(p, y));
+        gui_folder.addnum(sign.position, 'y');
+        gui_folder.addscale(sign.scale);
+        const obj = sign.children[0];
+        const name = obj.children[0].name;
+        if (name.search('circle') != -1) {
+            gui_folder.addcolor(obj.children[1].material, 'color');
+        } else if (name.search('stop') != -1) {
+            gui_folder.addcolor(obj.children[0].material.materials[1], 'color');
+            // gui_folder.addcolor(g[2].material, 'emissive');
+        }
+        sign.rotation.y = Math.atan2(d.x, d.y);
+        scene.add(sign);
+    }    
 
     place_signs() {
         this.signs = [];

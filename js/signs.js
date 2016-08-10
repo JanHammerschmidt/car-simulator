@@ -91,8 +91,9 @@ class SpeedSign extends THREE.Object3D {
     static load_model() {
         const obj = misc.load_obj_mtl(models.speed_sign);
         obj.rotateY(Math.PI);
-        obj.position.y = -2.5;
-        obj.scale.multiplyScalar(3.5);
+        const scale = window.cfg.signs_scale * 3.5;
+        obj.position.y = -0.72 * scale;
+        obj.scale.multiplyScalar(scale);
         const sign = obj.children[1];
         sign.material = new THREE.MeshBasicMaterial({map:sign.material.map, color: '#e8e8e8'});
         SpeedSign._model = obj;
@@ -179,8 +180,9 @@ class StopSign extends THREE.Object3D {
         const obj = misc.load_obj_mtl(models.stop_sign);
         obj.rotateY(Math.PI);
         obj.rotateX(Math.PI / 2);
-        obj.position.y = -2.27;
-        obj.scale.multiplyScalar(1.5);
+        const scale = window.cfg.signs_scale * 1.5;
+        obj.position.y = -1.52 * scale;
+        obj.scale.multiplyScalar(scale);
         const mats = obj.children[0].material.materials;
         mats[1] = new THREE.MeshBasicMaterial({map:mats[1].map, color: '#e8e8e8'});
         StopSign._model = obj;
@@ -250,8 +252,9 @@ class TrafficLight extends THREE.Object3D {
     }
     static load_model() {
         const obj = misc.load_obj_mtl(models.traffic_light);
-        obj.scale.multiplyScalar(24);
-        obj.position.y = -1.9;
+        const scale = window.cfg.signs_scale * 24;
+        obj.position.y = -0.105 * scale;
+        obj.scale.multiplyScalar(scale);
         obj.rotateY(Math.PI/2);
         obj.children.find(o => o.name == 'case').material.side = THREE.DoubleSide;
         TrafficLight._model = obj;

@@ -20,7 +20,7 @@ class Street extends THREE.Object3D {
     constructor(no_load_texture, lut_points_per_meter, street_width, segment_points_per_meter) {
         super();
         // this.loaded = false;
-        this.street_width = street_width || 20;
+        this.street_width = street_width || 8;
         this.lut_points_per_meter = lut_points_per_meter || 0.1;
         this.segment_points_per_meter = segment_points_per_meter || 0.1;
         this.segments = [];
@@ -44,7 +44,7 @@ class Street extends THREE.Object3D {
 
     vec3toxy(vec3) { return new THREE.Vector2(vec3.x, vec3.z) }
 
-    xytovec3(v, y) { return new THREE.Vector3(v.x, y || 0.1, v.y); }
+    xytovec3(v, y) { return new THREE.Vector3(v.x, y || 0, v.y); }
 
     get_road_position(xy) {
         // var xy = new THREE.Vector2().copy(this.vec3toxy(vec3)); // 2d point
