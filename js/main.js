@@ -4,37 +4,35 @@
 // const t0 = perf.now();
 // function plog(s) {console.log(((perf.now()-t0)/1000).toPrecision(4), s);}
 
+const cfg_base = {
+    random_street: 0,
+    car_scale: 1/1.6,
+    force_on_street: true,
+    use_audi: true,
+    do_logging: false,
+    do_sound: false,
+    show_car: false    
+}
+
 const cfg_debug = {
     do_vr: false,
     antialias: false,
-    do_sound: false,
-    random_street: 0,
-    show_car: false,
-    use_audi: true,
     use_more_lights: false,
-    force_on_street: true,
     show_terrain: true,
-    show_buildings: true,
-    smooth_terrain: true,
-    hq_street: false,
-    do_logging: false
+    show_buildings: false,
+    smooth_terrain: false,
+    hq_street: false
 }
 const cfg_vr = { //eslint-disable-line
     do_vr: true,
     antialias: true,
-    do_sound: false,
-    random_street: 0,
-    show_car: true,
-    use_audi: true,
     use_more_lights: true,
-    force_on_street: true,
     show_terrain: true,
     show_buildings: true,
     smooth_terrain: true,
-    hq_street: true,
-    do_logging: false
+    hq_street: true
 }
-const cfg = window.cfg = cfg_debug;
+const cfg = window.cfg = Object.assign(cfg_base, cfg_debug);
 
 const mousetrap = require('mousetrap');
 // https://jsfiddle.net/9f6j76dL/1/
@@ -529,9 +527,10 @@ class App {
 
     init_first_person_view() {
         this.camera_first_person_object = new THREE.Object3D();
-        if (cfg.use_audi)
-            this.camera_first_person_object.position.set(0.53, 1.8, -0.4);
-        else
+        if (cfg.use_audi) {
+            const m = cfg.car_scale;
+            this.camera_first_person_object.position.set(m*0.53, m*1.8, m*-0.4);
+        } else
             this.camera_first_person_object.position.set(0.37, 1.36, 0.09);
         this.car_model_slope.add(this.camera_first_person_object);
     }
@@ -791,6 +790,7 @@ class App {
                     m.side = THREE.DoubleSide; // set double-sided
                 }
                 this.car_model_slope.add(obj);
+                obj.scale.multiplyScalar(cfg.car_scale);
                 this.car_body = obj;
                 // gui.addFolder('car position').addnum(obj.position, 'y');
                 this.car_loaded._resolve(obj);
@@ -844,7 +844,9 @@ class App {
         });
         return new Promise(resolve => {
             misc.load_obj_mtl_url('models/AudiA3/', 'steering_wheel.obj', 'steering_wheel.mtl').then(wheel => {
-                wheel.position.set(0.562,1.458,0.332);
+                wheel.scale.multiplyScalar(cfg.car_scale);
+                const m = cfg.car_scale;
+                wheel.position.set(m*0.562, m*1.458, m*0.332);
                 wheel.rotation.set(0.446,0,0);
                 const gf = this.gui.addFolder('steering wheel');
                 gf.addxyz(wheel.position, 0.01);
@@ -860,7 +862,9 @@ class App {
         if (cfg.use_audi) {
             const init_needle = (name, model, x,y,z, rx, ry, add_gui) => {
                 const needle = misc.load_obj_mtl(model);
-                needle.position.set(x,y,z);
+                needle.scale.multiplyScalar(cfg.car_scale);
+                const m = cfg.car_scale;
+                needle.position.set(m*x, m*y, m*z);
                 needle.rotation.x = rx;
                 needle.rotation.y = ry;
                 this.car_model_slope.add(needle);
@@ -872,7 +876,7 @@ class App {
                 return needle;
             }
             this.speedometer_needle = init_needle('speedometer', models.dashboard_needle1, 0.412, 1.478, 0.75, 0.2, 0);
-            this.rpm_needle = init_needle('rpm display', models.dashboard_needle1, 0.692, 1.474, 0.75, 0.2, 0, true);
+            this.rpm_needle = init_needle('rpm display', models.dashboard_needle1, 0.692, 1.474, 0.75, 0.2, 0);
             this.top_needle_left = init_needle('top needle left', models.dashboard_needle2, 0.5885, 1.52, 0.753, 0.2, 0.05);
             this.top_needle_right = init_needle('top needle right', models.dashboard_needle2, 0.511, 1.52, 0.757, 0.2, 0.05);
             //speedometer_needle.rotation.z = [-0.48,4.32] (10-210)
