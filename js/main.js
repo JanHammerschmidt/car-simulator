@@ -63,6 +63,7 @@ require("../node_modules/three/examples/js/loaders/MTLLoader.js");
 require("../node_modules/three/examples/js/loaders/OBJLoader.js");
 require("../node_modules/three/examples/js/controls/OrbitControls.js");
 require("./FirstPersonControls2.js");
+require('script!./lib/THREE.ext.TextureCreator.js');
 const Bezier = require('./lib/bezier.js');
 
 // const smoothie = require('../bower_components/smoothie/smoothie.js');
@@ -766,6 +767,8 @@ class App {
                 },
                 gear_change_callback: gear => {
                     $('#gears_display').text(gear+1);
+                    if ("gears_display" in this)
+                        this.gears_display.writeText(this.car2d.gearbox.gear + 1);
                 }
             });
         this.car2d.config_panel = new ConfigPanel(this.car2d);
@@ -906,8 +909,15 @@ class App {
                     for (let w of this.car_windows)
                         w.visible = this.show_car_windows;
                 };
-                this.gui.add(this, 'show_car_windows').onChange(update_car_windows);
+                //this.gui.add(this, 'show_car_windows').onChange(update_car_windows);
                 update_car_windows();
+                const gears_display = THREE.ext.TextureCreator.text();
+                const dashboard_display = car_body.children.filter(c => c.name.indexOf('Object') >= 0)[0];
+                dashboard_display.material.map = gears_display.texture;
+                gears_display.texture.wrapS = THREE.RepeatWrapping;
+                gears_display.texture.repeat.x = -1;
+                gears_display.writeText(this.car2d.gearbox.gear + 1);
+                this.gears_display = gears_display;
             });            
         } else {
             const speedometer_needle = new THREE.Mesh(
