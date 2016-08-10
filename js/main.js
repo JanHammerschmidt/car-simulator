@@ -769,6 +769,9 @@ class App {
         mbind('f', () => this.car2d.gearbox.gear_down() );
         mbind('shift+f', () => this.car2d.engine.max_torque = 600 );
         mbind('ctrl+shift+f', () => this.car2d.engine.max_torque = 2000 );
+        setInterval(() => {
+            $('#kmh_display').text(Math.round(this.car2d.kmh()));
+        }, 400);
     }
 
     load_car() {
