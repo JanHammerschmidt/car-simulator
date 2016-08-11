@@ -32,16 +32,17 @@ $(function() {
       $.getJSON('track.panning-study.json', function(track) {
 
         gui.clearFolders();
+        let track_length = track.points[track.points.length-1].x;
+        gui.add({'track_length': track_length}, 'track_length').onChange(v => {track_length = Math.max(v, 100); draw(); });                
         
         function draw() {
 
-          const track_length = track.points[track.points.length-1].x;
           for (let s of track.signs) {
             if ('no_percent_present' in s || !('percent' in s)) {
               s.percent = s.at_length / track_length;
               s.no_percent_present = true;
             }
-          }          
+          }
 
           c.clearRect(0,0,canvas.width,canvas.height);
           
@@ -75,7 +76,7 @@ $(function() {
           } else { // draw track (top view)
 
             var poly_bezier = new Bezier.PolyBezier();
-            var scale = cfg.scale * canvas.height;
+            var scale = 0.5 * cfg.scale; // * track_length; //canvas.height;
             var origin = new THREE.Vector2(0, 0);
             let p = new THREE.Vector2(0.5*canvas.width,0.6*canvas.height);
             var t = new THREE.Vector2(0,-1); // tangent
@@ -101,8 +102,8 @@ $(function() {
             }
             function proc_sign(sign) { // eslint-disable-line
               var p_deviation = (sign.type == 13 ? -0.2 : 0.2) * sign.intensity * sign.duration * cfg.deviation_mult;
-              var distance = (sign.duration) * scale * cfg.distance_mult;
-              return do_bezier(p_deviation, distance) / scale;
+              var distance = (sign.duration) * scale * cfg.distance_mult * 1000;
+              return do_bezier(p_deviation, distance) / (scale * track_length);
             }
             function proc_prev_sign(prev,cur_percent) { // eslint-disable-line
               var p_deviation = (prev.type == 13 ? -0.2 : 0.2) * Math.PI;
@@ -111,7 +112,7 @@ $(function() {
             }
             let sign_count = 0;
             for (let i = 0; i < signs.length; i++) {
-              var sign = signs[i];
+              const sign = signs[i];
               if (sign.type >= 13) {
                 sign_count++;
                 const fname = 'sign ' + sign_count;
@@ -129,7 +130,7 @@ $(function() {
                   if (percent1 > 0) {
                     // p.addScaledVector(t, percent1 * scale);
                     // bezier_draw.drawLine(p0, p);
-                    do_bezier(0, percent1 * scale);
+                    do_bezier(0, percent1 * scale * track_length);
                   }
                   if (percent1 < 0)
                     console.log('!!');
@@ -150,7 +151,7 @@ $(function() {
             }
             if (cfg.ver2) {
               if (cur_percent < 1) {
-                do_bezier(0, (1-cur_percent) * scale);
+                do_bezier(0, (1-cur_percent) * scale * track_length);
                 // bezier_draw.drawLine(p, p.clone().addScaledVector(t, (1-cur_percent) * scale));
               }
             } else
