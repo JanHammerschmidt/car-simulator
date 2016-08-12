@@ -137,10 +137,10 @@ $(function() {
                     // bezier_draw.drawLine(p0, p);
                     do_bezier(0, percent1 * scale * track_length);
                   }
-                  if (percent1 < 0)
-                    console.log('!!');
+                  // if (percent1 < 0)
+                  //   console.log('!!');
                   cur_percent += Math.max(percent1,0) + proc_sign(sign);
-                } else {
+                } else { // ver2
                   if (first) {
                     // var p0 = p.clone();
                     // p.y -= sign.percent * scale;
@@ -162,8 +162,8 @@ $(function() {
             } else
               proc_prev_sign(prev,1);
             poly_bezier.cacheLengths();
-            //console.log((poly_bezier.total_length / scale).toFixed(3));          
-          }
+            // console.log(poly_bezier.acc_lengths);
+            console.log(poly_bezier.total_length, poly_bezier.length(), track_length, scale); //.toFixed(3)
             if (true) { // eslint-disable-line
               const curves = poly_bezier.curves;
               const cl = curves.length;
@@ -175,6 +175,7 @@ $(function() {
               //bezier_draw.setRandomColor();
               bezier_draw.drawCurve(c);
             }
+            // console.log(signs.filter(s => s.type < 13).map(s => s.percent * track_length));
             for (let s of signs) {
               if (s.type < 13) {
                 bezier_draw.drawCircle(poly_bezier.get(s.percent), 2);
