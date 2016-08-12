@@ -304,7 +304,7 @@ class App {
                 const car_pos = {x: -this.car2d.position.y, y: this.car2d.position.x};
                 let nearest = this.distractions.children.filter(d => d.pos.distanceTo(car_pos) <= 120);
                 if (nearest.length > 0) {
-                    const cam = this.cameras["first_person_cam"][0];
+                    const cam = this.cameras[(this.camera == "vr_cam") ? "vr_cam" : "first_person_cam"][0];
                     const p0 = new THREE.Vector3().unproject(cam);
                     const p1 = new THREE.Vector3(0,0,1).unproject(cam);
                     const cam_dir = new THREE.Vector3().subVectors(p1, p0).setY(0).normalize();
