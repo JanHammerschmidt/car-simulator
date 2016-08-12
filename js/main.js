@@ -729,7 +729,7 @@ class App {
                 this.place_sign(s, sign.percent, fs);
             }
             if (sign.type == 0 || sign.type == 12) {
-                const c = this.add_crossing(sign.percent + 14 / this.street_length, sign.crossing_type, sign.crossing_height);
+                const c = this.add_crossing(sign.percent + (0.5 * this.street.street_width + 2) / this.street_length, sign.crossing_type, sign.crossing_height, sign.crossing_segments);
                 scene.add(c);
                 fc.addnum(c.position, 'y');
             }
@@ -950,9 +950,10 @@ class App {
         }
     }
 
-    add_crossing(_t, type, height_diff) {
+    add_crossing(_t, type, height_diff, segments) {
         height_diff = height_diff || 0.01;
         type = type || "both";
+        segments = segments || 3;
         const street = this.street;
         const c = new Street(); // new crossing
         c.max_deviation_random_street = 0;
@@ -965,10 +966,10 @@ class App {
             c.segments.push(new Bezier(p0, p, p, p1)); // main crossing
             c.starting_point = p0; // right side
             c.starting_tangent = t;
-            c.create_random_segments(3);
+            c.create_random_segments((segments instanceof Array) ? segments[1] : segments);
             c.starting_point = p1; // left side
             c.starting_tangent = t.clone().multiplyScalar(-1);
-            c.create_random_segments(3);
+            c.create_random_segments((segments instanceof Array) ? segments[0] : segments);
 
             c.create_geometry();
             c.adjust_height_from_terrain(this.terrain);
@@ -979,7 +980,7 @@ class App {
                 c.starting_tangent.multiplyScalar(-1);
             c.starting_point = p.clone().addScaledVector(c.starting_tangent, -0.5 * w);
             //c.initial_height = street.height_profile.get(_t).y;
-            c.create_road(3, this.terrain, true);
+            c.create_road(segments, this.terrain, true);
         }
         c.position.y = street.position.y + height_diff;
         c.adjust_height_from_street(this.street, height_diff);
