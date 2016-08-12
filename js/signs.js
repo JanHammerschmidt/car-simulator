@@ -20,7 +20,10 @@ class CurrentSign {
     }
     set_next_sign() {
         this.current = this.next;
-        this.next = this.next_i >= this.signs.length ? null : this.signs[this.next_i];
+        if (this.next_i >= this.signs.length)
+            this.next_i = 0;
+        this.next = this.signs[this.next_i];
+        //this.next = this.next_i >= this.signs.length ? null : this.signs[this.next_i];
     }
 }
 
@@ -113,12 +116,13 @@ class SpeedSign extends THREE.Object3D {
         if (c.next) {
             const d = c.next.pos - cur_pos; // how much until next sign
             c.lower = Math.min(c.lower, c.next.speed_limit + DECELERATION * Math.max(d, 0));
-            if (d <= 0) {
+            if (d <= 0 && d > -50) {
                 c.prev_limit = c.current ? c.current.speed_limit : kmh;
                 c.limit = c.next.speed_limit;
+                console.log("speed: next sign:", c.limit);
                 c.next_i++;
                 c.set_next_sign();
-            } else {
+            } else if (d >= 0) {
                 c.limit = Math.min(c.limit, c.next.speed_limit + BRAKING * d);
             }
         }
