@@ -88,6 +88,10 @@ class Street extends THREE.Object3D {
             polygon[polygon.length - i - 1] = [p[1].x, p[1].y];
         }
         //street_polygons.push(polygon);
+        geo.computeBoundingSphere();
+        if (isNaN(geo.boundingSphere.radius))
+            debugger;
+
         return {
             geo: geo,
             poly: polygon
@@ -143,11 +147,19 @@ class Street extends THREE.Object3D {
 
     create_segments_from_json() {
         const track = load_track();
+        const track_length = track.points[track.points.length-1].x;
+        console.log('track length', track_length);
+        for (let s of track.signs) {
+            if (!('percent' in s)) {
+                s.percent = s.at_length / track_length;
+                s.no_percent_present = true;
+            }
+        }
         var cfg = {
             ver2: true,
             deviation_mult: 4.0, //4.0, //3.0, // max. ~5.4
             distance_mult: 0.07, //0.07, // 0.1
-            scale: 1500.0
+            scale: 1.5 //1500.0
         };
         var scale = cfg.scale;
         var origin = new THREE.Vector2(0, 0);
@@ -177,8 +189,8 @@ class Street extends THREE.Object3D {
 
         function proc_sign(sign) {
             var p_deviation = (sign.type == 13 ? -0.2 : 0.2) * sign.intensity * sign.duration * cfg.deviation_mult;
-            var distance = (sign.duration) * scale * cfg.distance_mult;
-            return do_bezier(p_deviation, distance) / scale;
+            var distance = (sign.duration) * scale * cfg.distance_mult * 1000;
+            return do_bezier(p_deviation, distance) / (scale * track_length);
         }
 
         function proc_prev_sign(prev, cur_percent) {
@@ -193,7 +205,7 @@ class Street extends THREE.Object3D {
                     // var p0 = p.clone();
                     var percent1 = (sign.percent - cur_percent);
                     if (percent1 > 0) {
-                        do_bezier(0, percent1 * scale);
+                        do_bezier(0, percent1 * scale * track_length);
                     }
                     cur_percent += Math.max(percent1, 0) + proc_sign(sign);
                 } else {
@@ -209,7 +221,7 @@ class Street extends THREE.Object3D {
         }
         if (cfg.ver2) {
             if (cur_percent < 1) {
-                do_bezier(0, (1 - cur_percent) * scale);
+                do_bezier(0, (1 - cur_percent) * scale * track_length);
             }
         } else
             proc_prev_sign(prev, 1);
