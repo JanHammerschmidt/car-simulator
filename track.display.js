@@ -10,7 +10,7 @@ dat.GUI.prototype.clearFolders = function() {
 $(function() {
   var canvas = document.getElementById('tutorial');
   if (canvas.getContext){
-    var cfg = {ver2: true, deviation_mult: 4.0, distance_mult: 0.07, scale: 1.0, 
+    var cfg = {ver2: true, deviation_mult: 4.0, distance_mult: 0.07, scale: 1.0, connect_mult: 20,
       draw_height: false, scale_x: 0.1, scale_y: 0.5, draw_signs: false, t: 1, y:0.01};
     var c = canvas.getContext('2d');
     var bezier_draw = bindDrawFunctions(c); // eslint-disable-line
@@ -20,6 +20,7 @@ $(function() {
     gui.add(cfg, 'deviation_mult', 0.5, 7);
     gui.add(cfg, 'distance_mult', 0.01, 0.2);
     gui.add(cfg, 'scale', 0.4, 1.5);
+    gui.add(cfg, 'connect_mult', 10, 60);
     // gui.add(cfg, 'draw_height');
     // gui.add(cfg, 'scale_x', 0.08,1.2);
     // gui.add(cfg, 'scale_y');
@@ -98,7 +99,7 @@ $(function() {
                   p.clone().addScaledVector(t, a1_length),
                   p2.clone().addScaledVector(t.clone().rotateAround(origin, p_deviation + Math.PI + a2_deviation), a2_length),
                   p2);
-              bezier_draw.drawCurve(segment);
+              //bezier_draw.drawCurve(segment);
               t.copy(segment.derivative(1)).normalize();
               p.copy(p2);
               poly_bezier.addCurve(segment);
@@ -163,6 +164,17 @@ $(function() {
             poly_bezier.cacheLengths();
             //console.log((poly_bezier.total_length / scale).toFixed(3));          
           }
+            if (true) { // eslint-disable-line
+              const curves = poly_bezier.curves;
+              const cl = curves.length;
+              const l = curves[cl-1];
+              l.points[l.points.length-1] = curves[0].points[0];
+              l.points[l.points.length-2] = new THREE.Vector2().addVectors(curves[0].points[0], {x:0,y:scale*cfg.connect_mult*1.5});
+            }
+            for (let c of poly_bezier.curves) {
+              //bezier_draw.setRandomColor();
+              bezier_draw.drawCurve(c);
+            }
             for (let s of signs) {
               if (s.type < 13) {
                 bezier_draw.drawCircle(poly_bezier.get(s.percent), 2);
