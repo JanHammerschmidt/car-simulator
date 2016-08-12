@@ -10,7 +10,7 @@ let rand = misc.rand;
 
 function load_track() {
     if (isNode) {
-        return module.require('../track.study1.json');
+        return module.require('../track.panning-study.json');
     } else {
         return require('./webpack/static.js').track_study_1;
     }

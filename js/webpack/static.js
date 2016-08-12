@@ -19,6 +19,6 @@ models.dashboard_needle2 = {'mtl': require('raw!../../models/AudiA3/dashboard_ne
 
 module.exports = {
     'models': models,
-    'track_study_1': require('json!../../track.study1.json'),
+    'track_study_1': require('json!../../track.panning-study.json'), // require('json!../../track.study1.json'),
     'terrain_height': require('json!../../terrain.json')
 };
