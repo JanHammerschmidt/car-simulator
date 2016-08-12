@@ -93,7 +93,7 @@ class SpeedSign extends THREE.Object3D {
         if (v.next) {
             const d = v.next.pos - cur_pos;
             //smoothie.speed.append(new Date().getTime(), d);
-            if (d < v.trigger_dist) {
+            if (d < v.trigger_dist && Math.abs(d - v.trigger_dist) < 50) {
                 console.log("speed limit: " + v.next.speed_limit + " kmh");
                 v.limit = v.next.speed_limit * (1+TOO_FAST_TOLERANCE) + TOO_FAST_TOLERANCE_OFFSET; // apply speed limit from next sign
                 v.next_i++;
@@ -220,7 +220,7 @@ class TrafficLight extends THREE.Object3D {
         misc.plog("traffic light model loaded");
     }
     set_state(state) {
-        //console.log("traffic light state", state);
+        // console.log("traffic light state", state);
         const lights_off = this.lights_off;
         this.colors.forEach(function(c,i) {
             c.material.color.setHex(lights_off[i]);
