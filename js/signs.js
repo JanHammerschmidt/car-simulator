@@ -284,15 +284,29 @@ class TrafficLight extends THREE.Object3D {
             this.set_state(0)
         });
     }
+    trigger_back() {
+        delay(10000).then(() => {
+            console.log("traffic light trigger back");        
+            this.set_state(1);
+            return delay(1000);
+        }).then(() => {
+            this.set_state(2);
+            this.no_tick = false;
+        });
+    }    
     tick(cur_pos) {
         if (this.no_tick)
+            return;
+        const d = this.pos - cur_pos;
+        if (Math.abs(d) > this.trigger_dist)
             return;
         if (this.state < 2) {
             this.limit = this.lower = DEF_SPEED_LIMIT;
             this.no_tick = true;
+            this.trigger_back()
             return;
         }
-        const d = this.pos - cur_pos;
+        
         this.limit = Math.max(0, (d-5) * BRAKING);
         this.lower = Math.max(0, (d-5) * DECELERATION);
         if (d < 0) {
