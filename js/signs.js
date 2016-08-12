@@ -79,7 +79,7 @@ class SpeedSign extends THREE.Object3D {
         const v = this.violations;
         v.set_next_sign();
         if (v.next)
-            v.trigger_dist = v.current && v.next.speed_limit > v.limit ? 30 : -30;
+            v.trigger_dist = v.current && v.next.speed_limit > v.limit ? 25 : -25;
     }
     // static set_next_sign() { // based on next_sign_i (and update current_sign based on next_sign)
     //     const signs = SpeedSign.signs;
