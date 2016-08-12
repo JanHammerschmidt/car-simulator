@@ -349,11 +349,13 @@ class App {
 
     place_distraction(t) {
         t = t || misc.rand(0,1);
+        if (t > 1)
+            t -= 1;
         this.distraction_materials.then(mats => {
             mats = mats.slice();
             mats.splice(mats.indexOf(this.last_distraction), 1);
             const street = this.street;
-            const street_bezier = street.poly_bezier;                
+            const street_bezier = street.poly_bezier;     
             const p = new THREE.Vector2().copy(street_bezier.get(t));
             const n = new THREE.Vector2().copy(street_bezier.normal(t));
             const dist = misc.rand(-50,50);
@@ -1127,7 +1129,11 @@ class App {
         }
 
         const street_position = t * this.street_length; // should be [m]
-        const m_driven = street_position - ("prev_street_position" in this ? this.prev_street_position : 0);
+        let m_driven = street_position - ("prev_street_position" in this ? this.prev_street_position : 0);
+        if (m_driven < -1000) // happens when restarting at the beginning after one circuit
+            m_driven += this.street_length;
+        else if (m_driven > 1000) // happens when going back through the "zero line"
+            m_driven -= this.street_length;
         this.prev_street_position = street_position;
         const kmh = car2d.kmh();
         // smoothie.speed.append(new Date().getTime(), kmh);
