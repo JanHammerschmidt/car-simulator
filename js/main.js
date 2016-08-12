@@ -340,7 +340,7 @@ class App {
         if (this.m_driven > this.next_distraction) {
             const distractions_placement_distance = 200;
             const distraction_place_every_m_driven = [100, 200];
-            //console.log('place distraction at', t, '+', distractions_placement_distance / this.street.length, '=', t + distractions_placement_distance / this.street.length);
+            console.log('place distraction at', t * this.street_length, '+', distractions_placement_distance, '=', t * this.street_length + distractions_placement_distance);
             this.place_distraction(t + distractions_placement_distance / this.street_length);
             this.m_driven = 0;
             this.next_distraction = misc.rand_int(...distraction_place_every_m_driven);
@@ -669,12 +669,14 @@ class App {
     }
 
     init_street() {
+        const track = track_study_1;
         this.street = new Street();
         this.street.position.y = track.street_above_ground;
         var f = this.gui.addFolder('street position');
         f.addnum(this.street.position, 'y');
         this.street.create_road(cfg.random_street);
         this.street_length = this.street.poly_bezier.total_length;
+        console.log("street length", this.street_length);
         scene.add(this.street);
         // street.show_lut_points();
         this.streets.push(this.street);
@@ -1177,8 +1179,10 @@ class App {
         else
             setTimeout(() => { this.animate(); }, 500);
 
-        if (this.camera == "vr_cam") {
+        if ("vr_cam" in this.cameras)
             this.cameras["vr_cam"][1].update();
+        if (this.camera == "vr_cam") {
+            
             if (car_model)
                 car_model.updateMatrixWorld(true);
             this.vr_manager.render(scene, this.cameras["vr_cam"][0]);
