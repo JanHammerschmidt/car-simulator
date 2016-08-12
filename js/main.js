@@ -558,8 +558,15 @@ class App {
         const controls = new THREE.VRControls(camera);
         mbind('enter', () => controls.resetSensor() );
         this.cameras["vr_cam"] = [camera, controls];
+        //this.gui.add(camera, 'fov').onChange(() => camera.updateProjectionMatrix());
+        scene.helper_objects.add(new THREE.CameraHelper(camera));
 
-        mbind('o', () => { this.vr_manager.enterVRMode_(); this.vr_manager.setMode_(3) });
+        mbind('o', () => {
+            this.camera_change = "vr_cam";
+            this.update_camera(); 
+            this.vr_manager.enterVRMode_();
+            this.vr_manager.setMode_(3); 
+        });
         // mbind('l', () => { this.vr_manager.setMode_(1) });
     }
 
@@ -571,7 +578,7 @@ class App {
             controls = new THREE.FirstPersonControls2(camera, renderer.domElement, false);
             controls.lookSpeed = 0.2;
             controls.lookVertical = true;
-            scene.add(new THREE.CameraHelper(camera));
+            // scene.helper_objects.add(new THREE.CameraHelper(camera));
         }
         this.camera_first_person_object.add(camera);        
 
