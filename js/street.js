@@ -159,7 +159,8 @@ class Street extends THREE.Object3D {
             ver2: true,
             deviation_mult: 4.0, //4.0, //3.0, // max. ~5.4
             distance_mult: 0.07, //0.07, // 0.1
-            scale: 1.5 //1500.0
+            scale: 1.5, //1500.0
+            connect_mult: 20
         };
         var scale = cfg.scale;
         var origin = new THREE.Vector2(0, 0);
@@ -225,6 +226,15 @@ class Street extends THREE.Object3D {
             }
         } else
             proc_prev_sign(prev, 1);
+        if (true) { // eslint-disable-line
+            // connect endpoints
+            const curves = this.segments;
+            const cl = curves.length;
+            const l = curves[cl-1];
+            const s = curves[0].points[0];
+            curves[cl-1] = new Bezier(l.points[0], l.points[1], new THREE.Vector2().addVectors(s, {x:0,y:-scale*cfg.connect_mult}), s);
+        }
+            
     }
 
     adjust_height_from_terrain(terrain) {

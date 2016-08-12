@@ -168,8 +168,8 @@ $(function() {
               const curves = poly_bezier.curves;
               const cl = curves.length;
               const l = curves[cl-1];
-              l.points[l.points.length-1] = curves[0].points[0];
-              l.points[l.points.length-2] = new THREE.Vector2().addVectors(curves[0].points[0], {x:0,y:scale*cfg.connect_mult*1.5});
+              const s = curves[0].points[0];
+              curves[cl-1] = new Bezier(l.points[0], l.points[1], new THREE.Vector2().addVectors(s, {x:0,y:scale*cfg.connect_mult*1.5}), s);
             }
             for (let c of poly_bezier.curves) {
               //bezier_draw.setRandomColor();
