@@ -26,6 +26,8 @@ $(function() {
     // gui.add(cfg, 'draw_signs');
     // gui.add(cfg, 't',0,1);
     // gui.add(cfg, 'y').listen();
+    
+    var gui_track_length = 0;
 
     function load_track() { // eslint-disable-line
 
@@ -33,7 +35,9 @@ $(function() {
 
         gui.clearFolders();
         let track_length = track.points[track.points.length-1].x;
-        gui.add({'track_length': track_length}, 'track_length').onChange(v => {track_length = Math.max(v, 100); draw(); });                
+        if (gui_track_length)
+          gui.remove(gui_track_length);
+        gui_track_length = gui.add({'track_length': track_length}, 'track_length').onChange(v => {track_length = Math.max(v, 100); draw(); });                
         
         function draw() {
 
