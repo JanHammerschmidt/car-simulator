@@ -279,8 +279,6 @@ class App {
 
         if (!cfg.random_street)
             this.place_signs();
-        this.speed_observer = new signs.SpeedObserver(this.street);
-        this.speed_observer.plot();
         if (cfg.show_buildings) {
             scene.add(create_city_geometry(this.streets, this.terrain));
             plog('city geometry loaded');
