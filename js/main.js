@@ -9,7 +9,7 @@ const cfg_base = {
     car_scale: 1/1.6,
     force_on_street: true,
     use_audi: true,
-    do_logging: false,
+    do_logging: true,
     do_sound: false,
     signs_scale: 0.625,
     signs_dist_mult: 0.6
@@ -106,10 +106,11 @@ const track_study_1 = statics.track_study_1;
 $('body').append(require('html!../carphysics2d/public/js/car_config.html'));
 
 class LogItem extends Array {
-    constructor(dt, throttle, brake, gear, speed) {
+    constructor(dt, throttle, brake, gear) {
         super(dt, throttle, brake, gear);
     }
     speed(v) {this[4] = v}
+    track_deviation(v) {this[5] = v}
 }
 
 // renderer.shadowMap.enabled = true;
@@ -290,7 +291,7 @@ class App {
     init_distractions() {
         this.distractions = new THREE.Object3D();
         this.m_driven = 0;
-        this.next_distraction = 2;
+        this.next_distraction = 2; // meters until next distraction appears
         scene.add(this.distractions);
         misc.load_obj_mtl_url('models/', 'pokeball.obj', 'pokeball.mtl').then(obj => {
             obj.scale.multiplyScalar(0.9);
@@ -704,7 +705,8 @@ class App {
     }    
 
     place_signs() {
-        this.signs = [];
+        this.signs = []; // list of signs that need to be tick'd 
+        this.speed_signs = [];
         const fc = this.gui.addFolder('crossings');
         const fs = this.gui.addFolder('signs');
         //const ft = this.gui.addFolder('traffic lights');
@@ -712,10 +714,12 @@ class App {
         for (let sign of track.signs) {
             if (sign.type == 0) { // stop sign
                 const s = new signs.StopSign(sign.percent * this.street_length);
+                s.type = 'stop sign';
                 this.signs.push(s);
                 this.place_sign(s, sign.percent, fs);
             } else if (sign.type == 12) { // traffic light
                 const light = new signs.TrafficLight(sign.percent * this.street_length, sign.trigger_distance, sign.time_range_from);
+                light.type = 'traffic light';
                 //const l = light.children[0].children.last();
                 //ft.addxyz(l.position)
                 //ft.addnum(l, 'intensity');
@@ -727,7 +731,7 @@ class App {
             } else if (sign.type < 12) { // speed sign 
                 const speed_limit = 30 + 10 * (sign.type-1);
                 const s = new signs.SpeedSign(sign.percent * this.street_length, speed_limit);
-                // this.signs.push(s)
+                this.speed_signs.push(s)
                 this.place_sign(s, sign.percent, fs);
             }
             if (sign.type == 0 || sign.type == 12) {
@@ -1044,15 +1048,16 @@ class App {
                 inputs.left = -steering;
             }
         }
-        // const log_item = {'dt': dt, 'throttle': inputs.throttle, 
-        //                   'brake': inputs.brake, 'gear': car2d.gearbox.gear};
         if (!this.started && inputs.throttle > 0) {
             this.started = true;
             if (cfg.do_logging) {
                 console.log("starting logging")
-                this.log = [];
+                this.log = {items :[], events: []};
+                const track = this.log.track = {'length': this.street_length, 'width': this.street.street_width};
+                track.signs = this.signs.map(s => {return {'pos': s.pos, 'type': s.type}; });
+                track.speed_signs = this.speed_signs.map(s => {return {'pos': s.pos, 'limit': s.speed_limit}; });
                 this.save_log = () => {
-                    console.log("sending " + this.log.length + " items");
+                    console.log("sending " + this.log.items.length + " items and " + this.log.events.length + " events");
                     const s = this.log_websocket;
                     s.send('__setFilename logs/test');
                     s.send(JSON.stringify(this.log));
@@ -1152,7 +1157,8 @@ class App {
 
         if (cfg.do_logging && this.started) {
             log_item.speed(kmh);
-            this.log.push(log_item);
+            log_item.track_deviation(dp);
+            this.log.items.push(log_item);
         }
 
         this.distractions_handler(m_driven, t);
