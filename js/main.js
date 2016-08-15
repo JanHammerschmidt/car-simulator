@@ -130,6 +130,11 @@ class LogItem extends Array {
     speed(v) {this[4] = v}
     track_deviation(v) {this[5] = v}
     track_position(v) {this[6] = v}
+    rpm(v) {this[7] = v}
+    consumption(v) {this[8] = v}
+    total_consumption(v) {this[9] = v}
+    camera(v) {this[10] = v}
+    acceleration(v) {this[11] = v}
 }
 
 // renderer.shadowMap.enabled = true;
@@ -303,6 +308,7 @@ class App {
             scene.add(create_city_geometry(this.streets, this.terrain));
             plog('city geometry loaded');
         }
+        this.log = new Log(this);
 
         this.gui.close();
     }
@@ -1079,7 +1085,6 @@ class App {
             this.started = true;
             if (cfg.do_logging) {
                 console.log("starting logging")
-                this.log = new Log(this)
                 this.save_log = () => {
                     console.log("sending " + this.log.items.length + " items and " + this.log.events.length + " events");
                     const s = this.log_websocket;
@@ -1183,15 +1188,7 @@ class App {
         for (var i = this.animations.length-1; i >= 0; i--) {
             if (this.animations[i].tick(dt))
                 this.animations.splice(i, 1);
-        }
-
-        if (cfg.do_logging && this.started) {
-            log_item.speed(kmh);
-            log_item.track_deviation(dp);
-            log_item.track_position(street_position);
-            this.log.items.push(log_item);
-            this.log.tick();
-        }        
+        } 
 
         if (car_model && this.camera == "chase_cam") //"chase_cam" in this.cameras)
             this.cameras["chase_cam"][1].tick(car_model.position, new THREE.Quaternion().multiplyQuaternions(car_model.quaternion, car_model_slope.quaternion), dt);
@@ -1212,13 +1209,27 @@ class App {
         if ("vr_cam" in this.cameras)
             this.cameras["vr_cam"][1].update();
         if (this.camera == "vr_cam") {
-            
             if (car_model)
                 car_model.updateMatrixWorld(true);
             this.vr_manager.render(scene, this.cameras["vr_cam"][0]);
         } else {
             renderer.render(scene, this.cameras[this.camera][0]);
         }
+        if (cfg.do_logging && this.started) {
+            log_item.speed(kmh);
+            log_item.track_deviation(dp);
+            log_item.track_position(street_position);
+            log_item.rpm(car2d.engine.rpm());
+            log_item.consumption(car2d.consumption_monitor.liters_per_100km_cont);
+            log_item.total_consumption(car2d.consumption_monitor.liters_used);
+            log_item.acceleration(car2d.velocity_c.x);
+            const cam = (("vr_cam" in this.cameras) ? this.cameras['vr_cam'] : this.cameras['first_person_cam'])[0];
+            const p0 = new THREE.Vector3().unproject(cam);
+            const p1 = new THREE.Vector3(0,0,1).unproject(cam);             
+            log_item.camera([p0.toArray(), p1.toArray()]);
+            this.log.items.push(log_item);
+            this.log.tick();
+        }        
 
         this.last_time = time;
     }
