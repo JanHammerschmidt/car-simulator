@@ -592,7 +592,7 @@ Car.prototype.update = function( dtms )
 	this.throttle = this.inputs.throttle;
 	this.brake = this.inputs.brake;
 
-	var steerInput = this.inputs.left - this.inputs.right;
+	var steerInput = -this.inputs.steering; //this.inputs.left - this.inputs.right;
 
 	//  Perform filtering on steering...
 	if( this.smoothSteer )

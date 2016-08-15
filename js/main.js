@@ -1073,13 +1073,7 @@ class App {
                 inputs.throttle = 0;
                 inputs.brake = -accel;
             }
-            if (steering > 0) {
-                inputs.right = steering;
-                inputs.left = 0;
-            } else {
-                inputs.right = 0;
-                inputs.left = -steering;
-            }
+            inputs.steering = steering;
         }
         if (!this.started && inputs.throttle > 0) {
             this.started = true;
@@ -1110,7 +1104,7 @@ class App {
         car_model.rotation.y = -car2d.heading;
         car_model.position.x = -car2d.position.y;
         car_model.position.z = car2d.position.x;
-        this.steering_wheel.then(w => {w.rotation.z = -steering * 0.9});
+        this.steering_wheel.then(w => {w.rotation.z = -inputs.steering * 0.9});
 
         car_model.position.y = this.terrain.p2height({ x: car_model.position.x, y: car_model.position.z }) + street.position.y;
         // car_model_slope.rotation.x = 0;
