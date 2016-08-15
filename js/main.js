@@ -66,19 +66,19 @@ require("./FirstPersonControls2.js");
 require('script!./lib/THREE.ext.TextureCreator.js');
 const Bezier = require('./lib/bezier.js');
 
-// const smoothie = require('../bower_components/smoothie/smoothie.js');
-// smoothie.upperbound = new smoothie.TimeSeries();
-// smoothie.lowerbound = new smoothie.TimeSeries();
-// smoothie.speed = new smoothie.TimeSeries();
+const smoothie = require('../bower_components/smoothie/smoothie.js');
+smoothie.upperbound = new smoothie.TimeSeries();
+smoothie.lowerbound = new smoothie.TimeSeries();
+smoothie.speed = new smoothie.TimeSeries();
 
-// $(() => {
-//     const chart = new smoothie.SmoothieChart({interpolation:'linear'});
-//     chart.addTimeSeries(smoothie.upperbound, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 1 });
-//     chart.addTimeSeries(smoothie.lowerbound, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 1 });
-//     chart.addTimeSeries(smoothie.speed, { strokeStyle: 'rgba(255, 255, 255, 1)', fillStyle: 'rgba(255, 255, 255, 0.2)', lineWidth: 1 });
-//     chart.streamTo(document.getElementById("chart"), 0);
-//     smoothie.chart = chart;
-// });
+$(() => {
+    const chart = new smoothie.SmoothieChart({interpolation:'linear'});
+    chart.addTimeSeries(smoothie.upperbound, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 1 });
+    chart.addTimeSeries(smoothie.lowerbound, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 1 });
+    chart.addTimeSeries(smoothie.speed, { strokeStyle: 'rgba(255, 255, 255, 1)', fillStyle: 'rgba(255, 255, 255, 0.2)', lineWidth: 1 });
+    chart.streamTo(document.getElementById("chart"), 0);
+    smoothie.chart = chart;
+});
 
 let chase_cam = require("./cam_controls.js").chase_cam;
 let input = require('./wingman_input.js');
@@ -1165,13 +1165,13 @@ class App {
             m_driven -= this.street_length;
         this.prev_street_position = street_position;
         const kmh = car2d.kmh();
-        // smoothie.speed.append(new Date().getTime(), kmh);
+        smoothie.speed.append(new Date().getTime(), kmh);
         if (this.started && this.signs_loaded) {
             for (let s of this.signs) // these are all except for the speed signs
-                s.tick(street_position, kmh);
-            signs.SpeedSign.tick(street_position, kmh, dt);
-            // smoothie.upperbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.limit, ...this.signs.map(s => s.limit)));
-            // smoothie.lowerbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.lower, ...this.signs.map(s => s.lower)));
+                s.tick(street_position, kmh, this);
+            signs.SpeedSign.tick(street_position, kmh, dt, this);
+            smoothie.upperbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.limit, ...this.signs.map(s => s.limit)));
+            smoothie.lowerbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.lower, ...this.signs.map(s => s.lower)));
         }
         car_stats.add('street position', street_position);
         car_stats.add('car.x', car_model.position.x);
@@ -1179,19 +1179,19 @@ class App {
         car_stats.add('car.y', car_model.position.y);
         car_stats.render();
 
+        this.distractions_handler(m_driven, t);
+        for (var i = this.animations.length-1; i >= 0; i--) {
+            if (this.animations[i].tick(dt))
+                this.animations.splice(i, 1);
+        }
+
         if (cfg.do_logging && this.started) {
             log_item.speed(kmh);
             log_item.track_deviation(dp);
             log_item.track_position(street_position);
             this.log.items.push(log_item);
             this.log.tick();
-        }
-
-        this.distractions_handler(m_driven, t);
-        for (var i = this.animations.length-1; i >= 0; i--) {
-            if (this.animations[i].tick(dt))
-                this.animations.splice(i, 1);
-        }
+        }        
 
         if (car_model && this.camera == "chase_cam") //"chase_cam" in this.cameras)
             this.cameras["chase_cam"][1].tick(car_model.position, new THREE.Quaternion().multiplyQuaternions(car_model.quaternion, car_model_slope.quaternion), dt);

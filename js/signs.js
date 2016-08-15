@@ -90,7 +90,7 @@ class SpeedSign extends THREE.Object3D {
     //         SpeedSign.trigger_dist = SpeedSign.current_sign && 
     //                                  SpeedSign.next_sign.speed_limit > SpeedSign.current_sign.speed_limit ? 30 : -30;
     // }
-    static tick(cur_pos, kmh, dt) {
+    static tick(cur_pos, kmh, dt, app) {
         // observe violations
         const v = SpeedSign.violations;
         if (v.next) {
@@ -104,9 +104,10 @@ class SpeedSign extends THREE.Object3D {
             }
         }
         if (kmh > v.limit && (new Date() - v.cooldown_timer_start) > COOLDOWN_TIME_SPEEDING) {
-            if (window.osc_port)
-                window.osc_port.call('/flash');
+            // if (window.osc_port)
+            //     window.osc_port.call('/flash');
             console.log('speeding violation ('+kmh.toPrecision(3)+' kmh instead of '+(v.current ? v.current.speed_limit : v.limit)+' kmh)');
+            app.log.add_event('speeding violation', {'kmh': kmh, 'limit': v.limit});
             v.cooldown_timer_start = new Date();
         }
         // observe speed channel
@@ -257,7 +258,7 @@ class TrafficLight extends THREE.Object3D {
             this.no_tick = false;
         });
     }    
-    tick(cur_pos) {
+    tick(cur_pos, kmh, app) {
         if (this.no_tick)
             return;
         const d = this.pos - cur_pos;
@@ -279,6 +280,7 @@ class TrafficLight extends THREE.Object3D {
             console.log("traffic light überfahren :o");
             this.limit = this.lower = DEF_SPEED_LIMIT;
             this.no_tick = true;
+            app.log.add_event('running over traffic light');
             this.trigger_back();
         } else if (this.state == 2 && d < this.trigger_dist) {
             this.trigger();
