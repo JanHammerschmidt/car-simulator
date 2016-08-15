@@ -105,12 +105,31 @@ const track_study_1 = statics.track_study_1;
 
 $('body').append(require('html!../carphysics2d/public/js/car_config.html'));
 
+class Log {
+    constructor(app) {
+        this.items = []
+        this.events = []
+        const track = this.track = {'length': app.street_length, 'width': app.street.street_width};
+        track.signs = app.signs.map(s => {return {'pos': s.pos, 'type': s.type}; });
+        track.speed_signs = app.speed_signs.map(s => {return {'pos': s.pos, 'limit': s.speed_limit}; });
+        this.frame = 0
+    }
+    add_event(type, event) {
+        event = event || {};
+        event.type = type;
+        event.frame = this.frame
+        this.events.push(event);
+    }
+    tick() { this.frame++; }
+}
+
 class LogItem extends Array {
     constructor(dt, throttle, brake, gear) {
         super(dt, throttle, brake, gear);
     }
     speed(v) {this[4] = v}
     track_deviation(v) {this[5] = v}
+    track_position(v) {this[6] = v}
 }
 
 // renderer.shadowMap.enabled = true;
@@ -292,6 +311,7 @@ class App {
         this.distractions = new THREE.Object3D();
         this.m_driven = 0;
         this.next_distraction = 2; // meters until next distraction appears
+        this.next_distraction_id = 0;
         scene.add(this.distractions);
         misc.load_obj_mtl_url('models/', 'pokeball.obj', 'pokeball.mtl').then(obj => {
             obj.scale.multiplyScalar(0.9);
@@ -315,9 +335,13 @@ class App {
                     if (nearest.length > 0) {
                         const n = nearest.sort((a,b) => a.dot < b.dot)[0];
                         const angle = Math.acos(n.dot) * 180 / Math.PI;
-                        console.log(angle);
-                        if (angle < 12)
+                        //console.log(angle);
+                        if (angle < 12) {
                             this.animations.push(new AnimatePokeball(this.pokeball.clone(), p0.add(cam_dir.multiplyScalar(1.5)), n, this));
+                            this.log.add_event('caught distraction', {'distraction_id': n.id});
+                        } else {
+                            this.log.add_event('missed distraction');
+                        }
                     }
                 }
             });            
@@ -339,7 +363,7 @@ class App {
         if (this.m_driven > this.next_distraction) {
             const distractions_placement_distance = 200;
             const distraction_place_every_m_driven = [100, 200];
-            console.log('place distraction at', t * this.street_length, '+', distractions_placement_distance, '=', t * this.street_length + distractions_placement_distance);
+            // console.log('place distraction at', t * this.street_length, '+', distractions_placement_distance, '=', t * this.street_length + distractions_placement_distance);
             this.place_distraction(t + distractions_placement_distance / this.street_length);
             this.m_driven = 0;
             this.next_distraction = misc.rand_int(...distraction_place_every_m_driven);
@@ -369,7 +393,10 @@ class App {
             s.position.set(p.x, y + 0.5*scale, p.y);
             s.scale.set(scale,scale,scale);
             s.pos = p; // save 2d position
-            this.distractions.add(s);            
+            s.number = this.next_distraction_id;
+            this.next_distraction_id++;
+            this.distractions.add(s);  
+            this.log.add_event('add distraction', {'pos': t * this.street_length, 'dist': dist, 'id': s.number});
         });
     }
 
@@ -1052,10 +1079,7 @@ class App {
             this.started = true;
             if (cfg.do_logging) {
                 console.log("starting logging")
-                this.log = {items :[], events: []};
-                const track = this.log.track = {'length': this.street_length, 'width': this.street.street_width};
-                track.signs = this.signs.map(s => {return {'pos': s.pos, 'type': s.type}; });
-                track.speed_signs = this.speed_signs.map(s => {return {'pos': s.pos, 'limit': s.speed_limit}; });
+                this.log = new Log(this)
                 this.save_log = () => {
                     console.log("sending " + this.log.items.length + " items and " + this.log.events.length + " events");
                     const s = this.log_websocket;
@@ -1158,7 +1182,9 @@ class App {
         if (cfg.do_logging && this.started) {
             log_item.speed(kmh);
             log_item.track_deviation(dp);
+            log_item.track_position(street_position);
             this.log.items.push(log_item);
+            this.log.tick();
         }
 
         this.distractions_handler(m_driven, t);
