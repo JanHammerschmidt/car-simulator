@@ -3,9 +3,11 @@ var wingman_input = {
 
     steering: 0, // [-1,+1]
     accel: 0, // [-1,+1] also includes braking
+    button_mappings: [],
 
-    //dev = undefined,
-    //prev_timestamp = undefined,
+    add_button_mapping: function(id, callback) {
+        wingman_input.button_mappings.push([id, callback, false]);
+    },
 
     tick: function() { // returns true if there has been an update
         var gamepads = navigator.getGamepads();
@@ -30,8 +32,16 @@ var wingman_input = {
             if (steering < 0 && steering > -0.05)
                 steering = 0;
             wingman_input.steering = steering;
-            wingman_input.accel = accel;                
-            console.log(accel, steering);
+            wingman_input.accel = accel;
+            //console.log(accel, steering);
+            for (let m of wingman_input.button_mappings) {
+                const pressed = dev.buttons[m[0]].pressed;
+                if (pressed != m[2]) {
+                    if (pressed)
+                        m[1]();
+                    m[2] = pressed;
+                }
+            }
             return true;
         }
         return false;

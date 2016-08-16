@@ -323,9 +323,11 @@ class App {
             obj.scale.multiplyScalar(0.9);
             obj.rotation.y = Math.PI;
             this.pokeball = obj;
-            mbind('space', () => {
-                if (this.animations.length > 0)
+            const throw_pokeball = () => {
+                if (this.animations.length > 0) {
+                    console.log('one ball at a time! :o');
                     return;
+                }
                 const car_pos = {x: -this.car2d.position.y, y: this.car2d.position.x};
                 let nearest = this.distractions.children.filter(d => d.pos.distanceTo(car_pos) <= 120);
                 if (nearest.length > 0) {
@@ -341,16 +343,20 @@ class App {
                     if (nearest.length > 0) {
                         const n = nearest.sort((a,b) => a.dot < b.dot)[0];
                         const angle = Math.acos(n.dot) * 180 / Math.PI;
-                        //console.log(angle);
                         if (angle < 12) {
                             this.animations.push(new AnimatePokeball(this.pokeball.clone(), p0.add(cam_dir.multiplyScalar(1.5)), n, this));
                             this.log.add_event('caught distraction', {'distraction_id': n.id});
+                            console.log('caught', angle);
                         } else {
                             this.log.add_event('missed distraction');
+                            console.log('missed', angle);
                         }
                     }
                 }
-            });            
+            };
+            mbind('space', throw_pokeball);
+            wingman_input.add_button_mapping(0, throw_pokeball);
+            wingman_input.add_button_mapping(1, throw_pokeball);
         });
         const files = ['025Pikachu_OS_anime_5', '007Squirtle_AG_anime', '133Eevee_AG_anime', '393Piplup_DP_anime_3', '001Bulbasaur_AG_anime'];
         const textureLoader = new THREE.TextureLoader();
@@ -819,7 +825,9 @@ class App {
             });
         this.car2d.config_panel = new ConfigPanel(this.car2d);
         mbind('r', () => this.car2d.gearbox.gear_up() );
+        wingman_input.add_button_mapping(5, () => this.car2d.gearbox.gear_up() );
         mbind('f', () => this.car2d.gearbox.gear_down() );
+        wingman_input.add_button_mapping(4, () => this.car2d.gearbox.gear_down() );
         mbind('shift+f', () => this.car2d.engine.max_torque = 600 );
         mbind('ctrl+shift+f', () => this.car2d.engine.max_torque = 2000 );
         setInterval(() => {
