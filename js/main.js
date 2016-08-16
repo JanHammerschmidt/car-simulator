@@ -9,7 +9,7 @@ const cfg_base = {
     car_scale: 1/1.6,
     force_on_street: true,
     use_audi: true,
-    do_logging: true,
+    do_logging: false,
     do_sound: false,
     signs_scale: 0.625,
     signs_dist_mult: 0.6
@@ -19,7 +19,7 @@ const cfg_debug = {
     antialias: false,
     use_more_lights: false,
     show_terrain: true,
-    show_buildings: true,
+    show_buildings: false,
     smooth_terrain: false,
     hq_street: false,
     show_car: false
@@ -70,14 +70,20 @@ const smoothie = require('../bower_components/smoothie/smoothie.js');
 smoothie.upperbound = new smoothie.TimeSeries();
 smoothie.lowerbound = new smoothie.TimeSeries();
 smoothie.speed = new smoothie.TimeSeries();
+smoothie.speed_feedback = new smoothie.TimeSeries();
+smoothie.zero_line = new smoothie.TimeSeries();
 
 $(() => {
-    const chart = new smoothie.SmoothieChart({interpolation:'linear'});
+    let chart = new smoothie.SmoothieChart({interpolation:'linear'});
     chart.addTimeSeries(smoothie.upperbound, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 1 });
     chart.addTimeSeries(smoothie.lowerbound, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 1 });
     chart.addTimeSeries(smoothie.speed, { strokeStyle: 'rgba(255, 255, 255, 1)', fillStyle: 'rgba(255, 255, 255, 0.2)', lineWidth: 1 });
-    chart.streamTo(document.getElementById("chart"), 0);
-    smoothie.chart = chart;
+    chart.streamTo(document.getElementById("speed_display"), 0);
+    // smoothie.chart = chart;
+    chart = new smoothie.SmoothieChart({interpolation:'linear'});
+    chart.addTimeSeries(smoothie.speed_feedback, { strokeStyle: 'rgba(255, 255, 255, 1)', fillStyle: 'rgba(255, 255, 255, 0.2)', lineWidth: 1 });
+    chart.addTimeSeries(smoothie.zero_line, { strokeStyle: 'rgba(0, 0, 0, 1)', fillStyle: 'rgba(0, 0, 0, 0)', lineWidth: 2 });
+    chart.streamTo(document.getElementById("speed_feedback"), 0);
 });
 
 let chase_cam = require("./cam_controls.js").chase_cam;
@@ -1172,13 +1178,23 @@ class App {
             m_driven -= this.street_length;
         this.prev_street_position = street_position;
         const kmh = car2d.kmh();
-        smoothie.speed.append(new Date().getTime(), kmh);
+        const ctime = new Date().getTime();
+        smoothie.speed.append(ctime, kmh);
         if (this.started && this.signs_loaded) {
             for (let s of this.signs) // these are all except for the speed signs
                 s.tick(street_position, kmh, this);
             signs.SpeedSign.tick(street_position, kmh, dt, this);
-            smoothie.upperbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.limit, ...this.signs.map(s => s.limit)));
-            smoothie.lowerbound.append(new Date().getTime(), Math.min(signs.SpeedSign.speed_channel.lower, ...this.signs.map(s => s.lower)));
+            const upper = Math.min(signs.SpeedSign.speed_channel.limit, ...this.signs.map(s => s.limit));
+            const lower = Math.min(signs.SpeedSign.speed_channel.lower, ...this.signs.map(s => s.lower));
+            smoothie.upperbound.append(ctime, upper);
+            smoothie.lowerbound.append(ctime, lower);
+            let feedback = 0;
+            if (kmh > upper)
+                feedback = kmh - upper;
+            else if (kmh < lower)
+                feedback = kmh - lower;
+            smoothie.speed_feedback.append(ctime, -feedback);
+            smoothie.zero_line.append(ctime, 0);
         }
         car_stats.add('street position', street_position);
         car_stats.add('car.x', car_model.position.x);
