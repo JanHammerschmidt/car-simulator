@@ -1181,9 +1181,9 @@ class App {
         const ctime = new Date().getTime();
         smoothie.speed.append(ctime, kmh);
         if (this.started && this.signs_loaded) {
+            signs.SpeedSign.tick(street_position, kmh, dt, this);
             for (let s of this.signs) // these are all except for the speed signs
                 s.tick(street_position, kmh, this);
-            signs.SpeedSign.tick(street_position, kmh, dt, this);
             const upper = Math.min(signs.SpeedSign.speed_channel.limit, ...this.signs.map(s => s.limit));
             const lower = Math.min(signs.SpeedSign.speed_channel.lower, ...this.signs.map(s => s.lower));
             smoothie.upperbound.append(ctime, upper);

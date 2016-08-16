@@ -257,7 +257,13 @@ class TrafficLight extends THREE.Object3D {
             this.set_state(2);
             this.no_tick = false;
         });
-    }    
+    }
+    reset(kmh) {
+        this.limit = this.lower = DEF_SPEED_LIMIT;
+        SpeedSign.speed_channel.lower = kmh;
+        this.no_tick = true;
+        this.trigger_back()
+    }
     tick(cur_pos, kmh, app) {
         if (this.no_tick)
             return;
@@ -265,9 +271,7 @@ class TrafficLight extends THREE.Object3D {
         if (Math.abs(d) > this.trigger_dist)
             return;
         if (this.state < 2) {
-            this.limit = this.lower = DEF_SPEED_LIMIT;
-            this.no_tick = true;
-            this.trigger_back()
+            this.reset(kmh);
             return;
         }
         
@@ -278,10 +282,8 @@ class TrafficLight extends THREE.Object3D {
             if (window.osc_port)
                 window.osc_port.call('/flash');            
             console.log("traffic light überfahren :o");
-            this.limit = this.lower = DEF_SPEED_LIMIT;
-            this.no_tick = true;
             app.log.add_event('running over traffic light');
-            this.trigger_back();
+            this.reset(kmh);            
         } else if (this.state == 2 && d < this.trigger_dist) {
             this.trigger();
         }
