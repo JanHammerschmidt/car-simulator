@@ -196,7 +196,7 @@ Car.Config = function( opts )
 	this.tireGrip = opts.tireGrip || 2000.0;  // How much grip tires have
 	this.lockGrip = (typeof opts.lockGrip === 'number') ? GMath.clamp(opts.lockGrip, 0.01, 1.0) : 0.7;  // % of grip available when wheel is locked
 	//this.engineForce = opts.engineForce || 8000.0; // not used anymore!
-	this.brakeForce = opts.brakeForce || 30000.0;
+	this.brakeForce = opts.brakeForce || 25000.0;
 	this.eBrakeForce = opts.eBrakeForce || this.brakeForce / 2.5;
 	this.weightTransfer = (typeof opts.weightTransfer === 'number') ? opts.weightTransfer : 0.2;  // How much weight is transferred during acceleration/braking
 	this.maxSteer = opts.maxSteer || 0.2;  // Maximum steering angle in radians
