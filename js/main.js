@@ -243,7 +243,9 @@ class AnimatePokeball {
         this.t += 80 *  dt / (15*Math.sqrt(this.dist*0.5));
         if (this.t > 1) {
             const d = this.app.distractions.children;
-            d.splice(d.indexOf(this.target), 1); // remove distractions
+            const idx = d.indexOf(this.target);
+            if (idx != -1)
+                d.splice(idx, 1); // remove distractions
             this.ball.visible = false;
             return true;
         }
