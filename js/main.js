@@ -9,8 +9,8 @@ const cfg_base = {
     car_scale: 1/1.6,
     force_on_street: true,
     use_audi: true,
-    do_logging: false,
-    do_sound: false,
+    do_logging: true,
+    do_sound: true,
     signs_scale: 0.625,
     signs_dist_mult: 0.6
 }
@@ -34,7 +34,7 @@ const cfg_vr = { //eslint-disable-line
     hq_street: true,
     show_car: true
 }
-const cfg = window.cfg = Object.assign(cfg_base, cfg_debug);
+const cfg = window.cfg = Object.assign(cfg_base, cfg_vr);
 
 const mousetrap = require('mousetrap');
 // https://jsfiddle.net/9f6j76dL/1/
