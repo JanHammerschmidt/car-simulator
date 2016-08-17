@@ -4,6 +4,7 @@ var fs = require('fs');
 var player = require('play-sound')();
 var msgpack = require('msgpack5')({forceFloat64:true});
 var zlib = require('zlib');
+var moment = require('moment');
 
 function write2file(filename, data) {
     try {
@@ -31,7 +32,7 @@ socket.on('connection', function(conn) {
             }
         } else {
             if (!filename) {
-                filename = "logs/misc/last";
+                filename = "logs/last/" + moment().format('YYYY-MM-DD_hh.mm.ss');
                 console.log("error: no filename provided => using: " + filename);
             }
             // if (filename.search('msgpack')) {

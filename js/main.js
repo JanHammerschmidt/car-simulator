@@ -1134,7 +1134,6 @@ class App {
                 this.save_log = () => {
                     console.log("sending " + this.log.items.length + " items and " + this.log.events.length + " events");
                     const s = this.log_websocket;
-                    s.send('__setFilename logs/test');
                     s.send(JSON.stringify(this.log));
                 };
                 this.gui.add(this, 'save_log');
