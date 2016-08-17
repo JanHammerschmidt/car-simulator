@@ -72,6 +72,7 @@ smoothie.lowerbound = new smoothie.TimeSeries();
 smoothie.speed = new smoothie.TimeSeries();
 smoothie.speed_feedback = new smoothie.TimeSeries();
 smoothie.zero_line = new smoothie.TimeSeries();
+smoothie.lowerdb = new smoothie.TimeSeries();
 
 $(() => {
     let chart = new smoothie.SmoothieChart({interpolation:'linear'});
@@ -82,6 +83,7 @@ $(() => {
     // smoothie.chart = chart;
     chart = new smoothie.SmoothieChart({interpolation:'linear'});
     chart.addTimeSeries(smoothie.speed_feedback, { strokeStyle: 'rgba(255, 255, 255, 1)', fillStyle: 'rgba(255, 255, 255, 0.2)', lineWidth: 1 });
+    chart.addTimeSeries(smoothie.lowerdb, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 1 });
     chart.addTimeSeries(smoothie.zero_line, { strokeStyle: 'rgba(0, 0, 0, 1)', fillStyle: 'rgba(0, 0, 0, 0)', lineWidth: 2 });
     chart.streamTo(document.getElementById("speed_feedback"), 0);
 });
@@ -110,6 +112,42 @@ const track_study_1 = statics.track_study_1;
 //var pointInPolygon = require('point-in-polygon-extended').pointInPolyRaycast; //pointInPolyWindingNumber
 
 $('body').append(require('html!../carphysics2d/public/js/car_config.html'));
+
+function panning_feedback(kmh, upper, lower) {
+    const neutral_kmh = 70;
+    const alpha = 0.5;
+    const tolerance = {'upper': 3, 'lower': 5};
+    const lowerdb_scale = {'upper': 35, 'lower': 35};
+    const weighting = (diff,limit,tol) => Math.max(0, (alpha * diff + (1-alpha) * diff/upper * neutral_kmh) - tol);
+
+    let kmh_diff = 0; // simple kmh diff
+    let diff = 0; // weighted kmh diff, considering tolerances
+    let p = 0; // panning value (normalized to [0,1])
+    let lowerdb = 0; // how much the sound will be reduced in volume
+    if (kmh > upper) {
+        kmh_diff = kmh - upper;
+        diff = weighting(kmh_diff, upper, tolerance.upper);
+        if (diff > 0) {
+            p = 0.2 * Math.sqrt(diff); 
+            if (p > 1.0) {
+                lowerdb = (p - 1.0) * lowerdb_scale.upper;
+                p = 1;
+            }
+        }
+    } else if (kmh < lower) {
+        kmh_diff = lower - kmh;
+        diff = weighting(kmh_diff, lower, tolerance.lower);
+        if (diff > 0) {
+            p = 0.2 * Math.sqrt(diff);
+            if (p > 1.0) {
+                lowerdb = (p - 1.0) * lowerdb_scale.lower;
+                p = -1;
+            } else
+                p = -p;
+        }
+    }
+    return {'pan': p, 'lowerdb': lowerdb, 'kmh_diff': kmh_diff, 'diff': diff};
+}
 
 class Log {
     constructor(app) {
@@ -1188,12 +1226,13 @@ class App {
             const lower = Math.min(signs.SpeedSign.speed_channel.lower, ...this.signs.map(s => s.lower));
             smoothie.upperbound.append(ctime, upper);
             smoothie.lowerbound.append(ctime, lower);
-            let feedback = 0;
-            if (kmh > upper)
-                feedback = kmh - upper;
-            else if (kmh < lower)
-                feedback = kmh - lower;
-            smoothie.speed_feedback.append(ctime, -feedback);
+            const feedback = panning_feedback(kmh, upper, lower);
+            smoothie.speed_feedback.append(ctime, feedback.pan);
+            smoothie.lowerdb.append(ctime, feedback.lowerdb);
+            if (this.osc_port) {
+                this.osc_port.send_float('/panning', feedback.pan, true);
+                this.osc_port.send_float('/lowerdb', feedback.lowerdb, true);
+            }
             smoothie.zero_line.append(ctime, 0);
         }
         car_stats.add('street position', street_position);
