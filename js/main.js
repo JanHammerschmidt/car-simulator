@@ -546,13 +546,21 @@ class App {
         this.fedis = {'1': 'slurp', '2': 'pitch', '3': 'grain'};
         this.sound_modus = '0';
 
-        mbind('h', () => { osc_port.call('/honk'); });
-        mbind('p', () => { osc_port.call('/stopEngine'); });
+        // mbind('h', () => { osc_port.call('/honk'); });
+        //mbind('p', () => { osc_port.call('/stopEngine'); });
+        mbind('p', () => { 
+            this.do_panning = !this.do_panning;
+            if (!this.do_panning) {
+                this.osc_port.send_float('/panning', 0);
+                this.osc_port.send_float('/lowerdb', 0);                
+            }
+        });
+
         mbind(['0', '1', '2', '3'], e => {
             this.set_sound_modus(e.key);
         });
-        mbind('shift+g shift+p', () => { osc_port.call('/grain_toggle_pitch'); });
-        mbind('shift+c', () => { osc_port.call('/show_controls'); });
+        // mbind('shift+g shift+p', () => { osc_port.call('/grain_toggle_pitch'); });
+        // mbind('shift+c', () => { osc_port.call('/show_controls'); });
         $(() => {            
             window.addEventListener('unload', () => {
                 this.set_sound_modus('0');
@@ -1230,7 +1238,7 @@ class App {
             const feedback = panning_feedback(kmh, upper, lower);
             smoothie.speed_feedback.append(ctime, feedback.pan);
             smoothie.lowerdb.append(ctime, feedback.lowerdb);
-            if (this.osc_port) {
+            if (this.osc_port && this.do_panning) {
                 this.osc_port.send_float('/panning', feedback.pan, true);
                 this.osc_port.send_float('/lowerdb', feedback.lowerdb, true);
             }
