@@ -1149,7 +1149,7 @@ class App {
             this.rpm_needle.rotation.z = this.rpm0 + this.rpm_slope * car2d.engine.rpm();
         if (this.started && this.osc_port) {
             this.osc_port.send_float('/rpm', 0.05 + car2d.engine.rel_rpm() * 0.7, true);
-            this.osc_port.send_float('/L_100km', car2d.consumption_monitor.liters_per_100km_cont, true);
+            // this.osc_port.send_float('/L_100km', car2d.consumption_monitor.liters_per_100km_cont, true);
         }        
 
         car_model.rotation.y = -car2d.heading;

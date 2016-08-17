@@ -55,8 +55,8 @@ class ConsumptionMonitor {
 		this.tick_counter += dt * liter_s;
 		if (this.tick_counter >= this.l_per_tick) {
 			this.tick_counter -= this.l_per_tick;
-			if (window.osc_port)
-				window.osc_port.send_float('/consumption_tick', this.liters_per_100km_cont);
+			// if (window.osc_port)
+			// 	window.osc_port.send_float('/consumption_tick', this.liters_per_100km_cont);
 		}
 	}
 	reset() {
