@@ -537,7 +537,8 @@ class App {
             url: "ws://localhost:8081"
         });
         osc_port.on('open', () => {
-            osc_port.send_float('/startEngine', 0);
+            osc_port.call('/startEngine', 0);
+            osc_port.call('/startRadio')
             this.osc_port = osc_port;
             window.osc_port = osc_port;
         });
@@ -564,7 +565,8 @@ class App {
         $(() => {            
             window.addEventListener('unload', () => {
                 this.set_sound_modus('0');
-                osc_port.send_float('/stopEngine', 0);
+                osc_port.call('/stopEngine');
+                osc_port.call('/stopRadio');
                 // osc_port.close();
             });
         });
