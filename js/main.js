@@ -543,7 +543,7 @@ class App {
             url: "ws://localhost:8081"
         });
         osc_port.on('open', () => {
-            osc_port.call('/startEngine', 0);
+            osc_port.call('/startEngine');
             osc_port.call('/startRadio')
             this.osc_port = osc_port;
             window.osc_port = osc_port;
@@ -590,8 +590,8 @@ class App {
     }
     toggle_fedi(c, enable) {
         const fedi = this.fedis[c];
-        if (fedi)
-            this.osc_port.call('/'+fedi+ '_' + (enable ? 'start' : 'stop'));
+        // if (fedi)
+        //     this.osc_port.call('/'+fedi+ '_' + (enable ? 'start' : 'stop'));
     }
 
     init_chase_cam() {

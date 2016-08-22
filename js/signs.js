@@ -175,8 +175,8 @@ class StopSign extends THREE.Object3D {
                     this.limit = this.lower = DEF_SPEED_LIMIT;
                 }
                 else if (d < 0) {
-                    if (window.osc_port)
-                        window.osc_port.call('/flash');                
+                    // if (window.osc_port)
+                    //     window.osc_port.call('/flash');                
                     console.log("stop sign: überfahren! :o");
                     this.state = 3;
                     this.limit = this.lower = DEF_SPEED_LIMIT;
@@ -279,8 +279,8 @@ class TrafficLight extends THREE.Object3D {
         this.lower = Math.max(0, (d-5) * DECELERATION);
         if (d < 0) {
             // console.assert(this.state != 2); // should not be red (w/o pending..)
-            if (window.osc_port)
-                window.osc_port.call('/flash');            
+            // if (window.osc_port)
+            //     window.osc_port.call('/flash');            
             console.log("traffic light überfahren :o");
             app.log.add_event('running over traffic light');
             this.reset(kmh);            
