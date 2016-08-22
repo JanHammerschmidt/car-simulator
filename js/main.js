@@ -22,7 +22,8 @@ const cfg_debug = {
     show_buildings: false,
     smooth_terrain: false,
     hq_street: false,
-    show_car: false
+    show_car: false,
+    framerate_limit_when_unfocused: true
 }
 const cfg_vr = { //eslint-disable-line
     do_vr: true,
@@ -32,7 +33,8 @@ const cfg_vr = { //eslint-disable-line
     show_buildings: true,
     smooth_terrain: true,
     hq_street: true,
-    show_car: true
+    show_car: true,
+    framerate_limit_when_unfocused: false
 }
 const cfg = window.cfg = Object.assign(cfg_base, cfg_vr);
 
@@ -334,8 +336,10 @@ class App {
         requestAnimationFrame(this.animate.bind(this));
 
         this.active = true;
-        $(window).focus(() => { this.active = true; });
-        $(window).blur(() => { this.active = false; });
+        if (cfg.framerate_limit_when_unfocused) {
+            $(window).focus(() => { this.active = true; });
+            $(window).blur(() => { this.active = false; });
+        }
 
         if (cfg.smooth_terrain)
             this.terrain.smooth(10, d2 => Math.exp(-d2 * 0.002), 0.02, this.street.lut, 400);
