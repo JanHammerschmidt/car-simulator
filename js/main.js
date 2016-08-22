@@ -310,6 +310,7 @@ class App {
         this.init_car();
         this.streets = [];
         this.init_street();
+        this.do_panning = false;
 
         signs.TrafficLight.load_model();
         signs.StopSign.load_model();
@@ -557,6 +558,7 @@ class App {
         //mbind('p', () => { osc_port.call('/stopEngine'); });
         mbind('p', () => { 
             this.do_panning = !this.do_panning;
+            console.log('panning', this.do_panning);
             if (!this.do_panning) {
                 this.osc_port.send_float('/panning', 0);
                 this.osc_port.send_float('/lowerdb', 0);                
@@ -1152,6 +1154,7 @@ class App {
                 this.save_log = () => {
                     console.log("sending " + this.log.items.length + " items and " + this.log.events.length + " events");
                     const s = this.log_websocket;
+                    this.log.panning_condition = this.do_panning;
                     s.send(JSON.stringify(this.log));
                 };
                 this.gui.add(this, 'save_log');
