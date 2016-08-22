@@ -25,7 +25,7 @@ var wingman_input = {
             wingman_input.prev_timestamp = dev.timestamp;
             var steering = -dev.axes[0];
             var accel = -dev.axes[1];
-            if (accel > 0 && accel < 0.004)
+            if (accel > 0 && accel < 0.2)
                 accel = 0;
             if (steering > 0 && steering < 0.05)
                 steering = 0;
