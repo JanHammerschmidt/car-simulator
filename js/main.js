@@ -636,7 +636,6 @@ class App {
         this.camera_first_person_object = new THREE.Object3D();
         if (cfg.use_audi) {
             const m = cfg.car_scale;
-            this.camera_first_person_object.position.set(m*0.53, m*1.8, m*-0.4);
         } else
             this.camera_first_person_object.position.set(0.37, 1.36, 0.09);
         this.car_model_slope.add(this.camera_first_person_object);
