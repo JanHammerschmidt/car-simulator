@@ -564,6 +564,7 @@ class App {
                 this.osc_port.send_float('/lowerdb', 0);                
             }
         });
+        mbind('k', () => {this.stop_sound()});
 
         mbind(['0', '1', '2', '3'], e => {
             this.set_sound_modus(e.key);
@@ -572,12 +573,18 @@ class App {
         // mbind('shift+c', () => { osc_port.call('/show_controls'); });
         $(() => {            
             window.addEventListener('unload', () => {
-                this.set_sound_modus('0');
-                osc_port.call('/stopEngine');
-                osc_port.call('/stopRadio');
-                // osc_port.close();
+                this.stop_sound();
             });
         });
+    }
+
+    stop_sound() {
+        if (this.osc_port) {
+            this.set_sound_modus('0');
+            this.osc_port.call('/stopEngine');
+            this.osc_port.call('/stopRadio');
+            this.osc_port.close();
+        }
     }
 
     set_sound_modus(c) {
