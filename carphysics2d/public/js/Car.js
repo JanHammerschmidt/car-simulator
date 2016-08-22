@@ -4,6 +4,7 @@ var Vec2 = require('./Vec2.js');
 require('script!./GMath.js');
 var InputState = require('./InputState.js');
 const misc = require('../../../js/misc.js');
+const smoothie = require('../../../bower_components/smoothie/smoothie.js');
 
 "use strict";
 
@@ -378,6 +379,7 @@ Car.prototype.tick = function(dt) {
 	this.gearbox.auto_clutch_control(this);
 	this.engine.update_torque(this.gearbox.gear_change() ? 0 : this.inputs.throttle);
 	var F = this.gearbox.torque2force_engine2wheels(this.engine, this, this.speed, dt);
+	// smoothie.speed.append(new Date().getTime(), F);
 	const uphill_resistance = this.config.mass * this.config.gravity * Math.sin(this.alpha);
 	// this.stats.add('alpha', this.alpha);
 	this.stats.add('uphill resistance', uphill_resistance);
@@ -475,7 +477,7 @@ Car.prototype.doPhysics = function( dt )
 
 	// var
 	const rollResist_cx = cfg.rollResist *  Math.cos(this.alpha) * cfg.mass * cfg.gravity; // -cfg.rollResist * this.velocity_c.x
-	const rollResist_cy = rollResist_cx; // this must be much higher, of course!
+	const rollResist_cy = rollResist_cx; // TODO: this must be much higher, of course!
 	const airResist_cx = cfg.airResist * this.velocity_c.x * Math.abs(this.velocity_c.x);
 	const airResist_cy = cfg.airResist * this.velocity_c.y * Math.abs(this.velocity_c.y);
 	var dragForce_cx =  -rollResist_cx - airResist_cx;

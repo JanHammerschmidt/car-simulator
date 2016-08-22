@@ -636,6 +636,8 @@ class App {
         this.camera_first_person_object = new THREE.Object3D();
         if (cfg.use_audi) {
             const m = cfg.car_scale;
+            //this.camera_first_person_object.position.set(m*0.53, m*1.8, m*-0.4);
+            this.camera_first_person_object.position.set(m*0.53, m*1.9, m*-0.33);
         } else
             this.camera_first_person_object.position.set(0.37, 1.36, 0.09);
         this.car_model_slope.add(this.camera_first_person_object);
@@ -704,7 +706,7 @@ class App {
             controls = new THREE.FirstPersonControls2(camera, renderer.domElement, false);
             controls.lookSpeed = 0.2;
             controls.lookVertical = true;
-            // scene.helper_objects.add(new THREE.CameraHelper(camera));
+            scene.helper_objects.add(new THREE.CameraHelper(camera));
         }
         this.camera_first_person_object.add(camera);        
 
@@ -1124,11 +1126,11 @@ class App {
     }
 
     animate(time) {
-        this.animates = this.animates || 0;
-        if (this.animates < 1) {
-            console.log('animation frame', this.animates+1);
-            this.animates++;
-        }
+        // this.animates = this.animates || 0;
+        // if (this.animates < 1) {
+        //     console.log('animation frame', this.animates+1);
+        //     this.animates++;
+        // }
         if (this.stop_switch)
             return;
 
@@ -1291,7 +1293,7 @@ class App {
         for (var i = this.animations.length-1; i >= 0; i--) {
             if (this.animations[i].tick(dt))
                 this.animations.splice(i, 1);
-        } 
+        }
 
         if (car_model && this.camera == "chase_cam") //"chase_cam" in this.cameras)
             this.cameras["chase_cam"][1].tick(car_model.position, new THREE.Quaternion().multiplyQuaternions(car_model.quaternion, car_model_slope.quaternion), dt);
