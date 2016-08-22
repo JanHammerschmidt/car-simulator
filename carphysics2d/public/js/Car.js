@@ -391,6 +391,19 @@ Car.prototype.tick = function(dt) {
 	this.engine_force = F;
 }
 
+Car.prototype.auto_gear_change = function() {
+	const gearbox = this.gearbox;
+	if (gearbox.t < 0.5)
+		return;
+	const ngears = gearbox.gears.length;
+	const gear = gearbox.gear;
+	const rpm = this.engine.rpm();
+	if (rpm > 3000 && gear < ngears-1)
+		gearbox.gear_up();
+	else if (rpm < 1200 && gear > 0)
+		gearbox.gear_down(); 
+}
+
 
 
 /**

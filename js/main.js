@@ -403,6 +403,8 @@ class App {
             mbind('space', throw_pokeball);
             wingman_input.add_button_mapping(0, throw_pokeball);
             wingman_input.add_button_mapping(1, throw_pokeball);
+            wingman_input.add_button_mapping(4, throw_pokeball);
+            wingman_input.add_button_mapping(5, throw_pokeball);
         });
         const files = ['025Pikachu_OS_anime_5', '007Squirtle_AG_anime', '133Eevee_AG_anime', '393Piplup_DP_anime_3', '001Bulbasaur_AG_anime'];
         const textureLoader = new THREE.TextureLoader();
@@ -880,10 +882,10 @@ class App {
                 }
             });
         this.car2d.config_panel = new ConfigPanel(this.car2d);
-        mbind('r', () => this.car2d.gearbox.gear_up() );
-        wingman_input.add_button_mapping(5, () => this.car2d.gearbox.gear_up() );
-        mbind('f', () => this.car2d.gearbox.gear_down() );
-        wingman_input.add_button_mapping(4, () => this.car2d.gearbox.gear_down() );
+        //mbind('r', () => this.car2d.gearbox.gear_up() );
+        //wingman_input.add_button_mapping(5, () => this.car2d.gearbox.gear_up() );
+        //mbind('f', () => this.car2d.gearbox.gear_down() );
+        //wingman_input.add_button_mapping(4, () => this.car2d.gearbox.gear_down() );
         mbind('shift+f', () => this.car2d.engine.max_torque = 600 );
         mbind('ctrl+shift+f', () => this.car2d.engine.max_torque = 2000 );
         setInterval(() => {
@@ -1155,6 +1157,7 @@ class App {
             var log_item = new LogItem(dt, inputs.throttle, inputs.brake, car2d.gearbox.gear);
         }
         car2d.update(dt * 1000);
+        car2d.auto_gear_change();
 
         this.speedometer_needle.rotation.z = this.speedometer_z10kmh + this.speedometer_kmh_slope * (Math.max(car2d.kmh(), 0) - 10);
         if (cfg.use_audi)
