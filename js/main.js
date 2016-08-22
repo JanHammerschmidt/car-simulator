@@ -808,6 +808,7 @@ class App {
     }
 
     place_sign(sign, t, gui_folder) {
+        sign.pos = t * this.street_length;
         const street = this.street;
         const street_bezier = street.poly_bezier;
         const p = new THREE.Vector2().copy(street_bezier.get(t));
