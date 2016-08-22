@@ -21,14 +21,16 @@ todo
     OK: get oculus running
     OK: impl. panning
     OK: check (unfreiwilliges) rückwärts fahren
-    0) oculus "eye" tracking
-    0) track erstellen für panning-studie
-    0) reagieren auf geschwindigkeitsänderungen => panning
-        - erstmal nur zu schnell!
-    1) ende der strecke
+    OK: oculus "eye" tracking
+    OK: track erstellen für panning-studie
+    OK: reagieren auf geschwindigkeitsänderungen => panning
+    OK: ende der strecke
+    !! VP-Gelder beantragen
+    - Oculus Cover
 
     2) dist-mult kleiner / dauer der strecke messen
     2) L/100km Darstellung
+        http://learningthreejs.com/blog/2014/05/02/easy-to-use-dynamic-texture-to-write-text-in-your-3d-object-with-threex-dot-dynamictexture-game-extensions-for-three-dot-js/
     2) motor-sound
     2) schöne speeding/stop-sign/traffic lights notifications
     2) too slow notifications?
@@ -37,7 +39,7 @@ todo
     3) Avatar (Beine)
     3) re-check rpm/speedometer mappings
     OK: check visual studio code
-    3) trackeditor?
+    OK: trackeditor?
     3) change based on vp_id / durchs experiment führen ..
     3) kreuzungen textur?
     3) fpstimer
@@ -48,4 +50,5 @@ todo
     3) http://stackoverflow.com/questions/4978323/how-to-calculate-distance-between-two-rectangles-context-a-game-in-lua
     OK: check out zsh+prezto(oder oh-my-zsh) / fish
     OK: check out iterm2
+    4) typescript ausprobieren: https://code.visualstudio.com/docs/languages/typescript
     4) osm2world nochmal abchecken
