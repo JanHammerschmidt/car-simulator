@@ -117,10 +117,10 @@ $('body').append(require('html!../carphysics2d/public/js/car_config.html'));
 
 function panning_feedback(kmh, upper, lower) {
     const neutral_kmh = 70;
-    const alpha = 0.5;
+    const alpha = 0.8;
     const tolerance = {'upper': 3, 'lower': 5};
-    const lowerdb_scale = {'upper': 35, 'lower': 35};
-    const weighting = (diff,limit,tol) => Math.max(0, (alpha * diff + (1-alpha) * diff/upper * neutral_kmh) - tol);
+    const lowerdb_scale = {'upper': 25, 'lower': 25};
+    const weighting = (diff,limit,tol) => Math.max(0, (alpha * diff + (1-alpha) * diff/limit * neutral_kmh) - tol);
 
     let kmh_diff = 0; // simple kmh diff
     let diff = 0; // weighted kmh diff, considering tolerances
