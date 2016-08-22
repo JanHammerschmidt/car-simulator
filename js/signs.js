@@ -10,7 +10,8 @@ const TOO_FAST_TOLERANCE_OFFSET = 10;
 const COOLDOWN_TIME_SPEEDING = 10000;
 
 const DEF_SPEED_LIMIT = 200;
-const BRAKING = 1; // kmh per meter
+const BRAKING = 0.8; // kmh per meter
+//const BRAKING_TRAFFIC_LIGHT = 1;
 const DECELERATION = 0.1; // [kmh/m]
 
 class CurrentSign {
