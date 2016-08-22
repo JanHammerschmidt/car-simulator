@@ -249,7 +249,7 @@ class TrafficLight extends THREE.Object3D {
         });
     }
     trigger_back() {
-        delay(10000).then(() => {
+        delay(15000).then(() => {
             console.log("traffic light trigger back");        
             this.set_state(1);
             return delay(1000);
