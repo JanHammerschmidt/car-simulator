@@ -97,7 +97,7 @@ class SpeedSign extends THREE.Object3D {
             const d = v.next.pos - cur_pos;
             //smoothie.speed.append(new Date().getTime(), d);
             if (d < v.trigger_dist && Math.abs(d - v.trigger_dist) < 50) {
-                console.log("speed limit: " + v.next.speed_limit + " kmh");
+                //console.log("speed limit: " + v.next.speed_limit + " kmh");
                 v.limit = v.next.speed_limit * (1+TOO_FAST_TOLERANCE) + TOO_FAST_TOLERANCE_OFFSET; // apply speed limit from next sign
                 v.next_i++;
                 SpeedSign.violation_set_next_sign();
@@ -120,7 +120,7 @@ class SpeedSign extends THREE.Object3D {
             if (d <= 0 && d > -50) {
                 c.prev_limit = c.current ? c.current.speed_limit : kmh;
                 c.limit = c.next.speed_limit;
-                console.log("speed: next sign:", c.limit);
+                //console.log("speed: next sign:", c.limit);
                 c.next_i++;
                 c.set_next_sign();
             } else if (d >= 0) {

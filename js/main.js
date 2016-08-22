@@ -261,7 +261,7 @@ function add_light(obj, name, x,y,z, gui, intensity, distance, decay, light_fact
 	light_factory = light_factory || ((c,i,d,dc) => new THREE.PointLight(c,i,d,dc));
 	var light = light_factory(0xffffff, intensity, distance, decay);
 	light.position.set(x,y,z);
-    if (gui) {
+    if (gui && false) {
         var lf = gui.addFolder(name);
         lf.addxyz(light.position, 0.1);
         lf.addnum(light, 'intensity');
@@ -299,12 +299,12 @@ class App {
         scene.fog = new THREE.FogExp2(0xd0e0f0, 0.0025);
 
         const light = new THREE.HemisphereLight(0xfffff0, 0x101020, 1.25);
-        const f = this.gui.addFolder('hemisphere light');
-        f.addcolor(light, 'color');
-        f.addColor(light, 'groundColor');
-        f.addnum(light, 'intensity');
+        // const f = this.gui.addFolder('hemisphere light');
+        // f.addcolor(light, 'color');
+        // f.addColor(light, 'groundColor');
+        // f.addnum(light, 'intensity');
         light.position.set(0.75, 1, 0.25);
-        f.addxyz(light.position);
+        // f.addxyz(light.position);
         scene.add(light);
 
         this.init_car();
@@ -350,7 +350,7 @@ class App {
         this.terrain.smooth_terrain = () => {
             this.terrain.smooth(10, d2 => Math.exp(-d2 * 0.002), 0.02, this.street.lut, 200);
         };
-        this.gui.add(this.terrain, 'smooth_terrain');
+        //this.gui.add(this.terrain, 'smooth_terrain');
 
         if (!cfg.random_street)
             this.place_signs();
@@ -772,8 +772,8 @@ class App {
         const track = track_study_1;
         this.street = new Street();
         this.street.position.y = track.street_above_ground;
-        var f = this.gui.addFolder('street position');
-        f.addnum(this.street.position, 'y');
+        // var f = this.gui.addFolder('street position');
+        // f.addnum(this.street.position, 'y');
         this.street.create_road(cfg.random_street);
         this.street_length = this.street.poly_bezier.total_length;
         console.log("street length", this.street_length);
@@ -943,7 +943,7 @@ class App {
 
         if (cfg.use_audi) {
             if (cfg.use_more_lights) {
-                const gf = this.gui.addFolder('car lights');
+                const gf = null; //this.gui.addFolder('car lights');
                 add_light(this.car_model_slope, 'inside', 0.26,2.08,0.3, gf, 0.65, 5, 0.5);
                 add_light(this.car_model_slope, 'left', 0.95,1.88,-0.4, gf, 0.56, 5, 0.5);
                 add_light(this.car_model_slope, 'right', -0.95,1.99,-0.4, gf, 0.56, 5, 0.5);
