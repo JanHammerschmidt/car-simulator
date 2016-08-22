@@ -1130,6 +1130,8 @@ class App {
             console.log('animation frame', this.animates+1);
             this.animates++;
         }
+        if (this.stop_switch)
+            return;
 
         if (time === undefined)
             time = performance.now()
