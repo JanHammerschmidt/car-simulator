@@ -311,6 +311,7 @@ class App {
         this.streets = [];
         this.init_street();
         this.do_panning = false;
+        this.m_driven_total = 0;
 
         signs.TrafficLight.load_model();
         signs.StopSign.load_model();
@@ -360,8 +361,23 @@ class App {
             plog('city geometry loaded');
         }
         this.log = new Log(this);
+        //this.gui.add(this, 'save_log_and_stop');
 
         this.gui.close();
+    }
+
+    save_log_and_stop() {
+        this.stop_switch = true;
+        this.save_log();
+        this.stop_sound();
+    }
+
+    stop_handler(m_driven, street_pos) {
+        this.m_driven_total += m_driven;
+        if (this.m_driven_total > 3 * this.street_length && street_pos > 2) {
+            console.log('STOP STOP STOP!!');
+            this.save_log_and_stop();
+        }
     }
 
     init_distractions() {
@@ -1314,6 +1330,7 @@ class App {
             log_item.camera([p0.toArray(), p1.toArray()]);
             this.log.items.push(log_item);
             this.log.tick();
+            this.stop_handler(m_driven, street_position);
         }        
 
         this.last_time = time;
