@@ -582,9 +582,9 @@ class App {
         });
         mbind('k', () => {this.stop_sound()});
 
-        mbind(['0', '1', '2', '3'], e => {
-            this.set_sound_modus(e.key);
-        });
+        // mbind(['0', '1', '2', '3'], e => {
+        //     this.set_sound_modus(e.key);
+        // });
         // mbind('shift+g shift+p', () => { osc_port.call('/grain_toggle_pitch'); });
         // mbind('shift+c', () => { osc_port.call('/show_controls'); });
         $(() => {            
