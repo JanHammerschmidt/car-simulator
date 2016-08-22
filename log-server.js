@@ -32,7 +32,7 @@ socket.on('connection', function(conn) {
             }
         } else {
             if (!filename) {
-                filename = "logs/last/" + moment().format('YYYY-MM-DD_hh.mm.ss');
+                filename = "logs/last/" + moment().format('YYYY-MM-DD_HH.mm.ss');
                 console.log("error: no filename provided => using: " + filename);
             }
             // if (filename.search('msgpack')) {
