@@ -115,7 +115,9 @@ class SpeedSign extends THREE.Object3D {
         // const t = cur_pos - (c.current ? c.current.pos : 0); // how much traveled since last sign
         c.lower = Math.min(c.current ? c.current.speed_limit : c.next.speed_limit, c.lower + acceleration(dt, c.lower));
         if (c.next) {
-            const d = c.next.pos - cur_pos; // how much until next sign
+            let d = c.next.pos - cur_pos; // how much until next sign
+            if (d < -10)
+                d += app.street_length;
             c.lower = Math.min(c.lower, c.next.speed_limit + DECELERATION * Math.max(d, 0));
             if (d <= 0 && d > -50) {
                 c.prev_limit = c.current ? c.current.speed_limit : kmh;
