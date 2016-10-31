@@ -12,10 +12,10 @@ const cfg_base = {
     do_logging: true,
     do_sound: true,
     signs_scale: 0.625,
-    signs_dist_mult: 0.6
+    signs_dist_mult: 0.6,
+    do_vr: false
 }
-const cfg_debug = {
-    do_vr: false,
+const cfg_debug = { //eslint-disable-line
     antialias: false,
     use_more_lights: false,
     show_terrain: true,
@@ -25,8 +25,17 @@ const cfg_debug = {
     show_car: false,
     framerate_limit_when_unfocused: true
 }
-const cfg_vr = { //eslint-disable-line
-    do_vr: true,
+const cfg_lightweight = { //eslint-disable-line
+    antialias: false,
+    use_more_lights: true,
+    show_terrain: true,
+    show_buildings: true,
+    smooth_terrain: true,
+    hq_street: false,
+    show_car: true,
+    framerate_limit_when_unfocused: true    
+}
+const cfg_production = { //eslint-disable-line
     antialias: true,
     use_more_lights: true,
     show_terrain: true,
@@ -36,7 +45,10 @@ const cfg_vr = { //eslint-disable-line
     show_car: true,
     framerate_limit_when_unfocused: false
 }
-const cfg = window.cfg = Object.assign(cfg_base, cfg_vr);
+const cfg_vr = { //eslint-disable-line
+    do_vr: true
+}
+const cfg = window.cfg = Object.assign(cfg_base, cfg_lightweight);
 
 const mousetrap = require('mousetrap');
 // https://jsfiddle.net/9f6j76dL/1/
@@ -175,7 +187,7 @@ class LogItem extends Array {
     }
     speed(v) {this[4] = v}
     track_deviation(v) {this[5] = v}
-    track_position(v) {this[6] = v}
+    track_position(v) {this[6] = v} // todo: absolute position!
     rpm(v) {this[7] = v}
     consumption(v) {this[8] = v}
     total_consumption(v) {this[9] = v}
