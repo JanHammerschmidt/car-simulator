@@ -1,10 +1,10 @@
-
+eval/*
 node_modules/*
 bower_components/*
 textures/*
 OculusCar/*
 models/*
-\#examples\ &\ tutorials/*
+\#examples\ &\ tutorials*
 js/lib*
 \#old/*
 *.json
@@ -13,8 +13,9 @@ carphysics2d/*
 *old*/*
 typings/*
 logs/*
+*.wav
 
-webpack/bundle*
+webpack/*
 
 .DS_Store
 media/*
