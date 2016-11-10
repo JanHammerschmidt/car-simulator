@@ -9,8 +9,9 @@ const cfg_base = {
     car_scale: 1/1.6,
     force_on_street: true,
     use_audi: true,
+    connect_to_logserver: true,
     do_logging: true,
-    do_sound: true,
+    do_sound: false,
     signs_scale: 0.625,
     signs_dist_mult: 0.6,
     do_vr: false,
@@ -19,7 +20,7 @@ const cfg_base = {
 const cfg_debug = { //eslint-disable-line
     antialias: false,
     use_more_lights: false,
-    show_terrain: true,
+    show_terrain: false,
     show_buildings: false,
     smooth_terrain: false,
     hq_street: false,
@@ -44,12 +45,13 @@ const cfg_production = { //eslint-disable-line
     smooth_terrain: true,
     hq_street: true,
     show_car: true,
-    framerate_limit_when_unfocused: false
+    framerate_limit_when_unfocused: false,
+    do_logging: true
 }
 const cfg_vr = { //eslint-disable-line
     do_vr: true
 }
-const cfg = window.cfg = Object.assign(cfg_base, cfg_lightweight);
+const cfg = window.cfg = Object.assign(cfg_base, cfg_debug);
 
 const mousetrap = require('mousetrap');
 // https://jsfiddle.net/9f6j76dL/1/
@@ -71,7 +73,7 @@ if (cfg.do_vr) {
     require('script!../node_modules/three/examples/js/effects/VREffect.js');
     require('script!../node_modules/three/examples/js/controls/VRControls.js');
 }
-if (cfg.do_logging)
+if (cfg.connect_to_logserver)
     require('script!../bower_components/sockjs-client/dist/sockjs.js');
 
 require("../node_modules/three/examples/js/loaders/MTLLoader.js");
@@ -196,6 +198,7 @@ class LogItem extends Array {
     total_consumption(v) {this[9] = v}
     camera(v) {this[10] = v}
     acceleration(v) {this[11] = v}
+    steering(v) {this[12] = v}
 }
 
 // renderer.shadowMap.enabled = true;
@@ -292,9 +295,11 @@ class App {
         plog("App entry point");
         window.init_threejs({antialias: cfg.antialias});
 
-        if (cfg.do_logging) {
+        if (cfg.connect_to_logserver) {
             this.log_websocket = new SockJS('http://localhost:9999/log-server'); // eslint-disable-line
-            this.log_websocket.onopen = () => console.log('connected to log-server');
+            this.log_websocket.onopen = () => {
+                console.log('connected to log-server');
+            }
             this.log_websocket.onclose = () => {
                 // console.log('disconnected from log-server!');
                 this.error = 'disconnected from log-server!'; 
@@ -302,6 +307,7 @@ class App {
                 this.gui.open();
             }
         }
+        this.log_replay = false;
         this.animations = [];
         this.cameras = {};
         scene.helper_objects = new THREE.Object3D();
@@ -377,8 +383,9 @@ class App {
         }
         this.log = new Log(this);
         //this.gui.add(this, 'save_log_and_stop');
+        this.gui.add(this, 'load_log');
 
-        this.gui.close();
+        //this.gui.close();
     }
 
     save_log_and_stop() {
@@ -1140,27 +1147,65 @@ class App {
         return c;
     }
 
-    animate(time) {
-        // this.animates = this.animates || 0;
-        // if (this.animates < 1) {
-        //     console.log('animation frame', this.animates+1);
-        //     this.animates++;
-        // }
-        if (this.stop_switch)
-            return;
+    load_log() {
+        this.log_websocket.onmessage = msg => {
+            cfg.do_logging = false;
+            var replay = {
+                log: JSON.parse(msg.data),
+                init: () => {
+                    replay.arrow = new THREE.ArrowHelper(new THREE.Vector3(0,0,1), new THREE.Vector3(200,1,100), 4);
+                    scene.add(replay.arrow);
+                    replay.speed_mult = 1.0; 
+                },
+                frame: 0,
+                framepos: 0,
+                frame_skip: 0,
+                advance_frame: play => {
+                    const d = replay.log.items[replay.frame];
+                    const inputs = this.car2d.inputs;
+                    inputs.throttle = d[1];
+                    inputs.brake = d[2];
+                    inputs.steering = 0; // !!
+                    this.advance_frame(d[0]);
+                    replay.frame++;
+                },
+                advance_frame_view_only: play => {
+                    replay.set_frame_view_only(replay.frame);
+                    replay.frame += 1 + Math.round(replay.frame_skip);
+                    if (play && replay.frame < replay.log.items.length) {
+                        setTimeout(replay.advance_frame_view_only.bind(this, true), 
+                            replay.log.items[replay.frame][0] * 1000 * replay.speed_mult
+                        );
+                    }
+                },
+                set_frame_view_only: frame => {
+                    const d = replay.log.items[frame];
+                    // debugger;
+                    const p0 = new THREE.Vector3(...d[10][0]);
+                    const p1 = new THREE.Vector3(...d[10][1]);
+                    const dir = p1.sub(p0).normalize();
+                    replay.arrow.position.copy(p0);
+                    replay.arrow.setDirection(dir);
+                    this.car_model.rotation.y = Math.atan2(dir.x, dir.z);
+                    this.car_model.position.x = p0.x;
+                    this.car_model.position.z = p0.z;
+                },
+                play: () => { replay.advance_frame_view_only(true); }
+            };
+            replay.init();
+            this.gui.add(replay, 'advance_frame_view_only');
+            this.gui.add(replay, 'play');
+            this.gui.add(replay, 'framepos', 0, 1.0).onChange(v => {
+                replay.set_frame_view_only(Math.round(v * (replay.log.items.length-1)));
+            });
+            this.gui.add(replay, 'speed_mult', 0, 1.0);
+            this.gui.add(replay, 'frame_skip', 0, 10);
+            this.log_replay = true;
+        };
+        this.log_websocket.send('__loadLog');
+    }
 
-        if (time === undefined)
-            time = performance.now()
-        var dt = Math.max(time - this.last_time, 0) * 0.001;
-        if (dt <= 0) {
-            requestAnimationFrame(this.animate.bind(this));
-            return;
-        }
-        if (dt > 0.1) { // Timestep too large - max out at 1/10th of a second.
-            //console.log("warning: dt too high!", dt, "ms");
-            dt = 0.1;
-        }
-
+    advance_frame(dt) { // uses car2d.inputs!
         const car2d = this.car2d;
         const car_model = this.car_model;
         const car_model_slope = this.car_model_slope;
@@ -1168,43 +1213,6 @@ class App {
         const car_stats = this.car_stats;
         const inputs = car2d.inputs;
 
-        var accel = null,
-            steering = null;
-        if (keyboard_input.tick()) {
-            accel = keyboard_input.accel;
-            steering = keyboard_input.steering;
-        }
-        if (wingman_input.tick()) {
-            accel = wingman_input.accel;
-            steering = wingman_input.steering;
-        }
-        if (accel != null) {
-            // console.log('accel', accel, 'steering', steering);
-            if (accel > 0) {
-                inputs.throttle = accel;
-                inputs.brake = 0;
-            } else { // is braking
-                inputs.throttle = 0;
-                inputs.brake = -accel;
-            }
-            inputs.steering = steering;
-        }
-        if (!this.started && inputs.throttle > 0) {
-            this.started = true;
-            if (cfg.do_logging) {
-                console.log("starting logging")
-                this.save_log = () => {
-                    console.log("sending " + this.log.items.length + " items and " + this.log.events.length + " events");
-                    const s = this.log_websocket;
-                    this.log.panning_condition = this.do_panning;
-                    s.send(JSON.stringify(this.log));
-                };
-                this.gui.add(this, 'save_log');
-            }
-        }
-        if (cfg.do_logging && this.started) {
-            var log_item = new LogItem(dt, inputs.throttle, inputs.brake, car2d.gearbox.gear);
-        }
         car2d.update(dt * 1000);
         car2d.auto_gear_change();
 
@@ -1310,8 +1318,82 @@ class App {
                 this.animations.splice(i, 1);
         }
 
+        return {'kmh': kmh, 'dp': dp, 'street_position': street_position, 'm_driven': m_driven};
+    }
+
+    animate(time) {
+        // this.animates = this.animates || 0;
+        // if (this.animates < 1) {
+        //     console.log('animation frame', this.animates+1);
+        //     this.animates++;
+        // }
+        if (this.stop_switch)
+            return;
+
+        if (time === undefined)
+            time = performance.now()
+        var dt = Math.max(time - this.last_time, 0) * 0.001;
+        if (dt <= 0) {
+            requestAnimationFrame(this.animate.bind(this));
+            return;
+        }
+        if (dt > 0.1) { // Timestep too large - max out at 1/10th of a second.
+            //console.log("warning: dt too high!", dt, "ms");
+            dt = 0.1;
+        }
+        
+        const car2d = this.car2d;
+        const car_model = this.car_model;
+        const inputs = car2d.inputs;
+        let info = null;
+
+        if (!this.log_replay) {
+            // interactive user input
+            var accel = null,
+                steering = null;
+            if (keyboard_input.tick()) {
+                accel = keyboard_input.accel;
+                steering = keyboard_input.steering;
+            }
+            if (wingman_input.tick()) {
+                accel = wingman_input.accel;
+                steering = wingman_input.steering;
+            }
+            if (accel != null) {
+                // console.log('accel', accel, 'steering', steering);
+                if (accel > 0) {
+                    inputs.throttle = accel;
+                    inputs.brake = 0;
+                } else { // is braking
+                    inputs.throttle = 0;
+                    inputs.brake = -accel;
+                }
+                inputs.steering = steering;
+            }
+            // handle logging
+            if (!this.started && inputs.throttle > 0) {
+                this.started = true;
+                if (cfg.do_logging) {
+                    console.log("starting logging")
+                    this.save_log = () => {
+                        console.log("sending " + this.log.items.length + " items and " + this.log.events.length + " events");
+                        const s = this.log_websocket;
+                        this.log.panning_condition = this.do_panning;
+                        s.send(JSON.stringify(this.log));
+                    };
+                    this.gui.add(this, 'save_log');
+                }
+            }
+            if (cfg.do_logging && this.started) {
+                var log_item = new LogItem(dt, inputs.throttle, inputs.brake, car2d.gearbox.gear);
+                log_item.steering(inputs.steering);
+            }
+            info = this.advance_frame(dt);
+        }
+
+
         if (car_model && this.camera == "chase_cam") //"chase_cam" in this.cameras)
-            this.cameras["chase_cam"][1].tick(car_model.position, new THREE.Quaternion().multiplyQuaternions(car_model.quaternion, car_model_slope.quaternion), dt);
+            this.cameras["chase_cam"][1].tick(car_model.position, new THREE.Quaternion().multiplyQuaternions(car_model.quaternion, this.car_model_slope.quaternion), dt);
         if (this.camera == "fly_cam")
             this.cameras["fly_cam"][1].update(dt);
         if (this.camera == "orbit_cam")
@@ -1335,10 +1417,13 @@ class App {
         } else {
             renderer.render(scene, this.cameras[this.camera][0]);
         }
-        if (cfg.do_logging && this.started) {
-            log_item.speed(kmh);
-            log_item.track_deviation(dp);
-            log_item.track_position(street_position);
+        
+        // add more information to log-item
+        if (cfg.do_logging && this.started && !this.log_replay) {
+            debugger;
+            log_item.speed(info.kmh);
+            log_item.track_deviation(info.dp);
+            log_item.track_position(info.street_position);
             log_item.rpm(car2d.engine.rpm());
             log_item.consumption(car2d.consumption_monitor.liters_per_100km_cont);
             log_item.total_consumption(car2d.consumption_monitor.liters_used);
@@ -1349,7 +1434,7 @@ class App {
             log_item.camera([p0.toArray(), p1.toArray()]);
             this.log.items.push(log_item);
             this.log.tick();
-            this.stop_handler(m_driven, street_position);
+            this.stop_handler(info.m_driven, info.street_position);
         }        
 
         this.last_time = time;

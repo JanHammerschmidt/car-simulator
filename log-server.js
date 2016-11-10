@@ -30,6 +30,10 @@ socket.on('connection', function(conn) {
                 filename = msg.substring(14);
                 console.log('set filename to: ' + filename);
             }
+        } else if (msg.startsWith('__loadLog')) {
+            // filename = "logs/11/1-O/2016-08-18_17.50.56.json";
+            filename = "logs/3/1-O/2016-08-18_14.54.24.json";
+            conn.write(fs.readFileSync(filename));
         } else {
             if (!filename) {
                 filename = "logs/last/" + moment().format('YYYY-MM-DD_HH.mm.ss');
