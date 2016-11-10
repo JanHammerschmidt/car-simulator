@@ -13,7 +13,8 @@ const cfg_base = {
     do_sound: true,
     signs_scale: 0.625,
     signs_dist_mult: 0.6,
-    do_vr: false
+    do_vr: false,
+    do_smoothie: false
 }
 const cfg_debug = { //eslint-disable-line
     antialias: false,
@@ -88,19 +89,21 @@ smoothie.speed_feedback = new smoothie.TimeSeries();
 smoothie.zero_line = new smoothie.TimeSeries();
 smoothie.lowerdb = new smoothie.TimeSeries();
 
-$(() => {
-    let chart = new smoothie.SmoothieChart({interpolation:'linear'});
-    chart.addTimeSeries(smoothie.upperbound, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 1 });
-    chart.addTimeSeries(smoothie.lowerbound, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 1 });
-    chart.addTimeSeries(smoothie.speed, { strokeStyle: 'rgba(255, 255, 255, 1)', fillStyle: 'rgba(255, 255, 255, 0.2)', lineWidth: 1 });
-    chart.streamTo(document.getElementById("speed_display"), 0);
-    // smoothie.chart = chart;
-    chart = new smoothie.SmoothieChart({interpolation:'linear'});
-    chart.addTimeSeries(smoothie.speed_feedback, { strokeStyle: 'rgba(255, 255, 255, 1)', fillStyle: 'rgba(255, 255, 255, 0.2)', lineWidth: 1 });
-    chart.addTimeSeries(smoothie.lowerdb, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 1 });
-    chart.addTimeSeries(smoothie.zero_line, { strokeStyle: 'rgba(0, 0, 0, 1)', fillStyle: 'rgba(0, 0, 0, 0)', lineWidth: 2 });
-    chart.streamTo(document.getElementById("speed_feedback"), 0);
-});
+if (cfg.do_smoothie) {
+    $(() => {
+        let chart = new smoothie.SmoothieChart({interpolation:'linear'});
+        chart.addTimeSeries(smoothie.upperbound, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.2)', lineWidth: 1 });
+        chart.addTimeSeries(smoothie.lowerbound, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 1 });
+        chart.addTimeSeries(smoothie.speed, { strokeStyle: 'rgba(255, 255, 255, 1)', fillStyle: 'rgba(255, 255, 255, 0.2)', lineWidth: 1 });
+        chart.streamTo(document.getElementById("speed_display"), 0);
+        // smoothie.chart = chart;
+        chart = new smoothie.SmoothieChart({interpolation:'linear'});
+        chart.addTimeSeries(smoothie.speed_feedback, { strokeStyle: 'rgba(255, 255, 255, 1)', fillStyle: 'rgba(255, 255, 255, 0.2)', lineWidth: 1 });
+        chart.addTimeSeries(smoothie.lowerdb, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 1 });
+        chart.addTimeSeries(smoothie.zero_line, { strokeStyle: 'rgba(0, 0, 0, 1)', fillStyle: 'rgba(0, 0, 0, 0)', lineWidth: 2 });
+        chart.streamTo(document.getElementById("speed_feedback"), 0);
+    });
+}
 
 let chase_cam = require("./cam_controls.js").chase_cam;
 let input = require('./wingman_input.js');
