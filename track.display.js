@@ -7,6 +7,15 @@ dat.GUI.prototype.clearFolders = function() {
   this.onResize();
 }
 
+dat.GUI.prototype.addnum = function(object, prop, prec) {
+    var prev = object[prop];
+    object[prop] = prec || 0.1;
+    const r = this.add(object, prop);
+    object[prop] = prev;
+    this.__controllers[this.__controllers.length - 1].updateDisplay();
+    return r;
+}
+
 $(function() {
   var canvas = document.getElementById('tutorial');
   if (canvas.getContext){
@@ -29,6 +38,7 @@ $(function() {
     // gui.add(cfg, 'y').listen();
     
     var gui_track_length = 0;
+    var gui_sign_track_length = 0;
 
     function load_track() { // eslint-disable-line
 
@@ -36,15 +46,19 @@ $(function() {
 
         gui.clearFolders();
         let track_length = track.points[track.points.length-1].x;
+        let sign_track_length = track_length;
         if (gui_track_length)
           gui.remove(gui_track_length);
-        gui_track_length = gui.add({'track_length': track_length}, 'track_length').onChange(v => {track_length = Math.max(v, 100); draw(); });                
+        gui_track_length = gui.add({'track_length': track_length}, 'track_length').onChange(v => {track_length = Math.max(v, 100); draw(); });
+        if (gui_sign_track_length)
+          gui.remove(gui_sign_track_length);
+        gui_sign_track_length = gui.addnum({'sign_track_length': sign_track_length}, 'sign_track_length', 10).onChange(v => {sign_track_length = Math.max(v, 100); draw(); });
         
         function draw() {
 
           for (let s of track.signs) {
             if ('no_percent_present' in s || !('percent' in s)) {
-              s.percent = s.at_length / track_length;
+              s.percent = s.at_length / ((s.type >= 13) ? track_length : sign_track_length);
               s.no_percent_present = true;
             }
           }
@@ -161,9 +175,7 @@ $(function() {
               }
             } else
               proc_prev_sign(prev,1);
-            poly_bezier.cacheLengths();
             // console.log(poly_bezier.acc_lengths);
-            console.log(poly_bezier.total_length, poly_bezier.length(), track_length, scale); //.toFixed(3)
             if (true) { // eslint-disable-line
               const curves = poly_bezier.curves;
               const cl = curves.length;
@@ -171,6 +183,8 @@ $(function() {
               const s = curves[0].points[0];
               curves[cl-1] = new Bezier(l.points[0], l.points[1], new THREE.Vector2().addVectors(s, {x:0,y:scale*cfg.connect_mult*1.5}), s);
             }
+            poly_bezier.cacheLengths();
+            console.log(poly_bezier.total_length, poly_bezier.length(), track_length, scale); //.toFixed(3)
             for (let c of poly_bezier.curves) {
               //bezier_draw.setRandomColor();
               bezier_draw.drawCurve(c);
