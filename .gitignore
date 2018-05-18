@@ -7,7 +7,6 @@ models/*
 \#examples\ &\ tutorials*
 js/lib*
 \#old/*
-*.json
 carphysics2d/*
 \#threejs.docs/*
 *old*/*
