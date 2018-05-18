@@ -51,7 +51,7 @@ const cfg_production = { //eslint-disable-line
 const cfg_vr = { //eslint-disable-line
     do_vr: true
 }
-const cfg = window.cfg = Object.assign(cfg_base, cfg_debug);
+const cfg = window.cfg = Object.assign(cfg_base, cfg_lightweight);
 
 const mousetrap = require('mousetrap');
 // https://jsfiddle.net/9f6j76dL/1/
