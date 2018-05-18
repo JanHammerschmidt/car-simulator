@@ -1,0 +1,117 @@
+{
+    "points": [
+        {
+            "x": 0,
+            "y": 0
+        },
+        {
+            "x": 100,
+            "y": 0
+        },
+        {
+            "x": 900,
+            "y": 0
+        },
+        {
+            "x": 1300,
+            "y": 0
+        }
+    ],
+    "signs": [
+        {
+            "at_length": 56,
+            "type": 5
+        },
+        {
+            "at_length": 220,
+            "type": 12,
+            "time_range_from": 7000,
+            "time_range_to": 7000,
+            "trigger_distance": 100,
+            "crossing_segments": [4,2]
+        },
+        {
+            "at_length": 385,
+            "type": 3
+        },
+        {
+            "at_length": 524,
+            "type": 1
+        },
+        {
+            "at_length": 632,
+            "type": 3
+        },
+        {
+            "at_length": 771,
+            "type": 5
+        },
+        {
+            "at_length": 935,
+            "type": 8
+        },
+        {
+            "at_length": 1132,
+            "type": 11
+        },
+        {
+            "at_length": 50,
+            "duration": 0.9,
+            "intensity": 0.78,
+            "type": 14
+        },
+        {
+            "at_length": 150,
+            "duration": 1.2,
+            "intensity": 0.7,
+            "type": 14
+        },
+        {
+            "at_length": 260,
+            "duration": 1.4,
+            "intensity": 0.53,
+            "type": 13
+        },
+        {
+            "at_length": 410,
+            "duration": 1.45,
+            "intensity": 0.6,
+            "type": 14
+        },
+        {
+            "at_length": 550,
+            "duration": 0.75,
+            "intensity": 1.28,
+            "type": 14
+        },
+        {
+            "at_length": 660,
+            "duration": 1.08,
+            "intensity": 0.66,
+            "type": 13
+        },
+        {
+            "at_length": 760,
+            "duration": 1.6,
+            "intensity": 0.5,
+            "type": 14
+        },        
+        {
+            "at_length": 930,
+            "duration": 0.99,
+            "intensity": 0.39,
+            "type": 14
+        },
+        {
+            "at_length": 1000,
+            "duration": 3.3,
+            "intensity": 0.25,
+            "type": 14
+        }        
+    ],
+    "starting_point": [200,100],
+    "street_above_ground": 0.02,
+    "street_height_offset": 0,
+    "street_height_mult": 0
+
+}
